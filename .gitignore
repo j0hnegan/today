@@ -34,3 +34,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sqlite
+focus.db
+focus.db-wal
+focus.db-shm
+
+# user uploads
+/public/uploads/
+
+# data backups
+backup-data.json

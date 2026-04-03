@@ -2,26 +2,384 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 220 14% 96%;
+    --foreground: 240 10% 3.9%;
+    --card: 220 14% 96%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 13% 91%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 220 13% 91%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 13% 91%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.625rem;
+    --panel: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 240 6% 7%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 7%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --panel: 240 6% 9%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.08) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+
+/* Slash command block embeds */
+.slash-block {
+  position: relative;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  user-select: none;
+}
+
+.slash-block-heading {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.slash-block-row {
+  font-size: 13px;
+  padding: 2px 0;
+  color: hsl(var(--foreground));
+}
+
+.slash-block-row::before {
+  content: "\2022\00a0";
+  color: hsl(var(--muted-foreground));
+}
+
+.slash-block-meta {
+  font-size: 11px;
+  font-family: monospace;
+  color: hsl(var(--muted-foreground));
+}
+
+.slash-block-empty {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+.slash-embed {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  background: hsl(var(--accent));
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: baseline;
+  transition: background 0.15s;
+}
+
+.slash-embed:hover {
+  background: hsl(var(--accent) / 0.8);
+}
+
+/* Inline file/image embeds */
+.slash-inline-file {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 8px 0;
+  user-select: none;
+}
+
+.slash-inline-img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  object-fit: contain;
+  display: block;
+}
+
+/* Resize handle — bottom-right corner, visible on hover */
+.slash-inline-file:not(.slash-inline-doc-preview) .slash-inline-img + .slash-resize-handle,
+.slash-inline-file:not(.slash-inline-doc-preview)::before {
+  content: none;
+}
+
+.slash-inline-file:not(.slash-inline-doc-preview):hover {
+  outline: 2px solid hsl(var(--ring) / 0.4);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Document/PDF preview card */
+.slash-inline-doc-preview {
+  display: block;
+  width: 300px;
+  height: 200px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  overflow: hidden;
+  background: hsl(var(--muted));
+  cursor: pointer;
+}
+
+.slash-doc-preview-object {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border: none;
+}
+
+.slash-doc-preview-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.slash-doc-preview-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.slash-doc-preview-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 12px 10px;
+  font-size: 12px;
+  color: white;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.slash-inline-file-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  background: hsl(var(--accent));
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.slash-inline-file-link:hover {
+  background: hsl(var(--accent) / 0.8);
+}
+
+/* Remove button on embeds — appears on hover */
+.slash-embed::after,
+.slash-block::after,
+.slash-inline-file::after,
+.slash-inline-file-link::after {
+  content: "\00d7";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: white;
+  font-size: 12px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.slash-embed:hover::after,
+.slash-block:hover::after,
+.slash-inline-file:hover::after,
+.slash-inline-file-link:hover::after {
+  display: flex;
+}
+
+/* Inline file/doc X sits inside the element (not clipped by overflow:hidden) */
+.slash-inline-doc-preview::after,
+.slash-inline-file:not(.slash-inline-file-link)::after {
+  top: 6px;
+  right: 6px;
+}
+
+/* Slash heading styles in contentEditable */
+[contenteditable] .slash-h1,
+[contenteditable] h1 {
+  font-size: 1.5em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.5em 0 0.25em;
+}
+
+[contenteditable] .slash-h2,
+[contenteditable] h2 {
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.5em 0 0.25em;
+}
+
+[contenteditable] .slash-h3,
+[contenteditable] h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.5em 0 0.25em;
+}
+
+[contenteditable] blockquote,
+[contenteditable] .slash-quote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 12px;
+  color: hsl(var(--muted-foreground));
+  margin: 0.5em 0;
+}
+
+[contenteditable] hr,
+[contenteditable] .slash-divider {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1em 0;
+}
+
+[contenteditable] ul {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+[contenteditable] ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+/* Calendar dot for dates with content */
+.has-content-dot {
+  position: relative;
+}
+
+.has-content-dot::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(var(--foreground) / 0.4);
+}
+
+.has-content-dot[data-selected=true]::after,
+.has-content-dot[data-today=true]::after {
+  background: hsl(var(--primary-foreground) / 0.6);
+}
+
+/* Block editor placeholder */
+.block-editor [contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
 }
