@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -13,17 +13,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const updateStmt = db.prepare(
-      "UPDATE tasks SET sort_order = ? WHERE id = ?"
+    // Update sort_order for each task
+    const updates = task_ids.map((taskId: number, i: number) =>
+      supabase.from("tasks").update({ sort_order: i }).eq("id", taskId)
     );
 
-    const transaction = db.transaction(() => {
-      for (let i = 0; i < task_ids.length; i++) {
-        updateStmt.run(i, task_ids[i]);
-      }
-    });
-
-    transaction();
+    await Promise.all(updates);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

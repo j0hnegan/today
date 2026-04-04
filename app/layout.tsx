@@ -15,8 +15,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Focus",
+  title: "Today",
   description: "Energy-aware personal task manager",
+  robots: "noindex, nofollow",
   icons: {
     icon: { url: "/icon.svg", type: "image/svg+xml" },
   },

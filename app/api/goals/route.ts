@@ -1,30 +1,24 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
-const GOAL_WITH_CATEGORY_QUERY = `
-  SELECT
-    g.*,
-    c.id   AS cat_id,
-    c.name AS cat_name,
-    c.color AS cat_color
-  FROM goals g
-  LEFT JOIN categories c ON g.category_id = c.id
-`;
-
 function rowToGoal(row: Record<string, unknown>) {
-  const { cat_id, cat_name, cat_color, ...goal } = row;
+  const { categories, ...goal } = row;
+  const cat = categories as { id: number; name: string; color: string } | null;
   return {
     ...goal,
-    category: cat_id ? { id: cat_id, name: cat_name, color: cat_color } : null,
+    category: cat ?? null,
   };
 }
 
 export async function GET() {
   try {
-    const rows = db
-      .prepare(`${GOAL_WITH_CATEGORY_QUERY} ORDER BY g.sort_order ASC, g.created_at DESC`)
-      .all() as Record<string, unknown>[];
-    return NextResponse.json(rows.map(rowToGoal));
+    const { data: rows, error } = await supabase
+      .from("goals")
+      .select("*, categories(id, name, color)")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return NextResponse.json((rows || []).map(rowToGoal));
   } catch (e) {
     console.error("GET /api/goals error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -40,20 +34,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const result = db
-      .prepare(
-        "INSERT INTO goals (title, description, category_id, status) VALUES (?, ?, ?, ?)"
-      )
-      .run(
-        title.trim(),
-        description ?? null,
-        category_id ?? null,
-        status ?? "active"
-      );
-
-    const row = db
-      .prepare(`${GOAL_WITH_CATEGORY_QUERY} WHERE g.id = ?`)
-      .get(result.lastInsertRowid) as Record<string, unknown>;
+    const { data: row, error } = await supabase
+      .from("goals")
+      .insert({
+        title: title.trim(),
+        description: description ?? null,
+        category_id: category_id ?? null,
+        status: status ?? "active",
+      })
+      .select("*, categories(id, name, color)")
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(rowToGoal(row), { status: 201 });
   } catch (e) {

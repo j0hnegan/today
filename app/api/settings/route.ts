@@ -1,14 +1,13 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const rows = db.prepare("SELECT * FROM settings").all() as {
-      key: string;
-      value: string;
-    }[];
+    const { data: rows, error } = await supabase.from("settings").select("*");
+    if (error) throw error;
+
     const settings: Record<string, string> = {};
-    for (const row of rows) {
+    for (const row of rows || []) {
       settings[row.key] = row.value;
     }
     return NextResponse.json(settings);
@@ -22,25 +21,20 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const upsert = db.prepare(
-      "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)"
-    );
+    const upserts = Object.entries(body).map(([key, value]) => ({
+      key,
+      value: String(value),
+    }));
 
-    const transaction = db.transaction(() => {
-      for (const [key, value] of Object.entries(body)) {
-        upsert.run(key, String(value));
-      }
-    });
-
-    transaction();
+    const { error } = await supabase
+      .from("settings")
+      .upsert(upserts, { onConflict: "key" });
+    if (error) throw error;
 
     // Return updated settings
-    const rows = db.prepare("SELECT * FROM settings").all() as {
-      key: string;
-      value: string;
-    }[];
+    const { data: rows } = await supabase.from("settings").select("*");
     const settings: Record<string, string> = {};
-    for (const row of rows) {
+    for (const row of rows || []) {
       settings[row.key] = row.value;
     }
     return NextResponse.json(settings);

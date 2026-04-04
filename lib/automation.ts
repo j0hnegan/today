@@ -1,4 +1,4 @@
-import type Database from "better-sqlite3";
+import { supabase } from "@/lib/supabase";
 
 export interface AutomationResult {
   promotedTasks: number;
@@ -12,155 +12,128 @@ export interface AutomationResult {
 
 /**
  * Promote someday tasks to today when due date is today or past.
- * Moves tasks from someday → on_deck so they show up in the Today column.
  */
-function promoteDueTodayTasks(
-  db: Database.Database
-): { count: number; titles: string[] } {
+async function promoteDueTodayTasks(): Promise<{ count: number; titles: string[] }> {
   const today = new Date().toISOString().split("T")[0];
 
-  const txn = db.transaction(() => {
-    const dueToday = db
-      .prepare(
-        `
-      SELECT title FROM tasks
-      WHERE destination = 'someday'
-        AND status = 'active'
-        AND due_date IS NOT NULL
-        AND due_date <= ?
-    `
-      )
-      .all(today) as { title: string }[];
+  const { data: dueToday } = await supabase
+    .from("tasks")
+    .select("id, title")
+    .eq("destination", "someday")
+    .eq("status", "active")
+    .not("due_date", "is", null)
+    .lte("due_date", today);
 
-    const result = db
-      .prepare(
-        `
-      UPDATE tasks
-      SET destination = 'on_deck', updated_at = datetime('now')
-      WHERE destination = 'someday'
-        AND status = 'active'
-        AND due_date IS NOT NULL
-        AND due_date <= ?
-    `
-      )
-      .run(today);
+  if (!dueToday || dueToday.length === 0) return { count: 0, titles: [] };
 
-    return { count: result.changes, titles: dueToday.map((t) => t.title) };
-  });
+  const ids = dueToday.map((t) => t.id);
+  await supabase
+    .from("tasks")
+    .update({ destination: "on_deck", updated_at: new Date().toISOString() })
+    .in("id", ids);
 
-  return txn();
+  return { count: dueToday.length, titles: dueToday.map((t) => t.title) };
 }
 
 /**
  * Auto-update past due dates to today for undone tasks.
- * If a task is overdue, bump its due_date to today so it stays current.
  */
-function bumpOverdueDates(db: Database.Database): number {
+async function bumpOverdueDates(): Promise<number> {
   const today = new Date().toISOString().split("T")[0];
 
-  const result = db
-    .prepare(
-      `
-    UPDATE tasks
-    SET due_date = ?, updated_at = datetime('now')
-    WHERE status != 'done'
-      AND due_date IS NOT NULL
-      AND due_date < ?
-  `
-    )
-    .run(today, today);
+  const { data: overdue } = await supabase
+    .from("tasks")
+    .select("id")
+    .neq("status", "done")
+    .not("due_date", "is", null)
+    .lt("due_date", today);
 
-  return result.changes;
+  if (!overdue || overdue.length === 0) return 0;
+
+  const ids = overdue.map((t) => t.id);
+  await supabase
+    .from("tasks")
+    .update({ due_date: today, updated_at: new Date().toISOString() })
+    .in("id", ids);
+
+  return overdue.length;
 }
 
-function escalateUrgentTasks(db: Database.Database): number {
+async function escalateUrgentTasks(): Promise<number> {
   const twoDaysFromNow = new Date();
   twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
   const cutoff = twoDaysFromNow.toISOString().split("T")[0];
 
-  const result = db
-    .prepare(
-      `
-    UPDATE tasks
-    SET consequence = 'hard', updated_at = datetime('now')
-    WHERE destination = 'on_deck'
-      AND status = 'active'
-      AND consequence = 'none'
-      AND due_date IS NOT NULL
-      AND due_date <= ?
-  `
-    )
-    .run(cutoff);
+  const { data: urgent } = await supabase
+    .from("tasks")
+    .select("id")
+    .eq("destination", "on_deck")
+    .eq("status", "active")
+    .eq("consequence", "none")
+    .not("due_date", "is", null)
+    .lte("due_date", cutoff);
 
-  return result.changes;
+  if (!urgent || urgent.length === 0) return 0;
+
+  const ids = urgent.map((t) => t.id);
+  await supabase
+    .from("tasks")
+    .update({ consequence: "hard", updated_at: new Date().toISOString() })
+    .in("id", ids);
+
+  return urgent.length;
 }
 
-function moveStaleToSomeday(
-  db: Database.Database
-): { count: number; titles: string[] } {
+async function moveStaleToSomeday(): Promise<{ count: number; titles: string[] }> {
   const fourteenDaysAgo = new Date();
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
   const cutoff = fourteenDaysAgo.toISOString();
 
-  const txn = db.transaction(() => {
-    const stale = db
-      .prepare(
-        `
-      SELECT title FROM tasks
-      WHERE destination = 'on_deck'
-        AND status = 'active'
-        AND due_date IS NULL
-        AND updated_at <= ?
-    `
-      )
-      .all(cutoff) as { title: string }[];
+  const { data: stale } = await supabase
+    .from("tasks")
+    .select("id, title")
+    .eq("destination", "on_deck")
+    .eq("status", "active")
+    .is("due_date", null)
+    .lte("updated_at", cutoff);
 
-    const result = db
-      .prepare(
-        `
-      UPDATE tasks
-      SET destination = 'someday', updated_at = datetime('now')
-      WHERE destination = 'on_deck'
-        AND status = 'active'
-        AND due_date IS NULL
-        AND updated_at <= ?
-    `
-      )
-      .run(cutoff);
+  if (!stale || stale.length === 0) return { count: 0, titles: [] };
 
-    return { count: result.changes, titles: stale.map((t) => t.title) };
-  });
+  const ids = stale.map((t) => t.id);
+  await supabase
+    .from("tasks")
+    .update({ destination: "someday", updated_at: new Date().toISOString() })
+    .in("id", ids);
 
-  return txn();
+  return { count: stale.length, titles: stale.map((t) => t.title) };
 }
 
-function expireSnoozes(db: Database.Database): number {
+async function expireSnoozes(): Promise<number> {
   const now = new Date().toISOString();
 
-  const result = db
-    .prepare(
-      `
-    UPDATE tasks
-    SET snoozed_until = NULL, snooze_reason = NULL, updated_at = datetime('now')
-    WHERE snoozed_until IS NOT NULL
-      AND snoozed_until <= ?
-  `
-    )
-    .run(now);
+  const { data: snoozed } = await supabase
+    .from("tasks")
+    .select("id")
+    .not("snoozed_until", "is", null)
+    .lte("snoozed_until", now);
 
-  return result.changes;
+  if (!snoozed || snoozed.length === 0) return 0;
+
+  const ids = snoozed.map((t) => t.id);
+  await supabase
+    .from("tasks")
+    .update({ snoozed_until: null, snooze_reason: null, updated_at: new Date().toISOString() })
+    .in("id", ids);
+
+  return snoozed.length;
 }
 
-export function runAutomation(db: Database.Database): AutomationResult {
-  // Bump overdue dates to today first
-  const bumpedOverdue = bumpOverdueDates(db);
-  // Promote due-today tasks from someday → today
-  const { count: promotedTasks, titles: promotedTaskTitles } =
-    promoteDueTodayTasks(db);
-  const upgradedTasks = escalateUrgentTasks(db);
-  const { count: staledTasks, titles: staledTaskTitles } =
-    moveStaleToSomeday(db);
-  const unsnoozedTasks = expireSnoozes(db);
+export async function runAutomation(): Promise<AutomationResult> {
+  const bumpedOverdue = await bumpOverdueDates();
+  const { count: promotedTasks, titles: promotedTaskTitles } = await promoteDueTodayTasks();
+  const upgradedTasks = await escalateUrgentTasks();
+  const { count: staledTasks, titles: staledTaskTitles } = await moveStaleToSomeday();
+  const unsnoozedTasks = await expireSnoozes();
 
   return {
     promotedTasks,

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { isDueToday } from "@/lib/triage";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,64 +8,48 @@ export async function GET(request: NextRequest) {
     const destination = searchParams.get("destination");
     const status = searchParams.get("status");
 
-    let query = "SELECT * FROM tasks WHERE 1=1";
-    const params: string[] = [];
+    let query = supabase.from("tasks").select("*");
 
     if (destination) {
-      query += " AND destination = ?";
-      params.push(destination);
+      query = query.eq("destination", destination);
     }
     if (status) {
-      query += " AND status = ?";
-      params.push(status);
+      query = query.eq("status", status);
     }
 
-    query += " ORDER BY sort_order ASC, updated_at DESC";
+    query = query.order("sort_order", { ascending: true }).order("updated_at", { ascending: false });
 
-    const tasks = db.prepare(query).all(...params) as Record<string, unknown>[];
+    const { data: tasks, error } = await query;
+    if (error) throw error;
+
+    if (!tasks || tasks.length === 0) {
+      return NextResponse.json([]);
+    }
 
     // Batch-fetch all tags for returned tasks (avoids N+1 queries)
-    const taskIds = tasks.map((t) => t.id as number);
-    let tasksWithTags: Record<string, unknown>[];
+    const taskIds = tasks.map((t) => t.id);
 
-    if (taskIds.length === 0) {
-      tasksWithTags = [];
-    } else {
-      const placeholders = taskIds.map(() => "?").join(",");
-      const allTaskTags = db
-        .prepare(
-          `SELECT tt.task_id, t.id, t.name, t.color
-           FROM categories t
-           JOIN task_categories tt ON tt.category_id = t.id
-           WHERE tt.task_id IN (${placeholders})`
-        )
-        .all(...taskIds) as {
-        task_id: number;
-        id: number;
-        name: string;
-        color: string;
-      }[];
+    const { data: allTaskTags, error: tagError } = await supabase
+      .from("task_categories")
+      .select("task_id, categories(id, name, color)")
+      .in("task_id", taskIds);
+    if (tagError) throw tagError;
 
-      const tagsByTask = new Map<
-        number,
-        { id: number; name: string; color: string }[]
-      >();
-      for (const row of allTaskTags) {
-        if (!tagsByTask.has(row.task_id)) {
-          tagsByTask.set(row.task_id, []);
-        }
-        tagsByTask.get(row.task_id)!.push({
-          id: row.id,
-          name: row.name,
-          color: row.color,
-        });
+    const tagsByTask = new Map<number, { id: number; name: string; color: string }[]>();
+    for (const row of allTaskTags || []) {
+      if (!tagsByTask.has(row.task_id)) {
+        tagsByTask.set(row.task_id, []);
       }
-
-      tasksWithTags = tasks.map((task) => ({
-        ...task,
-        tags: tagsByTask.get(task.id as number) ?? [],
-      }));
+      const cat = row.categories as unknown as { id: number; name: string; color: string };
+      if (cat) {
+        tagsByTask.get(row.task_id)!.push(cat);
+      }
     }
+
+    const tasksWithTags = tasks.map((task) => ({
+      ...task,
+      tags: tagsByTask.get(task.id) ?? [],
+    }));
 
     return NextResponse.json(tasksWithTags);
   } catch (e) {
@@ -102,43 +86,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const insertTask = db.prepare(`
-      INSERT INTO tasks (title, description, destination, consequence, size, due_date)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    const insertTaskTag = db.prepare(`
-      INSERT INTO task_categories (task_id, category_id) VALUES (?, ?)
-    `);
-
-    const transaction = db.transaction(() => {
-      const result = insertTask.run(
-        title.trim(),
+    const { data: task, error } = await supabase
+      .from("tasks")
+      .insert({
+        title: title.trim(),
         description,
         destination,
         consequence,
         size,
-        due_date
-      );
-      const taskId = result.lastInsertRowid;
+        due_date,
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
-      for (const tagId of tag_ids) {
-        insertTaskTag.run(taskId, tagId);
-      }
+    // Insert tag associations
+    if (tag_ids.length > 0) {
+      const tagRows = tag_ids.map((tagId: number) => ({
+        task_id: task.id,
+        category_id: tagId,
+      }));
+      const { error: tagError } = await supabase.from("task_categories").insert(tagRows);
+      if (tagError) throw tagError;
+    }
 
-      return taskId;
-    });
+    // Fetch tags for response
+    const { data: tags } = await supabase
+      .from("task_categories")
+      .select("categories(id, name, color)")
+      .eq("task_id", task.id);
 
-    const taskId = transaction();
+    const formattedTags = (tags || []).map((t) => t.categories as unknown as { id: number; name: string; color: string });
 
-    const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId) as Record<string, unknown>;
-    const tags = db
-      .prepare(
-        `SELECT t.id, t.name, t.color FROM categories t JOIN task_categories tt ON tt.category_id = t.id WHERE tt.task_id = ?`
-      )
-      .all(taskId);
-
-    return NextResponse.json({ ...task, tags }, { status: 201 });
+    return NextResponse.json({ ...task, tags: formattedTags }, { status: 201 });
   } catch (e) {
     console.error("POST /api/tasks error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

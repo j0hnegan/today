@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -10,31 +10,21 @@ export async function PATCH(
     const { name, color } = body;
     const id = parseInt(params.id, 10);
 
-    const existing = db.prepare("SELECT * FROM categories WHERE id = ?").get(id);
+    const { data: existing } = await supabase.from("categories").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Tag not found" }, { status: 404 });
     }
 
-    const updates: string[] = [];
-    const values: unknown[] = [];
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name.trim();
+    if (color !== undefined) updates.color = color;
 
-    if (name !== undefined) {
-      updates.push("name = ?");
-      values.push(name.trim());
-    }
-    if (color !== undefined) {
-      updates.push("color = ?");
-      values.push(color);
+    if (Object.keys(updates).length > 0) {
+      const { error } = await supabase.from("categories").update(updates).eq("id", id);
+      if (error) throw error;
     }
 
-    if (updates.length > 0) {
-      values.push(id);
-      db.prepare(`UPDATE categories SET ${updates.join(", ")} WHERE id = ?`).run(
-        ...values
-      );
-    }
-
-    const tag = db.prepare("SELECT * FROM categories WHERE id = ?").get(id);
+    const { data: tag } = await supabase.from("categories").select("*").eq("id", id).single();
     return NextResponse.json(tag);
   } catch (e) {
     console.error("PATCH /api/tags/[id] error:", e);
@@ -49,10 +39,9 @@ export async function DELETE(
   try {
     const id = parseInt(params.id, 10);
 
-    // Remove tag associations first
-    db.prepare("DELETE FROM task_categories WHERE category_id = ?").run(id);
-    // Delete the tag
-    db.prepare("DELETE FROM categories WHERE id = ?").run(id);
+    // CASCADE handles task_categories cleanup
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (e) {

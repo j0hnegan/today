@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { CircleCheck, ListTodo, Target, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { CircleCheck, ListTodo, Target, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase-browser";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import type { View } from "@/lib/types";
+import type { User } from "@supabase/supabase-js";
 
 const navItems: { view: View; label: string; icon: typeof CircleCheck; color: string }[] = [
   { view: "focus", label: "Today", icon: CircleCheck, color: "#22c55e" },
@@ -20,9 +23,136 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
+function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const name = user?.user_metadata?.full_name || user?.email || "";
+  const initials = name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        width={size}
+        height={size}
+        className="rounded-full"
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-medium"
+      style={{ width: size, height: size }}
+    >
+      {initials || "?"}
+    </div>
+  );
+}
+
+function UserMenu({ user, collapsed, theme, setTheme }: { user: User | null; collapsed: boolean; theme: string | undefined; setTheme: (theme: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
+  const name = user?.user_metadata?.full_name || user?.email || "User";
+
+  if (collapsed) {
+    return (
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center justify-center w-9 h-9 rounded-[10px] hover:bg-accent/50 transition-colors"
+          title={name}
+        >
+          <UserAvatar user={user} size={28} />
+        </button>
+        {open && (
+          <div className="absolute bottom-full left-0 mb-1 w-40 rounded-lg border border-border bg-popover p-1 shadow-lg z-50">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+      >
+        <UserAvatar user={user} size={24} />
+        <span className="truncate">{name}</span>
+      </button>
+      {open && (
+        <div className="absolute bottom-full left-0 mb-1 w-full rounded-lg border border-border bg-popover p-1 shadow-lg z-50">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: SidebarProps) {
   const [hoveredView, setHoveredView] = useState<View | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+  }, []);
 
   if (collapsed) {
     return (
@@ -59,13 +189,7 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
           })}
         </nav>
         <div className="flex flex-col items-center gap-2 pb-4">
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center justify-center w-9 h-9 rounded-[10px] text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-          </button>
+          <UserMenu user={user} collapsed theme={theme} setTheme={setTheme} />
         </div>
       </aside>
     );
@@ -115,20 +239,8 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
           })}
         </ul>
       </nav>
-      <div className="px-3 pb-4 space-y-1">
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-        >
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
-        <p className="px-3 text-xs text-muted-foreground font-mono">
-          <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px]">
-            ⌘K
-          </kbd>{" "}
-          Quick add
-        </p>
+      <div className="px-3 pb-4">
+        <UserMenu user={user} collapsed={false} theme={theme} setTheme={setTheme} />
       </div>
     </aside>
   );

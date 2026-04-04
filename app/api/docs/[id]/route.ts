@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,28 +7,27 @@ export async function GET(
 ) {
   try {
     const id = parseInt(params.id, 10);
-    const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+    const { data: doc } = await supabase.from("documents").select("*").eq("id", id).single();
     if (!doc) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    const categories = db
-      .prepare(
-        `SELECT c.id, c.name, c.color FROM categories c
-         JOIN document_categories dc ON dc.category_id = c.id
-         WHERE dc.document_id = ?`
-      )
-      .all(id);
+    const [{ data: categories }, { data: goals }] = await Promise.all([
+      supabase
+        .from("document_categories")
+        .select("categories(id, name, color)")
+        .eq("document_id", id),
+      supabase
+        .from("document_goals")
+        .select("goals(id, title, description, category_id, status)")
+        .eq("document_id", id),
+    ]);
 
-    const goals = db
-      .prepare(
-        `SELECT g.id, g.title, g.description, g.category_id, g.status FROM goals g
-         JOIN document_goals dg ON dg.goal_id = g.id
-         WHERE dg.document_id = ?`
-      )
-      .all(id);
-
-    return NextResponse.json({ ...doc, categories, goals });
+    return NextResponse.json({
+      ...doc,
+      categories: (categories || []).map((r) => r.categories),
+      goals: (goals || []).map((r) => r.goals),
+    });
   } catch (e) {
     console.error("GET /api/docs/[id] error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -43,65 +42,62 @@ export async function PATCH(
     const id = parseInt(params.id, 10);
     const body = await request.json();
 
-    const existing = db.prepare("SELECT * FROM documents WHERE id = ?").get(id);
+    const { data: existing } = await supabase.from("documents").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
     const allowedFields = ["title", "content", "sort_order"];
-    const updates: string[] = [];
-    const values: unknown[] = [];
+    const updates: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
       if (field in body) {
-        updates.push(`${field} = ?`);
-        values.push(body[field]);
+        updates[field] = body[field];
       }
     }
 
-    const transaction = db.transaction(() => {
-      if (updates.length > 0) {
-        updates.push("updated_at = datetime('now')");
-        values.push(id);
-        db.prepare(`UPDATE documents SET ${updates.join(", ")} WHERE id = ?`).run(...values);
-      }
+    if (Object.keys(updates).length > 0) {
+      updates.updated_at = new Date().toISOString();
+      const { error } = await supabase.from("documents").update(updates).eq("id", id);
+      if (error) throw error;
+    }
 
-      if (body.category_ids) {
-        db.prepare("DELETE FROM document_categories WHERE document_id = ?").run(id);
-        const insertCat = db.prepare("INSERT INTO document_categories (document_id, category_id) VALUES (?, ?)");
-        for (const catId of body.category_ids) {
-          insertCat.run(id, catId);
-        }
+    if (body.category_ids) {
+      await supabase.from("document_categories").delete().eq("document_id", id);
+      if (body.category_ids.length > 0) {
+        await supabase.from("document_categories").insert(
+          body.category_ids.map((catId: number) => ({ document_id: id, category_id: catId }))
+        );
       }
+    }
 
-      if (body.goal_ids) {
-        db.prepare("DELETE FROM document_goals WHERE document_id = ?").run(id);
-        const insertGoal = db.prepare("INSERT INTO document_goals (document_id, goal_id) VALUES (?, ?)");
-        for (const goalId of body.goal_ids) {
-          insertGoal.run(id, goalId);
-        }
+    if (body.goal_ids) {
+      await supabase.from("document_goals").delete().eq("document_id", id);
+      if (body.goal_ids.length > 0) {
+        await supabase.from("document_goals").insert(
+          body.goal_ids.map((goalId: number) => ({ document_id: id, goal_id: goalId }))
+        );
       }
+    }
+
+    const { data: doc } = await supabase.from("documents").select("*").eq("id", id).single();
+
+    const [{ data: categories }, { data: goals }] = await Promise.all([
+      supabase
+        .from("document_categories")
+        .select("categories(id, name, color)")
+        .eq("document_id", id),
+      supabase
+        .from("document_goals")
+        .select("goals(id, title, description, category_id, status)")
+        .eq("document_id", id),
+    ]);
+
+    return NextResponse.json({
+      ...doc,
+      categories: (categories || []).map((r) => r.categories),
+      goals: (goals || []).map((r) => r.goals),
     });
-
-    transaction();
-
-    const doc = db.prepare("SELECT * FROM documents WHERE id = ?").get(id) as Record<string, unknown>;
-    const categories = db
-      .prepare(
-        `SELECT c.id, c.name, c.color FROM categories c
-         JOIN document_categories dc ON dc.category_id = c.id
-         WHERE dc.document_id = ?`
-      )
-      .all(id);
-    const goals = db
-      .prepare(
-        `SELECT g.id, g.title, g.description, g.category_id, g.status FROM goals g
-         JOIN document_goals dg ON dg.goal_id = g.id
-         WHERE dg.document_id = ?`
-      )
-      .all(id);
-
-    return NextResponse.json({ ...doc, categories, goals });
   } catch (e) {
     console.error("PATCH /api/docs/[id] error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -114,12 +110,14 @@ export async function DELETE(
 ) {
   try {
     const id = parseInt(params.id, 10);
-    const existing = db.prepare("SELECT * FROM documents WHERE id = ?").get(id);
+    const { data: existing } = await supabase.from("documents").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    db.prepare("DELETE FROM documents WHERE id = ?").run(id);
+    const { error } = await supabase.from("documents").delete().eq("id", id);
+    if (error) throw error;
+
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     console.error("DELETE /api/docs/[id] error:", e);

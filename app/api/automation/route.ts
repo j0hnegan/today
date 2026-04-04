@@ -1,10 +1,9 @@
-import { db } from "@/lib/db";
 import { runAutomation } from "@/lib/automation";
 import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
-    const result = runAutomation(db);
+    const result = await runAutomation();
     return NextResponse.json(result);
   } catch (e) {
     console.error("POST /api/automation error:", e);

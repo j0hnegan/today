@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -60,15 +60,19 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer);
 
     // Record in database
-    const result = db
-      .prepare(
-        "INSERT INTO attachments (filename, original_name, mime_type, size, entity_type, entity_id) VALUES (?, ?, ?, ?, ?, ?)"
-      )
-      .run(filename, file.name, file.type, file.size, entityType, parseInt(entityId, 10));
-
-    const attachment = db
-      .prepare("SELECT * FROM attachments WHERE id = ?")
-      .get(result.lastInsertRowid);
+    const { data: attachment, error } = await supabase
+      .from("attachments")
+      .insert({
+        filename,
+        original_name: file.name,
+        mime_type: file.type,
+        size: file.size,
+        entity_type: entityType,
+        entity_id: parseInt(entityId, 10),
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(attachment, { status: 201 });
   } catch (e) {
@@ -86,9 +90,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "entity_type and entity_id required" }, { status: 400 });
     }
 
-    const attachments = db
-      .prepare("SELECT * FROM attachments WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC")
-      .all(entityType, parseInt(entityId, 10));
+    const { data: attachments, error } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("entity_type", entityType)
+      .eq("entity_id", parseInt(entityId, 10))
+      .order("created_at", { ascending: false });
+    if (error) throw error;
 
     return NextResponse.json(attachments);
   } catch (e) {

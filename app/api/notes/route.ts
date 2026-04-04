@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -8,9 +8,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "date parameter required" }, { status: 400 });
     }
 
-    const note = db
-      .prepare("SELECT * FROM notes WHERE date = ?")
-      .get(date) as Record<string, unknown> | undefined;
+    const { data: note } = await supabase
+      .from("notes")
+      .select("*")
+      .eq("date", date)
+      .single();
 
     if (!note) {
       return NextResponse.json({ id: null, date, content: "", blocks: null });
@@ -20,18 +22,21 @@ export async function GET(request: NextRequest) {
     let blocks = null;
     if (note.blocks && typeof note.blocks === "string") {
       try {
-        blocks = JSON.parse(note.blocks as string);
+        blocks = JSON.parse(note.blocks);
       } catch {
         blocks = null;
       }
     }
 
     // Include attachments
-    const attachments = db
-      .prepare("SELECT * FROM attachments WHERE entity_type = 'note' AND entity_id = ? ORDER BY created_at DESC")
-      .all(note.id);
+    const { data: attachments } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("entity_type", "note")
+      .eq("entity_id", note.id)
+      .order("created_at", { ascending: false });
 
-    return NextResponse.json({ ...note, blocks, attachments });
+    return NextResponse.json({ ...note, blocks, attachments: attachments || [] });
   } catch (e) {
     console.error("GET /api/notes error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -49,19 +54,24 @@ export async function PATCH(request: NextRequest) {
 
     const blocksJson = blocks ? JSON.stringify(blocks) : null;
 
-    const existing = db
-      .prepare("SELECT id FROM notes WHERE date = ?")
-      .get(date) as { id: number } | undefined;
+    const { data: existing } = await supabase
+      .from("notes")
+      .select("id")
+      .eq("date", date)
+      .single();
 
     if (existing) {
-      db.prepare("UPDATE notes SET content = ?, blocks = ?, updated_at = datetime('now') WHERE id = ?")
-        .run(content ?? "", blocksJson, existing.id);
+      await supabase
+        .from("notes")
+        .update({ content: content ?? "", blocks: blocksJson, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
     } else {
-      db.prepare("INSERT INTO notes (date, content, blocks) VALUES (?, ?, ?)")
-        .run(date, content ?? "", blocksJson);
+      await supabase
+        .from("notes")
+        .insert({ date, content: content ?? "", blocks: blocksJson });
     }
 
-    const note = db.prepare("SELECT * FROM notes WHERE date = ?").get(date);
+    const { data: note } = await supabase.from("notes").select("*").eq("date", date).single();
     return NextResponse.json(note);
   } catch (e) {
     console.error("PATCH /api/notes error:", e);

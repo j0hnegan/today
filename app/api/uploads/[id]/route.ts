@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { unlink, writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -13,9 +13,11 @@ export async function PATCH(
 ) {
   try {
     const id = parseInt(params.id, 10);
-    const attachment = db
-      .prepare("SELECT * FROM attachments WHERE id = ?")
-      .get(id) as { id: number } | undefined;
+    const { data: attachment } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("id", id)
+      .single();
 
     if (!attachment) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
@@ -34,9 +36,9 @@ export async function PATCH(
     const buffer = Buffer.from(await thumbFile.arrayBuffer());
     await writeFile(path.join(UPLOAD_DIR, thumbFilename), buffer);
 
-    db.prepare("UPDATE attachments SET thumbnail = ? WHERE id = ?").run(thumbFilename, id);
+    await supabase.from("attachments").update({ thumbnail: thumbFilename }).eq("id", id);
 
-    const updated = db.prepare("SELECT * FROM attachments WHERE id = ?").get(id);
+    const { data: updated } = await supabase.from("attachments").select("*").eq("id", id).single();
     return NextResponse.json(updated);
   } catch (e) {
     console.error("PATCH /api/uploads/[id] error:", e);
@@ -50,9 +52,11 @@ export async function DELETE(
 ) {
   try {
     const id = parseInt(params.id, 10);
-    const attachment = db
-      .prepare("SELECT * FROM attachments WHERE id = ?")
-      .get(id) as { id: number; filename: string; thumbnail?: string } | undefined;
+    const { data: attachment } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("id", id)
+      .single();
 
     if (!attachment) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
@@ -72,7 +76,8 @@ export async function DELETE(
     }
 
     // Delete from database
-    db.prepare("DELETE FROM attachments WHERE id = ?").run(id);
+    const { error } = await supabase.from("attachments").delete().eq("id", id);
+    if (error) throw error;
 
     return new NextResponse(null, { status: 204 });
   } catch (e) {
