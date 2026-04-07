@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { ChevronLeft, Trash2, Check, Paperclip, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +73,15 @@ export function DocEditor({
   // Load content into editor
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = doc.content ?? "";
+      editorRef.current.innerHTML = DOMPurify.sanitize(doc.content ?? "", {
+        ADD_TAGS: ["span", "img", "div", "br"],
+        ADD_ATTR: [
+          "data-inline-file", "data-filename", "data-attachment-id",
+          "data-embed-type", "data-embed-id", "data-slash-block",
+          "data-natural-w", "data-natural-h", "data-current-w",
+          "contenteditable", "class", "style", "alt", "src",
+        ],
+      });
     }
   }, [doc.id]); // eslint-disable-line react-hooks/exhaustive-deps
 

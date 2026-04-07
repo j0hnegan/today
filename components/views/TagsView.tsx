@@ -58,7 +58,6 @@ function refreshAll() {
     (key: unknown) =>
       typeof key === "string" &&
       (key.startsWith("/api/tags") ||
-        key.startsWith("/api/categories") ||
         key.startsWith("/api/goals"))
   );
 }

@@ -1,7 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const { data: rows, error } = await supabase.from("settings").select("*");
     if (error) throw error;
@@ -18,6 +22,10 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const body = await request.json();
 

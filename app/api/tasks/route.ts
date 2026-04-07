@@ -1,8 +1,12 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { isDueToday } from "@/lib/triage";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const { searchParams } = new URL(request.url);
     const destination = searchParams.get("destination");
@@ -59,6 +63,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const body = await request.json();
     const {

@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -6,6 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
  * Query params: from (YYYY-MM-DD), to (YYYY-MM-DD)
  */
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const from = request.nextUrl.searchParams.get("from");
     const to = request.nextUrl.searchParams.get("to");

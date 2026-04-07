@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 function rowToGoal(row: Record<string, unknown>) {
@@ -11,6 +11,10 @@ function rowToGoal(row: Record<string, unknown>) {
 }
 
 export async function GET() {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const { data: rows, error } = await supabase
       .from("goals")
@@ -26,6 +30,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const body = await request.json();
     const { title, description, category_id, status } = body;

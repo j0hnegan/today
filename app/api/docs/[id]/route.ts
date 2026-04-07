@@ -1,10 +1,14 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const id = parseInt(params.id, 10);
     const { data: doc } = await supabase.from("documents").select("*").eq("id", id).single();
@@ -38,6 +42,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const id = parseInt(params.id, 10);
     const body = await request.json();
@@ -108,6 +116,10 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const id = parseInt(params.id, 10);
     const { data: existing } = await supabase.from("documents").select("id").eq("id", id).single();
