@@ -1,7 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const body = await request.json();
     const { task_ids } = body;

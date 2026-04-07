@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { unlink, writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -11,6 +11,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const id = parseInt(params.id, 10);
     const { data: attachment } = await supabase
@@ -50,6 +54,10 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const id = parseInt(params.id, 10);
     const { data: attachment } = await supabase

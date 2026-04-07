@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export interface AutomationResult {
   promotedTasks: number;
@@ -13,7 +13,7 @@ export interface AutomationResult {
 /**
  * Promote someday tasks to today when due date is today or past.
  */
-async function promoteDueTodayTasks(): Promise<{ count: number; titles: string[] }> {
+async function promoteDueTodayTasks(supabase: SupabaseClient): Promise<{ count: number; titles: string[] }> {
   const today = new Date().toISOString().split("T")[0];
 
   const { data: dueToday } = await supabase
@@ -38,7 +38,7 @@ async function promoteDueTodayTasks(): Promise<{ count: number; titles: string[]
 /**
  * Auto-update past due dates to today for undone tasks.
  */
-async function bumpOverdueDates(): Promise<number> {
+async function bumpOverdueDates(supabase: SupabaseClient): Promise<number> {
   const today = new Date().toISOString().split("T")[0];
 
   const { data: overdue } = await supabase
@@ -59,7 +59,7 @@ async function bumpOverdueDates(): Promise<number> {
   return overdue.length;
 }
 
-async function escalateUrgentTasks(): Promise<number> {
+async function escalateUrgentTasks(supabase: SupabaseClient): Promise<number> {
   const twoDaysFromNow = new Date();
   twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
   const cutoff = twoDaysFromNow.toISOString().split("T")[0];
@@ -84,7 +84,7 @@ async function escalateUrgentTasks(): Promise<number> {
   return urgent.length;
 }
 
-async function moveStaleToSomeday(): Promise<{ count: number; titles: string[] }> {
+async function moveStaleToSomeday(supabase: SupabaseClient): Promise<{ count: number; titles: string[] }> {
   const fourteenDaysAgo = new Date();
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
   const cutoff = fourteenDaysAgo.toISOString();
@@ -108,7 +108,7 @@ async function moveStaleToSomeday(): Promise<{ count: number; titles: string[] }
   return { count: stale.length, titles: stale.map((t) => t.title) };
 }
 
-async function expireSnoozes(): Promise<number> {
+async function expireSnoozes(supabase: SupabaseClient): Promise<number> {
   const now = new Date().toISOString();
 
   const { data: snoozed } = await supabase
@@ -128,12 +128,12 @@ async function expireSnoozes(): Promise<number> {
   return snoozed.length;
 }
 
-export async function runAutomation(): Promise<AutomationResult> {
-  const bumpedOverdue = await bumpOverdueDates();
-  const { count: promotedTasks, titles: promotedTaskTitles } = await promoteDueTodayTasks();
-  const upgradedTasks = await escalateUrgentTasks();
-  const { count: staledTasks, titles: staledTaskTitles } = await moveStaleToSomeday();
-  const unsnoozedTasks = await expireSnoozes();
+export async function runAutomation(supabase: SupabaseClient): Promise<AutomationResult> {
+  const bumpedOverdue = await bumpOverdueDates(supabase);
+  const { count: promotedTasks, titles: promotedTaskTitles } = await promoteDueTodayTasks(supabase);
+  const upgradedTasks = await escalateUrgentTasks(supabase);
+  const { count: staledTasks, titles: staledTaskTitles } = await moveStaleToSomeday(supabase);
+  const unsnoozedTasks = await expireSnoozes(supabase);
 
   return {
     promotedTasks,

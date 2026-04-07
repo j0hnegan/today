@@ -15,6 +15,14 @@ import {
 } from "lucide-react";
 import type { Task } from "./types";
 
+function escapeHTML(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export interface SlashCommand {
   id: string;
   /** Alternative ids that also match this command (e.g. "img", "files") */
@@ -36,16 +44,17 @@ export interface SlashCommandContext {
 }
 
 function taskListHTML(tasks: Task[], heading: string): string {
+  const h = escapeHTML(heading);
   if (tasks.length === 0) {
-    return `<div data-slash-block contenteditable="false" class="slash-block"><div class="slash-block-heading">${heading}</div><div class="slash-block-empty">No tasks</div></div><br>`;
+    return `<div data-slash-block contenteditable="false" class="slash-block"><div class="slash-block-heading">${h}</div><div class="slash-block-empty">No tasks</div></div><br>`;
   }
   const rows = tasks
     .map(
       (t) =>
-        `<div class="slash-block-row">${t.title}${t.due_date ? ` <span class="slash-block-meta">${t.due_date}</span>` : ""}</div>`
+        `<div class="slash-block-row">${escapeHTML(t.title)}${t.due_date ? ` <span class="slash-block-meta">${escapeHTML(t.due_date)}</span>` : ""}</div>`
     )
     .join("");
-  return `<div data-slash-block contenteditable="false" class="slash-block"><div class="slash-block-heading">${heading}</div>${rows}</div><br>`;
+  return `<div data-slash-block contenteditable="false" class="slash-block"><div class="slash-block-heading">${h}</div>${rows}</div><br>`;
 }
 
 export function buildEmbedHTML(
@@ -55,7 +64,7 @@ export function buildEmbedHTML(
   return items
     .map(
       (item) =>
-        `<span data-embed-type="${type}" data-embed-id="${item.id}" contenteditable="false" class="slash-embed">${type === "doc" ? "\u{1F4C4}" : "\u2705"} ${item.title}</span>`
+        `<span data-embed-type="${escapeHTML(type)}" data-embed-id="${item.id}" contenteditable="false" class="slash-embed">${type === "doc" ? "\u{1F4C4}" : "\u2705"} ${escapeHTML(item.title)}</span>`
     )
     .join(" ");
 }
@@ -95,20 +104,24 @@ export function buildInlineFileHTML(uploads: InlineUpload[]): string {
       .map((u) => {
         const idAttr = u.id ? ` data-attachment-id="${u.id}"` : "";
 
+        const fname = escapeHTML(u.filename);
+        const origName = escapeHTML(u.original_name);
+
         if (u.mime_type.startsWith("image/")) {
           const nw = u.naturalWidth || 300;
           const initialW = Math.min(300, nw);
-          return `<span data-inline-file data-filename="${u.filename}"${idAttr} data-natural-w="${nw}" data-natural-h="${u.naturalHeight || 300}" data-current-w="${initialW}" contenteditable="false" class="slash-inline-file" style="width:${initialW}px"><img src="/uploads/${u.filename}" alt="${u.original_name}" class="slash-inline-img" /></span>`;
+          return `<span data-inline-file data-filename="${fname}"${idAttr} data-natural-w="${nw}" data-natural-h="${u.naturalHeight || 300}" data-current-w="${initialW}" contenteditable="false" class="slash-inline-file" style="width:${initialW}px"><img src="/uploads/${fname}" alt="${origName}" class="slash-inline-img" /></span>`;
         }
 
         if (isDocMime(u.mime_type)) {
+          const thumbName = u.thumbnail ? escapeHTML(u.thumbnail) : "";
           const previewInner = u.thumbnail
-            ? `<img src="/uploads/${u.thumbnail}" alt="${u.original_name}" class="slash-doc-preview-thumb" />`
+            ? `<img src="/uploads/${thumbName}" alt="${origName}" class="slash-doc-preview-thumb" />`
             : `<div class="slash-doc-preview-icon">${getDocIcon(u.mime_type)}</div>`;
-          return `<span data-inline-file data-filename="${u.filename}"${idAttr} contenteditable="false" class="slash-inline-file slash-inline-doc-preview">${previewInner}<span class="slash-doc-preview-name">${u.original_name}</span></span>`;
+          return `<span data-inline-file data-filename="${fname}"${idAttr} contenteditable="false" class="slash-inline-file slash-inline-doc-preview">${previewInner}<span class="slash-doc-preview-name">${origName}</span></span>`;
         }
 
-        return `<span data-inline-file data-filename="${u.filename}"${idAttr} contenteditable="false" class="slash-inline-file-link">${getDocIcon(u.mime_type)} ${u.original_name}</span>`;
+        return `<span data-inline-file data-filename="${fname}"${idAttr} contenteditable="false" class="slash-inline-file-link">${getDocIcon(u.mime_type)} ${origName}</span>`;
       })
       .join(" ") + "<br>"
   );

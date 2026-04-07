@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ALLOWED_TYPES = new Set([
   // Images
-  "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+  "image/jpeg", "image/png", "image/gif", "image/webp",
   // Videos
   "video/mp4", "video/webm", "video/quicktime",
   // Documents
@@ -24,6 +24,10 @@ const ALLOWED_TYPES = new Set([
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -82,6 +86,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof Response) return auth;
+  const { supabase } = auth;
+
   try {
     const entityType = request.nextUrl.searchParams.get("entity_type");
     const entityId = request.nextUrl.searchParams.get("entity_id");

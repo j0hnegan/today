@@ -158,3 +158,25 @@ INSERT INTO settings (key, value) VALUES ('checkin_interval_hours', '4')
   ON CONFLICT (key) DO NOTHING;
 INSERT INTO settings (key, value) VALUES ('weekly_nudge_day', 'sunday')
   ON CONFLICT (key) DO NOTHING;
+
+-- =============================================================================
+-- ROW LEVEL SECURITY — only authenticated users may access data
+-- =============================================================================
+DO $$
+DECLARE
+  tbl TEXT;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY[
+    'tasks', 'categories', 'task_categories', 'goals',
+    'documents', 'document_categories', 'document_goals',
+    'notes', 'attachments', 'checkins', 'settings'
+  ]
+  LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format(
+      'CREATE POLICY "authenticated_full_access" ON %I FOR ALL USING (auth.role() = ''authenticated'')',
+      tbl
+    );
+  END LOOP;
+END
+$$;

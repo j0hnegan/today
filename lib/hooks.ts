@@ -27,12 +27,12 @@ export function useTasks(params?: {
 }
 
 export function useCategories() {
-  return useSWR<Category[]>("/api/categories", fetcher);
+  return useSWR<Category[]>("/api/tags", fetcher);
 }
 
 // Backward compat alias
 export function useTags() {
-  return useSWR<Tag[]>("/api/categories", fetcher);
+  return useSWR<Tag[]>("/api/tags", fetcher);
 }
 
 export function useGoals() {
