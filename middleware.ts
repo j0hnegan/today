@@ -1,9 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Dev-only auth bypass — see lib/api-auth.ts for the full rationale.
+ * Requires `HUSH_DEV_AUTH=1`, refuses to engage in production, hard-fails on Vercel.
+ */
+const DEV_AUTH_BYPASS =
+  process.env.HUSH_DEV_AUTH === "1" &&
+  process.env.NODE_ENV !== "production" &&
+  !process.env.VERCEL;
+
+if (DEV_AUTH_BYPASS) {
+  console.warn("[hush] DEV AUTH BYPASS ACTIVE — never use in production");
+}
+
 export async function middleware(request: NextRequest) {
-  // Skip auth in local development until auth is fully configured
-  if (process.env.NODE_ENV === "development") {
+  if (DEV_AUTH_BYPASS) {
     return NextResponse.next({ request });
   }
 
