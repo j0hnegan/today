@@ -65,6 +65,21 @@ The single-user model is load-bearing for these defenses. If a second user is ev
 - The Vercel guard (`!process.env.VERCEL`) — that's the deploy-safety net.
 - The generic error message on `/login`. Don't add the email back to the URL.
 
+### 2026-04-11 — Re-enable ESLint in builds
+**What:**
+- Removed `eslint.ignoreDuringBuilds: true` from `next.config.mjs`. `npm run build` now fails on lint errors.
+- Cleaned up the dead-code lint errors that had accumulated in `components/focus/BlockEditor.tsx` (unused imports, unused state value, two unreachable `useCallback`s, missing `useCallback` deps). One real bug surfaced as a side effect: the size-filter UI in the task list was computing `filtered` but throwing it away — now wired into the sort.
+- Two genuinely-orphaned-but-not-yet-deleted prop pipelines (`onEditTask` plumbing for the dormant PagePanel edit modal) are kept with `eslint-disable-next-line` comments + a note explaining why.
+- `<img>` tag in `components/shared/Sidebar.tsx` (Google avatar) gets a single `eslint-disable-next-line @next/next/no-img-element` plus a comment pointing future-us at the matching `img-src` directive in the CSP.
+
+**Why:**
+- `ignoreDuringBuilds` silently defeats `eslint-plugin-react`, the Next.js rules, and any future security plugin we add (e.g. `eslint-plugin-security`). A PR that ships an unused-vars warning today is also a PR that could ship `eval()` tomorrow without anyone noticing.
+- Re-enabling lint in CI/build means new warnings break the build instead of getting buried in `npm run lint` output that nobody runs.
+
+**Don't undo:**
+- Don't re-add `eslint.ignoreDuringBuilds`. If a single rule is genuinely too noisy, disable that *rule* in `.eslintrc`, don't blanket-disable the whole linter.
+- Keep the avatar comment in `Sidebar.tsx` — it's the load-bearing reminder that widening the avatar source means widening the CSP `img-src` allowlist in lockstep.
+
 ## Manual operations
 
 ### Revoking a session

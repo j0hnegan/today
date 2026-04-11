@@ -38,8 +38,14 @@ function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
     .slice(0, 2);
   const [imgFailed, setImgFailed] = useState(false);
 
+  // The avatar URL comes from Supabase session metadata (Google OAuth) and is
+  // contained by `img-src 'self' data: blob: https://*.googleusercontent.com`
+  // in the global CSP. If you ever widen this to other providers, update the
+  // CSP allowlist in `next.config.mjs` in lockstep. Plain <img> is fine here:
+  // it's a single 24-32px avatar, next/image gives no real LCP benefit.
   if (avatarUrl && !imgFailed) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={avatarUrl}
         alt={name}

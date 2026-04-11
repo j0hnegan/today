@@ -9,9 +9,6 @@ const csp = `default-src 'self'; ${scriptSrc}; style-src 'self' 'unsafe-inline';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   async headers() {
     return [
       {
