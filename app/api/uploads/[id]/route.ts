@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { unlink, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { fileTypeFromBuffer } from "file-type";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -49,11 +50,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Thumbnail must be PNG, JPEG, or WebP" }, { status: 400 });
     }
 
+    const buffer = Buffer.from(await thumbFile.arrayBuffer());
+
+    // Cross-check magic bytes against the declared MIME — same rationale as
+    // POST /api/uploads. All allowed thumbnail types are sniffable images.
+    const sniffed = await fileTypeFromBuffer(buffer);
+    if (!sniffed || !ALLOWED_THUMBNAIL_TYPES.has(sniffed.mime) || sniffed.mime !== thumbFile.type) {
+      return NextResponse.json(
+        { error: `Thumbnail contents don't match declared type ${thumbFile.type}` },
+        { status: 400 }
+      );
+    }
+
     const hash = crypto.randomBytes(8).toString("hex");
     const thumbFilename = `thumb-${Date.now()}-${hash}.png`;
 
     await mkdir(UPLOAD_DIR, { recursive: true });
-    const buffer = Buffer.from(await thumbFile.arrayBuffer());
     await writeFile(path.join(UPLOAD_DIR, thumbFilename), buffer);
 
     await supabase.from("attachments").update({ thumbnail: thumbFilename }).eq("id", id);

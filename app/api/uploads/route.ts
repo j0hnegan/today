@@ -5,10 +5,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { fileTypeFromBuffer } from "file-type";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-const ALLOWED_TYPES = new Set([
+// Types where we trust the client-supplied MIME because file-type can't sniff
+// them (plain text, CSV, markdown have no magic bytes). For these we still
+// allow upload but skip the byte-level cross-check.
+const UNSNIFFABLE_TYPES = new Set([
+  "text/plain", "text/csv", "text/markdown",
+]);
+
+const ALLOWED_TYPES = new Set<string>([
   // Images
   "image/jpeg", "image/png", "image/gif", "image/webp",
   // Videos
@@ -19,7 +27,7 @@ const ALLOWED_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  // Text
+  // Text (no magic bytes — see UNSNIFFABLE_TYPES)
   "text/plain", "text/csv", "text/markdown",
 ]);
 
@@ -56,6 +64,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `File type not allowed: ${file.type}` }, { status: 400 });
     }
 
+    // Read into memory once so we can both byte-sniff and persist.
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Cross-check the client-supplied MIME against the file's actual magic
+    // bytes. Without this, an attacker could rename a `.html` payload as
+    // `evil.png` with `Content-Type: image/png` and we'd happily serve it
+    // back from /uploads. Sniffable types must match; unsniffable text
+    // formats fall through (no magic bytes to check against).
+    if (!UNSNIFFABLE_TYPES.has(file.type)) {
+      const sniffed = await fileTypeFromBuffer(buffer);
+      if (!sniffed || !ALLOWED_TYPES.has(sniffed.mime) || sniffed.mime !== file.type) {
+        return NextResponse.json(
+          { error: `File contents don't match declared type ${file.type}` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Generate unique filename
     const ext = path.extname(file.name) || "";
     const hash = crypto.randomBytes(8).toString("hex");
@@ -65,7 +91,6 @@ export async function POST(request: NextRequest) {
     await mkdir(UPLOAD_DIR, { recursive: true });
 
     // Write file to disk
-    const buffer = Buffer.from(await file.arrayBuffer());
     const filePath = path.join(UPLOAD_DIR, filename);
     await writeFile(filePath, buffer);
 

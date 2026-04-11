@@ -25,6 +25,19 @@ The single-user model is load-bearing for these defenses. If a second user is ev
 - The per-resource schemas under `lib/validation/`.
 - The `WRITABLE_SETTINGS_KEYS` allowlist — if you add a new setting, add the key to that list AND seed it in `scripts/supabase-schema.sql`.
 
+### 2026-04-11 — Byte-sniff uploads against their declared MIME type
+**What:**
+- `app/api/uploads/route.ts` POST and `app/api/uploads/[id]/route.ts` PATCH (thumbnail) now use `file-type` to read the file's magic bytes and reject any upload whose actual content doesn't match the declared `Content-Type`.
+- Plain text formats (`text/plain`, `text/csv`, `text/markdown`) have no magic bytes, so they fall through and trust the client header. Defined as `UNSNIFFABLE_TYPES`.
+
+**Why:**
+- Without sniffing, an attacker could rename an HTML payload as `evil.png` with `Content-Type: image/png`, the server would store it under `/public/uploads`, and serving it back from that origin would let the HTML execute (despite the CSP, because `/uploads/*` has its own `default-src 'none'` lockdown — but the attack surface still includes things like content-type confusion in download tools, image proxies, or other consumers of the file URL).
+- The server already enforces a MIME allowlist (`ALLOWED_TYPES`) but was trusting the client to be honest about which type it was sending.
+
+**Don't undo:**
+- The `fileTypeFromBuffer` check in both upload routes.
+- The `UNSNIFFABLE_TYPES` carve-out — `file-type` correctly returns `undefined` for plain text, and rejecting them outright would break a real use case.
+
 ### 2026-04-11 — Drop `'unsafe-eval'` from the production CSP
 **What:**
 - `next.config.mjs` now branches the `script-src` directive on `NODE_ENV`. Production: `script-src 'self' 'unsafe-inline'`. Dev: `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (Next.js HMR needs eval).
