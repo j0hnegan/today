@@ -118,14 +118,18 @@ export function BlockEditor({
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
 
-        // Dash to task: "- text" or "-text" creates a task
-        const dashMatch = content.match(/^[-–—]\s*(.*)/);
-        if (dashMatch && dashMatch[1].trim()) {
-          onCreateTask(dashMatch[1].trim());
-          // Pre-fill with dash for quick consecutive task creation
-          handleBlockInput(block.id, "- ");
-          focusBlock(block.id);
-          return;
+        // Dash to task — only on the first line immediately below the task-list block.
+        // Anywhere else, a dash should behave like a normal character (unbulleted list, etc.)
+        const isFirstLineBelowTaskList = blocks[index - 1]?.type === "task-list";
+        if (isFirstLineBelowTaskList) {
+          const dashMatch = content.match(/^[-–—]\s*(.*)/);
+          if (dashMatch && dashMatch[1].trim()) {
+            onCreateTask(dashMatch[1].trim());
+            // Pre-fill with dash for quick consecutive task creation
+            handleBlockInput(block.id, "- ");
+            focusBlock(block.id);
+            return;
+          }
         }
 
         // Insert new block below
@@ -693,8 +697,51 @@ function TaskRow({
             {task.title}
           </span>
           {task.due_date && (
-            <span className="text-xs font-mono flex-shrink-0 text-muted-foreground" style={{ letterSpacing: "-0.25px" }}>
-              {`${new Date(task.due_date + "T00:00:00").getMonth() + 1}/${new Date(task.due_date + "T00:00:00").getDate()}`}
+            <span className="group/date inline-flex items-center gap-0.5 flex-shrink-0">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+                    style={{ letterSpacing: "-0.25px" }}
+                    title="Change due date"
+                  >
+                    {`${new Date(task.due_date + "T00:00:00").getMonth() + 1}/${new Date(task.due_date + "T00:00:00").getDate()}`}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start" onClick={(e) => e.stopPropagation()}>
+                  <Calendar
+                    mode="single"
+                    selected={new Date(task.due_date + "T00:00:00")}
+                    onSelect={async (day) => {
+                      const dateStr = day
+                        ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`
+                        : null;
+                      try {
+                        await patchTask(task, { due_date: dateStr });
+                      } catch {
+                        /* helper already toasted */
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    await patchTask(task, { due_date: null });
+                  } catch {
+                    /* helper already toasted */
+                  }
+                }}
+                className="opacity-0 group-hover/date:opacity-100 transition-opacity inline-flex items-center justify-center h-3 w-3 rounded text-muted-foreground hover:text-destructive"
+                title="Clear due date"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
             </span>
           )}
         </div>
@@ -831,7 +878,7 @@ function TaskListContent({
       }
       if (primary !== 0) return primary;
       if (sortKey !== "consequence" && aPri !== bPri) return aPri - bPri;
-      return (a.id as number) - (b.id as number);
+      return a.created_at.localeCompare(b.created_at);
     });
   }, [tasks, sortKey]);
 

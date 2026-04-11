@@ -24,7 +24,11 @@ interface SidebarProps {
 }
 
 function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
-  const avatarUrl = user?.user_metadata?.avatar_url;
+  const avatarUrl =
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    user?.identities?.[0]?.identity_data?.avatar_url ||
+    user?.identities?.[0]?.identity_data?.picture;
   const name = user?.user_metadata?.full_name || user?.email || "";
   const initials = name
     .split(" ")
@@ -32,16 +36,18 @@ function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+  const [imgFailed, setImgFailed] = useState(false);
 
-  if (avatarUrl) {
+  if (avatarUrl && !imgFailed) {
     return (
       <img
         src={avatarUrl}
         alt={name}
         width={size}
         height={size}
-        className="rounded-full"
+        className="rounded-full object-cover"
         referrerPolicy="no-referrer"
+        onError={() => setImgFailed(true)}
       />
     );
   }
