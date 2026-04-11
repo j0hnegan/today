@@ -273,7 +273,7 @@ export function PagePanel() {
       // Past: only tasks due on that specific date
       filtered = tasks.filter((t) => t.due_date === dateStr);
     }
-    return filtered.sort((a, b) => (a.id as number) - (b.id as number));
+    return filtered.sort((a, b) => a.created_at.localeCompare(b.created_at));
   }, [tasks, dateStr]);
 
   return (
