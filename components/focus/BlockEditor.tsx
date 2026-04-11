@@ -4,12 +4,10 @@ import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import { GripVertical, Target, Tag as TagIcon, SlidersHorizontal, ArrowUpDown, Check, X, CalendarOff, CalendarPlus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { createBlock, moveBlock } from "@/lib/blocks";
-import type { Block, BlockType, Task, Tag, Size, Goal, Category, Attachment } from "@/lib/types";
+import { createBlock } from "@/lib/blocks";
+import type { Block, Task, Size, Goal, Category, Attachment } from "@/lib/types";
 import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { toast } from "sonner";
-import { markTaskDone } from "@/lib/done-toast";
 import { patchTask, reorderTasks } from "@/lib/taskMutations";
 import { TaskListSkeleton } from "@/components/focus/TaskListSkeleton";
 
@@ -69,7 +67,7 @@ export function BlockEditor({
   onBackToTodayTask,
   placeholder = "Start typing...",
 }: BlockEditorProps) {
-  const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
+  const [, setFocusedBlockId] = useState<string | null>(null);
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
   const dropTargetRef = useRef<number | null>(null);
@@ -185,25 +183,7 @@ export function BlockEditor({
         // Just let it type the "/"
       }
     },
-    [blocks, onChange, focusBlock, handleBlockInput, onCreateTask]
-  );
-
-  // Handle block type change (from slash commands)
-  const changeBlockType = useCallback(
-    (blockId: string, newType: BlockType) => {
-      onChange(blocks.map((b) => (b.id === blockId ? { ...b, type: newType, content: b.content } : b)));
-    },
-    [blocks, onChange]
-  );
-
-  // Insert a block at index
-  const insertBlockAt = useCallback(
-    (index: number, block: Block) => {
-      const newBlocks = [...blocks];
-      newBlocks.splice(index, 0, block);
-      onChange(newBlocks);
-    },
-    [blocks, onChange]
+    [blocks, onChange, focusBlock, handleBlockInput, onCreateTask, tasks]
   );
 
   // Save task title inline — optimistic update via helper
@@ -807,6 +787,8 @@ function TaskListContent({
   inProgressTasks,
   loading,
   onMarkDone,
+  // Wired through from BlockEditor for the (currently dormant) PagePanel edit modal.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onEditTask,
   onDeleteTask,
   onNotTodayTask,
@@ -857,7 +839,7 @@ function TaskListContent({
     if (sizeFilter.length < ALL_SIZES.length) {
       filtered = filtered.filter((t) => sizeFilter.includes(t.size));
     }
-    return [...tasks].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const aPri = normalizeConsequence(a.consequence) === "hard" ? 0 : 1;
       const bPri = normalizeConsequence(b.consequence) === "hard" ? 0 : 1;
       let primary = 0;
@@ -880,7 +862,7 @@ function TaskListContent({
       if (sortKey !== "consequence" && aPri !== bPri) return aPri - bPri;
       return a.created_at.localeCompare(b.created_at);
     });
-  }, [tasks, sortKey]);
+  }, [tasks, sortKey, sizeFilter]);
 
   // Show skeleton while loading initial data
   if (loading && tasks.length === 0 && inProgressTasks.length === 0) {
