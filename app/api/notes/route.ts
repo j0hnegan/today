@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody, validateSearchParams } from "@/lib/validation/helpers";
+import { noteQuerySchema, upsertNoteSchema } from "@/lib/validation/note";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -6,12 +8,11 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const date = request.nextUrl.searchParams.get("date");
-    if (!date) {
-      return NextResponse.json({ error: "date parameter required" }, { status: 400 });
-    }
+  const params = validateSearchParams(request.nextUrl.searchParams, noteQuerySchema);
+  if (params instanceof NextResponse) return params;
+  const { date } = params;
 
+  try {
     const { data: note } = await supabase
       .from("notes")
       .select("*")
@@ -52,14 +53,11 @@ export async function PATCH(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const parsed = await validateBody(request, upsertNoteSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { date, content, blocks } = parsed;
+
   try {
-    const body = await request.json();
-    const { date, content, blocks } = body;
-
-    if (!date) {
-      return NextResponse.json({ error: "date required" }, { status: 400 });
-    }
-
     const blocksJson = blocks ? JSON.stringify(blocks) : null;
 
     const { data: existing } = await supabase

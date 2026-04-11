@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { createTagSchema } from "@/lib/validation/tag";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -24,17 +26,14 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const parsed = await validateBody(request, createTagSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { name, color } = parsed;
+
   try {
-    const body = await request.json();
-    const { name, color = "#6366f1" } = body;
-
-    if (!name || !name.trim()) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
-
     const { data: tag, error } = await supabase
       .from("categories")
-      .insert({ name: name.trim(), color })
+      .insert({ name, color })
       .select()
       .single();
 

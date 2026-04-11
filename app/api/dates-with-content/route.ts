@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateSearchParams } from "@/lib/validation/helpers";
+import { datesRangeQuerySchema } from "@/lib/validation/dates";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -10,13 +12,11 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const from = request.nextUrl.searchParams.get("from");
-    const to = request.nextUrl.searchParams.get("to");
+  const params = validateSearchParams(request.nextUrl.searchParams, datesRangeQuerySchema);
+  if (params instanceof NextResponse) return params;
+  const { from, to } = params;
 
-    if (!from || !to) {
-      return NextResponse.json({ error: "from and to parameters required" }, { status: 400 });
-    }
+  try {
 
     const [{ data: noteDates }, { data: taskDates }] = await Promise.all([
       supabase

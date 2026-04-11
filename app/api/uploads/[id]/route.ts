@@ -1,10 +1,18 @@
 import { requireAuth } from "@/lib/api-auth";
+import { parseIdParam } from "@/lib/validation/helpers";
 import { NextRequest, NextResponse } from "next/server";
 import { unlink, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+
+const ALLOWED_THUMBNAIL_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+const MAX_THUMBNAIL_SIZE = 2 * 1024 * 1024; // 2MB
 
 /** PATCH — upload a thumbnail for an existing attachment */
 export async function PATCH(
@@ -15,8 +23,10 @@ export async function PATCH(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
+
   try {
-    const id = parseInt(params.id, 10);
     const { data: attachment } = await supabase
       .from("attachments")
       .select("*")
@@ -31,6 +41,12 @@ export async function PATCH(
     const thumbFile = formData.get("thumbnail") as File | null;
     if (!thumbFile) {
       return NextResponse.json({ error: "No thumbnail provided" }, { status: 400 });
+    }
+    if (thumbFile.size > MAX_THUMBNAIL_SIZE) {
+      return NextResponse.json({ error: "Thumbnail too large (max 2MB)" }, { status: 400 });
+    }
+    if (!ALLOWED_THUMBNAIL_TYPES.has(thumbFile.type)) {
+      return NextResponse.json({ error: "Thumbnail must be PNG, JPEG, or WebP" }, { status: 400 });
     }
 
     const hash = crypto.randomBytes(8).toString("hex");
@@ -58,8 +74,10 @@ export async function DELETE(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
+
   try {
-    const id = parseInt(params.id, 10);
     const { data: attachment } = await supabase
       .from("attachments")
       .select("*")

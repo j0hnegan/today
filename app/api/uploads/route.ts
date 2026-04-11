@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateSearchParams } from "@/lib/validation/helpers";
+import { uploadFormSchema, uploadsQuerySchema } from "@/lib/validation/upload";
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -31,18 +33,22 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const entityType = formData.get("entity_type") as string | null;
-    const entityId = formData.get("entity_id") as string | null;
-
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-    if (!entityType || !entityId) {
-      return NextResponse.json({ error: "entity_type and entity_id required" }, { status: 400 });
+
+    const formParsed = uploadFormSchema.safeParse({
+      entity_type: formData.get("entity_type"),
+      entity_id: formData.get("entity_id"),
+    });
+    if (!formParsed.success) {
+      return NextResponse.json(
+        { error: "Invalid form data", issues: formParsed.error.issues },
+        { status: 400 }
+      );
     }
-    if (!["note", "document", "task"].includes(entityType)) {
-      return NextResponse.json({ error: "Invalid entity_type" }, { status: 400 });
-    }
+    const { entity_type: entityType, entity_id: entityId } = formParsed.data;
+
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
     }
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
         mime_type: file.type,
         size: file.size,
         entity_type: entityType,
-        entity_id: parseInt(entityId, 10),
+        entity_id: entityId,
       })
       .select()
       .single();
@@ -90,19 +96,16 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const params = validateSearchParams(request.nextUrl.searchParams, uploadsQuerySchema);
+  if (params instanceof NextResponse) return params;
+  const { entity_type: entityType, entity_id: entityId } = params;
+
   try {
-    const entityType = request.nextUrl.searchParams.get("entity_type");
-    const entityId = request.nextUrl.searchParams.get("entity_id");
-
-    if (!entityType || !entityId) {
-      return NextResponse.json({ error: "entity_type and entity_id required" }, { status: 400 });
-    }
-
     const { data: attachments, error } = await supabase
       .from("attachments")
       .select("*")
       .eq("entity_type", entityType)
-      .eq("entity_id", parseInt(entityId, 10))
+      .eq("entity_id", entityId)
       .order("created_at", { ascending: false });
     if (error) throw error;
 

@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { createDocSchema } from "@/lib/validation/doc";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -58,10 +60,11 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const body = await request.json();
-    const { title = "Untitled", content = "", category_ids = [], goal_ids = [] } = body;
+  const parsed = await validateBody(request, createDocSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { title, content, category_ids, goal_ids } = parsed;
 
+  try {
     const { data: doc, error } = await supabase
       .from("documents")
       .insert({ title: title.trim() || "Untitled", content })

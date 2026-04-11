@@ -1,5 +1,7 @@
 import { requireAuth } from "@/lib/api-auth";
 import { isDueToday } from "@/lib/triage";
+import { parseIdParam, validateBody } from "@/lib/validation/helpers";
+import { updateTaskSchema } from "@/lib/validation/task";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -10,45 +12,25 @@ export async function PATCH(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const id = parseInt(params.id);
-    const body = await request.json();
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
 
+  const parsed = await validateBody(request, updateTaskSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { tag_ids: parsedTagIds, category_ids, ...fields } = parsed;
+  const tagIds = parsedTagIds ?? category_ids;
+
+  try {
     const { data: existing } = await supabase.from("tasks").select("*").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    const allowedFields = [
-      "title",
-      "description",
-      "destination",
-      "consequence",
-      "size",
-      "status",
-      "due_date",
-      "snoozed_until",
-      "snooze_reason",
-      "sort_order",
-    ];
-
-    const updates: Record<string, unknown> = {};
-
-    for (const field of allowedFields) {
-      if (field in body) {
-        updates[field] = body[field];
-      }
-    }
+    const updates: Record<string, unknown> = { ...fields };
 
     // Auto-set done_at when marking as done
-    if (body.status === "done") {
+    if (fields.status === "done") {
       updates.done_at = new Date().toISOString();
-    }
-
-    const tagIds = body.tag_ids ?? body.category_ids;
-
-    if (Object.keys(updates).length === 0 && !tagIds) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
     if (Object.keys(updates).length > 0) {
@@ -68,7 +50,7 @@ export async function PATCH(
     }
 
     // Auto-triage: enforce due-today rule when due_date changes
-    if ("due_date" in body) {
+    if ("due_date" in fields) {
       const { data: current } = await supabase.from("tasks").select("destination, due_date, status").eq("id", id).single();
       if (current && current.status !== "done" && current.due_date) {
         const shouldBeToday = isDueToday(current.due_date);
@@ -102,9 +84,10 @@ export async function DELETE(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const id = parseInt(params.id);
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
 
+  try {
     const { data: existing } = await supabase.from("tasks").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
