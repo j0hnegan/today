@@ -1,16 +1,17 @@
 "use client";
 
 import { useRef, useCallback, useState, useEffect, useMemo } from "react";
-import { GripVertical, Target, Tag as TagIcon, SlidersHorizontal, ArrowUpDown, Check, X, CalendarOff, CalendarPlus, Undo2 } from "lucide-react";
+import { GripVertical, Target, Tag as TagIcon, SlidersHorizontal, ArrowUpDown, Check, X, CalendarOff, CalendarPlus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { createBlock, moveBlock } from "@/lib/blocks";
 import type { Block, BlockType, Task, Tag, Size, Goal, Category, Attachment } from "@/lib/types";
 import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { mutate } from "swr";
 import { toast } from "sonner";
 import { markTaskDone } from "@/lib/done-toast";
+import { patchTask, reorderTasks } from "@/lib/taskMutations";
+import { TaskListSkeleton } from "@/components/focus/TaskListSkeleton";
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
@@ -36,6 +37,7 @@ interface BlockEditorProps {
   onChange: (blocks: Block[]) => void;
   tasks: Task[];
   inProgressTasks: Task[];
+  tasksLoading?: boolean;
   goals: Goal[];
   categories: Category[];
   attachments: Attachment[];
@@ -54,6 +56,7 @@ export function BlockEditor({
   onChange,
   tasks,
   inProgressTasks,
+  tasksLoading = false,
   goals,
   categories,
   attachments,
@@ -199,21 +202,22 @@ export function BlockEditor({
     [blocks, onChange]
   );
 
-  // Save task title inline
-  const saveTaskTitle = useCallback(async (taskId: number, newTitle: string) => {
-    const trimmed = newTitle.trim();
-    try {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: trimmed }),
-      });
-      mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
-    } catch {
-      toast.error("Failed to update title");
-    }
-    setEditingTaskId(null);
-  }, []);
+  // Save task title inline — optimistic update via helper
+  const saveTaskTitle = useCallback(
+    async (taskId: number, newTitle: string) => {
+      const trimmed = newTitle.trim();
+      const task = tasks.find((t) => t.id === taskId) ?? inProgressTasks.find((t) => t.id === taskId);
+      if (task) {
+        try {
+          await patchTask(task, { title: trimmed });
+        } catch {
+          /* helper already toasted */
+        }
+      }
+      setEditingTaskId(null);
+    },
+    [tasks, inProgressTasks]
+  );
 
   // Drag & drop handlers
   const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
@@ -421,6 +425,7 @@ export function BlockEditor({
                 <TaskListContent
                   tasks={tasks}
                   inProgressTasks={inProgressTasks}
+                  loading={tasksLoading}
                   onMarkDone={onMarkDone}
                   onEditTask={onEditTask}
                   onDeleteTask={onDeleteTask}
@@ -551,7 +556,7 @@ function LongPressCheck({ task, onMarkDone, onLongPress }: { task: Task; onMarkD
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startRef = useRef<number>(0);
   const firedRef = useRef(false);
-  const DURATION = 1500; // 1.5 seconds
+  const DURATION = 750; // 0.75 seconds
 
   const startPress = useCallback(() => {
     firedRef.current = false;
@@ -629,10 +634,131 @@ function LongPressCheck({ task, onMarkDone, onLongPress }: { task: Task; onMarkD
   );
 }
 
+/** A single task row — used by both Today and In Progress tabs. */
+function TaskRow({
+  task,
+  editingTaskId,
+  setEditingTaskId,
+  saveTaskTitle,
+  onMarkDone,
+  onLongPress,
+  onDeleteTask,
+  onNotTodayTask,
+  onEnterAfterEdit,
+  isLastRow,
+}: {
+  task: Task;
+  editingTaskId: number | null;
+  setEditingTaskId: (id: number | null) => void;
+  saveTaskTitle: (id: number, title: string) => void;
+  onMarkDone: (task: Task) => void;
+  onLongPress: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
+  onNotTodayTask: (task: Task) => void;
+  onEnterAfterEdit?: () => void;
+  isLastRow?: boolean;
+}) {
+  const isEditing = editingTaskId === (task.id as number);
+
+  return (
+    <>
+      {/* Check circle — click to complete, long-press to move */}
+      {!isEditing && (
+        <LongPressCheck task={task} onMarkDone={onMarkDone} onLongPress={onLongPress} />
+      )}
+      {/* Title + due date */}
+      {isEditing ? (
+        <input
+          type="text"
+          defaultValue={task.title}
+          autoFocus
+          className="flex-1 min-w-0 text-left text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
+          onBlur={(e) => saveTaskTitle(task.id as number, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveTaskTitle(task.id as number, (e.target as HTMLInputElement).value);
+              if (isLastRow && onEnterAfterEdit) onEnterAfterEdit();
+            }
+            if (e.key === "Escape") setEditingTaskId(null);
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          <span
+            className="min-w-0 truncate text-left cursor-text"
+            onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id as number); }}
+          >
+            {task.title}
+          </span>
+          {task.due_date && (
+            <span className="text-xs font-mono flex-shrink-0 text-muted-foreground" style={{ letterSpacing: "-0.25px" }}>
+              {`${new Date(task.due_date + "T00:00:00").getMonth() + 1}/${new Date(task.due_date + "T00:00:00").getDate()}`}
+            </span>
+          )}
+        </div>
+      )}
+      {/* Action buttons — visible on hover */}
+      {!isEditing && (
+        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                title="Set due date"
+              >
+                <CalendarPlus className="h-3 w-3" />
+                <span className="hidden sm:inline">Date</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end" onClick={(e) => e.stopPropagation()}>
+              <Calendar
+                mode="single"
+                selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
+                onSelect={async (day) => {
+                  const dateStr = day
+                    ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`
+                    : null;
+                  try {
+                    await patchTask(task, { due_date: dateStr });
+                  } catch {
+                    /* helper already toasted */
+                  }
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onNotTodayTask(task); }}
+            className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Move to someday"
+          >
+            <CalendarOff className="h-3 w-3" />
+            <span className="hidden sm:inline">Not today</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDeleteTask(task); }}
+            className="inline-flex items-center justify-center h-5 w-5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            title="Delete task"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 /** Task list rendered inside a block — includes sorting & filtering */
 function TaskListContent({
   tasks,
   inProgressTasks,
+  loading,
   onMarkDone,
   onEditTask,
   onDeleteTask,
@@ -646,6 +772,7 @@ function TaskListContent({
 }: {
   tasks: Task[];
   inProgressTasks: Task[];
+  loading?: boolean;
   onMarkDone: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
@@ -707,6 +834,11 @@ function TaskListContent({
       return (a.id as number) - (b.id as number);
     });
   }, [tasks, sortKey]);
+
+  // Show skeleton while loading initial data
+  if (loading && tasks.length === 0 && inProgressTasks.length === 0) {
+    return <TaskListSkeleton />;
+  }
 
   if (tasks.length === 0 && inProgressTasks.length === 0) {
     return (
@@ -870,110 +1002,26 @@ function TaskListContent({
                       const [movedId] = reordered.splice(fromTaskIdx, 1);
                       reordered.splice(toTaskIdx, 0, movedId);
                       try {
-                        await fetch("/api/tasks/reorder", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ task_ids: reordered }),
-                        });
-                        mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
+                        await reorderTasks(reordered);
                       } catch {
-                        toast.error("Failed to reorder");
+                        /* helper already toasted */
                       }
                       setDraggingTaskIdx(null);
                       setTaskDropIdx(null);
                     }}
                   >
-                    {/* Check circle — click to complete, long-press to move to in progress */}
-                    {editingTaskId !== (task.id as number) && (
-                      <LongPressCheck task={task} onMarkDone={onMarkDone} onLongPress={onInProgressTask} />
-                    )}
-                    {/* Title + due date */}
-                    {editingTaskId === (task.id as number) ? (
-                      <input
-                        type="text"
-                        defaultValue={task.title}
-                        autoFocus
-                        className="flex-1 min-w-0 text-left text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
-                        onBlur={(e) => saveTaskTitle(task.id as number, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            saveTaskTitle(task.id as number, (e.target as HTMLInputElement).value);
-                            if (taskIdx === sortedTasks.length - 1 && onEnterAfterEdit) onEnterAfterEdit();
-                          }
-                          if (e.key === "Escape") setEditingTaskId(null);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div className="flex-1 min-w-0 flex items-center gap-1">
-                        <span
-                          className="min-w-0 truncate text-left cursor-text"
-                          onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id as number); }}
-                        >
-                          {task.title}
-                        </span>
-                        {task.due_date && (
-                          <span className="text-xs font-mono flex-shrink-0 text-muted-foreground" style={{ letterSpacing: "-0.25px" }}>
-                            {`${new Date(task.due_date + "T00:00:00").getMonth() + 1}/${new Date(task.due_date + "T00:00:00").getDate()}`}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {/* Action buttons — visible on hover */}
-                    {editingTaskId !== (task.id as number) && (
-                      <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                              title="Set due date"
-                            >
-                              <CalendarPlus className="h-3 w-3" />
-                              <span className="hidden sm:inline">Date</span>
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="end" onClick={(e) => e.stopPropagation()}>
-                            <Calendar
-                              mode="single"
-                              selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
-                              onSelect={async (day) => {
-                                const dateStr = day ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}` : null;
-                                try {
-                                  await fetch(`/api/tasks/${task.id}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ due_date: dateStr }),
-                                  });
-                                  mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
-                                } catch {
-                                  toast.error("Failed to update date");
-                                }
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); onNotTodayTask(task); }}
-                          className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                          title="Move to someday"
-                        >
-                          <CalendarOff className="h-3 w-3" />
-                          <span className="hidden sm:inline">Not today</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); onDeleteTask(task); }}
-                          className="inline-flex items-center justify-center h-5 w-5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                          title="Delete task"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
+                    <TaskRow
+                      task={task}
+                      editingTaskId={editingTaskId}
+                      setEditingTaskId={setEditingTaskId}
+                      saveTaskTitle={saveTaskTitle}
+                      onMarkDone={onMarkDone}
+                      onLongPress={onInProgressTask}
+                      onDeleteTask={onDeleteTask}
+                      onNotTodayTask={onNotTodayTask}
+                      onEnterAfterEdit={onEnterAfterEdit}
+                      isLastRow={taskIdx === sortedTasks.length - 1}
+                    />
                   </div>
                 </div>
               ))}
@@ -985,7 +1033,7 @@ function TaskListContent({
         </div>
       )}
 
-      {/* In Progress tab content */}
+      {/* In Progress tab content — reuses TaskRow for identical look & behavior */}
       {activeTab === "in_progress" && (
         <div className="space-y-0.5">
           {inProgressTasks.length === 0 ? (
@@ -998,68 +1046,16 @@ function TaskListContent({
                 key={task.id}
                 className="flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task"
               >
-                {/* Green dot indicator */}
-                <div className="inline-flex items-center justify-center w-5 h-5 flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                </div>
-                {/* Title */}
-                {editingTaskId === (task.id as number) ? (
-                  <input
-                    type="text"
-                    defaultValue={task.title}
-                    autoFocus
-                    className="flex-1 min-w-0 text-left text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
-                    onBlur={(e) => saveTaskTitle(task.id as number, e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        saveTaskTitle(task.id as number, (e.target as HTMLInputElement).value);
-                      }
-                      if (e.key === "Escape") setEditingTaskId(null);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <div className="flex-1 min-w-0 flex items-center gap-1">
-                    <span
-                      className="min-w-0 truncate text-left cursor-text"
-                      onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id as number); }}
-                    >
-                      {task.title}
-                    </span>
-                  </div>
-                )}
-                {/* Action buttons */}
-                {editingTaskId !== (task.id as number) && (
-                  <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); onBackToTodayTask(task); }}
-                      className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                      title="Move back to today"
-                    >
-                      <Undo2 className="h-3 w-3" />
-                      <span className="hidden sm:inline">Back to today</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); onMarkDone(task); }}
-                      className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-green-600/30 text-[10px] text-green-400 hover:text-green-300 hover:bg-green-500/10 transition-colors"
-                      title="Mark done"
-                    >
-                      <Check className="h-3 w-3" />
-                      <span className="hidden sm:inline">Done</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); onDeleteTask(task); }}
-                      className="inline-flex items-center justify-center h-5 w-5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                      title="Delete task"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
+                <TaskRow
+                  task={task}
+                  editingTaskId={editingTaskId}
+                  setEditingTaskId={setEditingTaskId}
+                  saveTaskTitle={saveTaskTitle}
+                  onMarkDone={onMarkDone}
+                  onLongPress={onBackToTodayTask}
+                  onDeleteTask={onDeleteTask}
+                  onNotTodayTask={onNotTodayTask}
+                />
               </div>
             ))
           )}
