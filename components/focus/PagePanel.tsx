@@ -19,7 +19,13 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { markTaskDone } from "@/lib/done-toast";
-import { mutate } from "swr";
+import {
+  createTask,
+  deleteTask,
+  moveToInProgress,
+  moveToToday,
+  moveToSomeday,
+} from "@/lib/taskMutations";
 import { toast } from "sonner";
 import type { Task, Block } from "@/lib/types";
 
@@ -177,84 +183,54 @@ export function PagePanel() {
     setSelectedDate(new Date());
   }
 
-  // Task actions
+  // Task actions — optimistic updates via taskMutations helpers
   async function handleMarkDone(task: Task) {
     await markTaskDone(task);
   }
 
   async function handleDeleteTask(task: Task) {
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await deleteTask(task);
       toast.success("Task deleted");
-      mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
     } catch {
-      toast.error("Failed to delete task");
+      /* helper already toasted */
     }
   }
 
   async function handleInProgressTask(task: Task) {
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: "in_progress" }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Moved to in progress");
-      mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
+      await moveToInProgress(task);
     } catch {
-      toast.error("Failed to move task");
+      /* helper already toasted */
     }
   }
 
   async function handleBackToTodayTask(task: Task) {
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: "on_deck" }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Moved back to today");
-      mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
+      await moveToToday(task);
     } catch {
-      toast.error("Failed to move task");
+      /* helper already toasted */
     }
   }
 
   async function handleNotTodayTask(task: Task) {
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: "someday", due_date: null, consequence: "none" }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Moved to someday");
-      mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
+      await moveToSomeday(task);
     } catch {
-      toast.error("Failed to move task");
+      /* helper already toasted */
     }
   }
 
-  function handleCreateTask(title: string) {
-    fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, destination: "on_deck", size: "small" }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        toast.success(`Task created: ${title}`);
-        mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
-        mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/dates-with-content"));
-        // Ensure task-list block exists
-        if (!blocks.some((b) => b.type === "task-list")) {
-          handleBlocksChange([createBlock("task-list"), ...blocks]);
-        }
-      })
-      .catch(() => toast.error("Failed to create task"));
+  async function handleCreateTask(title: string) {
+    // Ensure task-list block exists (synchronous — runs immediately)
+    if (!blocks.some((b) => b.type === "task-list")) {
+      handleBlocksChange([createBlock("task-list"), ...blocks]);
+    }
+    try {
+      await createTask({ title, destination: "on_deck", size: "small" });
+    } catch {
+      /* helper already toasted */
+    }
   }
 
   // File upload
@@ -382,6 +358,7 @@ export function PagePanel() {
           onChange={handleBlocksChange}
           tasks={todayTasks}
           inProgressTasks={inProgressTasks ?? []}
+          tasksLoading={tasks === undefined || inProgressTasks === undefined}
           goals={goals ?? []}
           categories={categories ?? []}
           attachments={note?.attachments ?? []}

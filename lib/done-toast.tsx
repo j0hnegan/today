@@ -1,26 +1,18 @@
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { mutate } from "swr";
 import type { Task, Destination } from "@/lib/types";
+import { markDone as markDoneMutation, patchTask } from "@/lib/taskMutations";
 
 /**
- * Mark a task done via API, show a styled toast with undo.
- * The toast wraps the task title naturally (no truncation) with
- * "is done" flowing inline, and an Undo button below.
+ * Mark a task done via optimistic update, show a styled toast with undo.
  */
 export async function markTaskDone(task: Task): Promise<boolean> {
   try {
-    const res = await fetch(`/api/tasks/${task.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "done" }),
-    });
-    if (!res.ok) throw new Error();
-    mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
+    await markDoneMutation(task);
     showDoneToast(task);
     return true;
   } catch {
-    toast.error("Failed to mark task done");
+    // helper already toasted the error
     return false;
   }
 }
@@ -42,19 +34,13 @@ function showDoneToast(task: Task) {
           onClick={async () => {
             toast.dismiss(id);
             try {
-              const res = await fetch(`/api/tasks/${task.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  status: "active",
-                  destination: task.destination as Destination,
-                }),
+              await patchTask(task, {
+                status: "active",
+                destination: task.destination as Destination,
               });
-              if (!res.ok) throw new Error();
-              mutate((key: unknown) => typeof key === "string" && key.startsWith("/api/tasks"));
               toast.success("Task restored");
             } catch {
-              toast.error("Failed to undo");
+              /* helper already toasted */
             }
           }}
           className="mt-2 ml-6 text-xs text-white/50 hover:text-white transition-colors"
