@@ -33,9 +33,9 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!isAllowedEmail(user?.email)) {
         await supabase.auth.signOut();
-        const params = new URLSearchParams({ error: "unauthorized" });
-        if (user?.email) params.set("email", user.email);
-        return NextResponse.redirect(`${origin}/login?${params.toString()}`);
+        // Don't echo the rejected email back into the URL — that's PII
+        // ending up in browser history, server logs, and Referer headers.
+        return NextResponse.redirect(`${origin}/login?error=unauthorized`);
       }
       return NextResponse.redirect(`${origin}${next}`);
     }

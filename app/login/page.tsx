@@ -426,13 +426,10 @@ function GridCross() {
 function LoginErrorMessage() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
-  const attemptedEmail = searchParams.get("email");
 
   const errorMessage =
     errorCode === "unauthorized"
-      ? attemptedEmail
-        ? `${attemptedEmail} isn't authorized to access this app.`
-        : "That email isn't authorized to access this app."
+      ? "That email isn't authorized to access this app."
       : errorCode === "auth"
         ? "Sign-in failed. Please try again."
         : null;
