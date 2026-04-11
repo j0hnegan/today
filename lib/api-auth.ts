@@ -3,9 +3,19 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+/**
+ * Dev-only auth bypass. Requires the explicit `HUSH_DEV_AUTH=1` opt-in,
+ * refuses to engage in production builds, and hard-fails on Vercel
+ * (which always sets `VERCEL=1`). Without all three guards, an accidentally
+ * deployed `NODE_ENV=development` would have unlocked the entire app.
+ */
+const DEV_AUTH_BYPASS =
+  process.env.HUSH_DEV_AUTH === "1" &&
+  process.env.NODE_ENV !== "production" &&
+  !process.env.VERCEL;
+
 export async function requireAuth() {
-  // In development, skip auth and return a bare Supabase client
-  if (process.env.NODE_ENV === "development") {
+  if (DEV_AUTH_BYPASS) {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

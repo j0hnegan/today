@@ -25,6 +25,22 @@ The single-user model is load-bearing for these defenses. If a second user is ev
 - The per-resource schemas under `lib/validation/`.
 - The `WRITABLE_SETTINGS_KEYS` allowlist — if you add a new setting, add the key to that list AND seed it in `scripts/supabase-schema.sql`.
 
+### 2026-04-11 — CSP additions, dev auth lockdown, email PII drop
+**What:**
+- Appended `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` to the global CSP in `next.config.mjs`.
+- Replaced the implicit `NODE_ENV === "development"` auth bypass in `lib/api-auth.ts` and `middleware.ts` with an explicit `HUSH_DEV_AUTH=1` env var. The bypass also refuses to engage in production builds or on Vercel (`VERCEL=1`). Local dev now requires `HUSH_DEV_AUTH=1` in `.env.local`.
+- Removed the rejected user's email from the auth-callback redirect URL — `app/auth/callback/route.ts` now redirects to `/login?error=unauthorized` only. `LoginErrorMessage` shows a single generic message.
+
+**Why:**
+- The three CSP additions close XSS amplification paths: injected `<base href>` retargeting, `<object>`/`<embed>` plugin content, and attacker-controlled `<form action>` posts.
+- The old `NODE_ENV === "development"` check meant a single misconfigured env var anywhere in the deploy pipeline would have completely unlocked the app. The new flag is impossible to trigger on Vercel even with `HUSH_DEV_AUTH=1` set, because Vercel always sets `VERCEL=1`.
+- The rejected email was leaking PII into browser history, server access logs, and Referer headers to any third-party resource the login page loaded.
+
+**Don't undo:**
+- The `HUSH_DEV_AUTH` flag in `lib/api-auth.ts` and `middleware.ts` (going back to `NODE_ENV` is the foot-gun we just removed).
+- The Vercel guard (`!process.env.VERCEL`) — that's the deploy-safety net.
+- The generic error message on `/login`. Don't add the email back to the URL.
+
 ## Manual operations
 
 ### Revoking a session
