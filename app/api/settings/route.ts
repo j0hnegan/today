@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { updateSettingsSchema } from "@/lib/validation/settings";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -26,10 +28,11 @@ export async function PATCH(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const body = await request.json();
+  const parsed = await validateBody(request, updateSettingsSchema);
+  if (parsed instanceof NextResponse) return parsed;
 
-    const upserts = Object.entries(body).map(([key, value]) => ({
+  try {
+    const upserts = Object.entries(parsed).map(([key, value]) => ({
       key,
       value: String(value),
     }));

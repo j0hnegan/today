@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { createGoalSchema } from "@/lib/validation/goal";
 import { NextRequest, NextResponse } from "next/server";
 
 function rowToGoal(row: Record<string, unknown>) {
@@ -34,21 +36,18 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const parsed = await validateBody(request, createGoalSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { title, description, category_id, status } = parsed;
+
   try {
-    const body = await request.json();
-    const { title, description, category_id, status } = body;
-
-    if (!title || !title.trim()) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
     const { data: row, error } = await supabase
       .from("goals")
       .insert({
-        title: title.trim(),
+        title,
         description: description ?? null,
         category_id: category_id ?? null,
-        status: status ?? "active",
+        status,
       })
       .select("*, categories(id, name, color)")
       .single();

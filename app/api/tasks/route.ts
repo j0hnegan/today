@@ -1,5 +1,7 @@
 import { requireAuth } from "@/lib/api-auth";
 import { isDueToday } from "@/lib/triage";
+import { validateBody, validateSearchParams } from "@/lib/validation/helpers";
+import { createTaskSchema, taskListQuerySchema } from "@/lib/validation/task";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -7,18 +9,18 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const { searchParams } = new URL(request.url);
-    const destination = searchParams.get("destination");
-    const status = searchParams.get("status");
+  const { searchParams } = new URL(request.url);
+  const params = validateSearchParams(searchParams, taskListQuerySchema);
+  if (params instanceof NextResponse) return params;
 
+  try {
     let query = supabase.from("tasks").select("*");
 
-    if (destination) {
-      query = query.eq("destination", destination);
+    if (params.destination) {
+      query = query.eq("destination", params.destination);
     }
-    if (status) {
-      query = query.eq("status", status);
+    if (params.status) {
+      query = query.eq("status", params.status);
     }
 
     query = query.order("sort_order", { ascending: true }).order("updated_at", { ascending: false });
@@ -67,18 +69,19 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const body = await request.json();
-    const {
-      title,
-      description = "",
-      consequence = "none",
-      size = "small",
-      due_date = null,
-      tag_ids = [],
-      destination: reqDestination,
-    } = body;
+  const parsed = await validateBody(request, createTaskSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const {
+    title,
+    description,
+    consequence,
+    size,
+    due_date = null,
+    tag_ids,
+    destination: reqDestination,
+  } = parsed;
 
+  try {
     // Auto-triage: due today or past → Today, otherwise → Someday
     let destination: string;
     if (due_date && isDueToday(due_date)) {
@@ -90,14 +93,10 @@ export async function POST(request: NextRequest) {
       destination = reqDestination === "on_deck" ? "on_deck" : "someday";
     }
 
-    if (!title || !title.trim()) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
     const { data: task, error } = await supabase
       .from("tasks")
       .insert({
-        title: title.trim(),
+        title,
         description,
         destination,
         consequence,

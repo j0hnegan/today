@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { createCheckinSchema } from "@/lib/validation/checkin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -32,17 +34,11 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const parsed = await validateBody(request, createCheckinSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { energy } = parsed;
+
   try {
-    const body = await request.json();
-    const { energy } = body;
-
-    if (!energy || !["low", "medium", "high"].includes(energy)) {
-      return NextResponse.json(
-        { error: "Energy must be low, medium, or high" },
-        { status: 400 }
-      );
-    }
-
     const { data: checkin, error } = await supabase
       .from("checkins")
       .insert({ energy })

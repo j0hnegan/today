@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { parseIdParam, validateBody } from "@/lib/validation/helpers";
+import { updateDocSchema } from "@/lib/validation/doc";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -9,8 +11,10 @@ export async function GET(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
+
   try {
-    const id = parseInt(params.id, 10);
     const { data: doc } = await supabase.from("documents").select("*").eq("id", id).single();
     if (!doc) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
@@ -46,44 +50,41 @@ export async function PATCH(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const id = parseInt(params.id, 10);
-    const body = await request.json();
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
 
+  const parsed = await validateBody(request, updateDocSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { category_ids, goal_ids, ...fields } = parsed;
+
+  try {
     const { data: existing } = await supabase.from("documents").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    const allowedFields = ["title", "content", "sort_order"];
-    const updates: Record<string, unknown> = {};
-
-    for (const field of allowedFields) {
-      if (field in body) {
-        updates[field] = body[field];
-      }
-    }
-
-    if (Object.keys(updates).length > 0) {
-      updates.updated_at = new Date().toISOString();
-      const { error } = await supabase.from("documents").update(updates).eq("id", id);
+    if (Object.keys(fields).length > 0) {
+      const { error } = await supabase
+        .from("documents")
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     }
 
-    if (body.category_ids) {
+    if (category_ids) {
       await supabase.from("document_categories").delete().eq("document_id", id);
-      if (body.category_ids.length > 0) {
+      if (category_ids.length > 0) {
         await supabase.from("document_categories").insert(
-          body.category_ids.map((catId: number) => ({ document_id: id, category_id: catId }))
+          category_ids.map((catId) => ({ document_id: id, category_id: catId }))
         );
       }
     }
 
-    if (body.goal_ids) {
+    if (goal_ids) {
       await supabase.from("document_goals").delete().eq("document_id", id);
-      if (body.goal_ids.length > 0) {
+      if (goal_ids.length > 0) {
         await supabase.from("document_goals").insert(
-          body.goal_ids.map((goalId: number) => ({ document_id: id, goal_id: goalId }))
+          goal_ids.map((goalId) => ({ document_id: id, goal_id: goalId }))
         );
       }
     }
@@ -120,8 +121,10 @@ export async function DELETE(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
+
   try {
-    const id = parseInt(params.id, 10);
     const { data: existing } = await supabase.from("documents").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });

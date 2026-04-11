@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { validateBody } from "@/lib/validation/helpers";
+import { reorderTasksSchema } from "@/lib/validation/task";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -6,19 +8,13 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
+  const parsed = await validateBody(request, reorderTasksSchema);
+  if (parsed instanceof NextResponse) return parsed;
+  const { task_ids } = parsed;
+
   try {
-    const body = await request.json();
-    const { task_ids } = body;
-
-    if (!Array.isArray(task_ids) || task_ids.length === 0) {
-      return NextResponse.json(
-        { error: "task_ids must be a non-empty array" },
-        { status: 400 }
-      );
-    }
-
     // Update sort_order for each task
-    const updates = task_ids.map((taskId: number, i: number) =>
+    const updates = task_ids.map((taskId, i) =>
       supabase.from("tasks").update({ sort_order: i }).eq("id", taskId)
     );
 

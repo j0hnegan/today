@@ -1,4 +1,6 @@
 import { requireAuth } from "@/lib/api-auth";
+import { parseIdParam, validateBody } from "@/lib/validation/helpers";
+import { updateGoalSchema } from "@/lib/validation/goal";
 import { NextRequest, NextResponse } from "next/server";
 
 function rowToGoal(row: Record<string, unknown>) {
@@ -18,28 +20,21 @@ export async function PATCH(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const body = await request.json();
-    const { title, description, category_id, status, sort_order } = body;
-    const id = parseInt(params.id, 10);
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
 
+  const parsed = await validateBody(request, updateGoalSchema);
+  if (parsed instanceof NextResponse) return parsed;
+
+  try {
     const { data: existing } = await supabase.from("goals").select("id").eq("id", id).single();
     if (!existing) {
       return NextResponse.json({ error: "Goal not found" }, { status: 404 });
     }
 
-    const updates: Record<string, unknown> = {};
-    if (title !== undefined) updates.title = title.trim();
-    if (description !== undefined) updates.description = description;
-    if (category_id !== undefined) updates.category_id = category_id;
-    if (status !== undefined) updates.status = status;
-    if (sort_order !== undefined) updates.sort_order = sort_order;
-
-    if (Object.keys(updates).length > 0) {
-      updates.updated_at = new Date().toISOString();
-      const { error } = await supabase.from("goals").update(updates).eq("id", id);
-      if (error) throw error;
-    }
+    const updates: Record<string, unknown> = { ...parsed, updated_at: new Date().toISOString() };
+    const { error } = await supabase.from("goals").update(updates).eq("id", id);
+    if (error) throw error;
 
     const { data: row } = await supabase
       .from("goals")
@@ -62,9 +57,10 @@ export async function DELETE(
   if (auth instanceof Response) return auth;
   const { supabase } = auth;
 
-  try {
-    const id = parseInt(params.id, 10);
+  const id = parseIdParam(params.id);
+  if (id instanceof NextResponse) return id;
 
+  try {
     const { error } = await supabase.from("goals").delete().eq("id", id);
     if (error) throw error;
 
