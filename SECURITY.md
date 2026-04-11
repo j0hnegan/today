@@ -25,6 +25,17 @@ The single-user model is load-bearing for these defenses. If a second user is ev
 - The per-resource schemas under `lib/validation/`.
 - The `WRITABLE_SETTINGS_KEYS` allowlist — if you add a new setting, add the key to that list AND seed it in `scripts/supabase-schema.sql`.
 
+### 2026-04-11 — Drop `'unsafe-eval'` from the production CSP
+**What:**
+- `next.config.mjs` now branches the `script-src` directive on `NODE_ENV`. Production: `script-src 'self' 'unsafe-inline'`. Dev: `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (Next.js HMR needs eval).
+
+**Why:**
+- `'unsafe-eval'` lets attackers turn arbitrary strings into executable code via `eval()`, `new Function(...)`, etc. Three.js compiles WebGL shaders via the GPU driver, and Next.js's production bundle doesn't use eval — so production has no legitimate use for it.
+- Considered nonce-based CSP (would also drop `'unsafe-inline'`) but it required ~50 lines of middleware/layout machinery and a per-request nonce-tagging dance through `next-themes`. The marginal benefit over just dropping eval is small for a single-user app behind Google OAuth + email allowlist + (now) input validation. Skipped.
+
+**Don't undo:**
+- The `isProd` branch in `next.config.mjs`. If you ever set `NODE_ENV=development` in prod (don't), you'd silently re-enable eval.
+
 ### 2026-04-11 — CSP additions, dev auth lockdown, email PII drop
 **What:**
 - Appended `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` to the global CSP in `next.config.mjs`.
