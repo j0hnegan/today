@@ -1,24 +1,27 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { CircleCheck, ListTodo, Target, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import type { View } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
 
-const navItems: { view: View; label: string; icon: typeof CircleCheck; color: string }[] = [
-  { view: "focus", label: "Today", icon: CircleCheck, color: "#22c55e" },
-  { view: "vault", label: "My Tasks", icon: ListTodo, color: "#a855f7" },
-  { view: "tags", label: "Goals", icon: Target, color: "#f59e0b" },
-  { view: "docs", label: "Docs", icon: FileText, color: "#06b6d4" },
+const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string }[] = [
+  { href: "/", label: "Today", icon: CircleCheck, color: "#22c55e" },
+  { href: "/vault", label: "My Tasks", icon: ListTodo, color: "#a855f7" },
+  { href: "/tags", label: "Goals", icon: Target, color: "#f59e0b" },
+  { href: "/docs", label: "Docs", icon: FileText, color: "#06b6d4" },
 ];
 
+function isActiveRoute(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 interface SidebarProps {
-  view: View;
-  onNavigate: (view: View) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -154,8 +157,9 @@ function UserMenu({ user, collapsed, theme, setTheme }: { user: User | null; col
   );
 }
 
-export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: SidebarProps) {
-  const [hoveredView, setHoveredView] = useState<View | null>(null);
+export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
+  const pathname = usePathname() ?? "/";
+  const [hoveredHref, setHoveredHref] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const { theme, setTheme } = useTheme();
 
@@ -181,11 +185,11 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
         </div>
         <nav className="flex-1 flex flex-col items-center gap-1 pt-8 px-1.5">
           {navItems.map((item) => {
-            const isActive = view === item.view;
+            const isActive = isActiveRoute(item.href, pathname);
             return (
-              <button
-                key={item.view}
-                onClick={() => onNavigate(item.view)}
+              <Link
+                key={item.href}
+                href={item.href}
                 title={item.label}
                 className={cn(
                   "flex items-center justify-center w-9 h-9 rounded-[10px] transition-colors",
@@ -196,7 +200,7 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
                   className="h-4 w-4"
                   style={{ color: isActive ? item.color : "hsl(var(--muted-foreground))" }}
                 />
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -225,14 +229,14 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
       <nav className="flex-1 px-3 pt-12 pb-4">
         <ul className="space-y-1">
           {navItems.map((item) => {
-            const isActive = view === item.view;
-            const isHovered = hoveredView === item.view;
+            const isActive = isActiveRoute(item.href, pathname);
+            const isHovered = hoveredHref === item.href;
             return (
-              <li key={item.view}>
-                <button
-                  onClick={() => onNavigate(item.view)}
-                  onMouseEnter={() => setHoveredView(item.view)}
-                  onMouseLeave={() => setHoveredView(null)}
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onMouseEnter={() => setHoveredHref(item.href)}
+                  onMouseLeave={() => setHoveredHref(null)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm font-medium transition-colors",
                     isActive
@@ -245,7 +249,7 @@ export function Sidebar({ view, onNavigate, collapsed, onToggleCollapse }: Sideb
                     style={{ color: isActive || isHovered ? item.color : undefined }}
                   />
                   {item.label}
-                </button>
+                </Link>
               </li>
             );
           })}

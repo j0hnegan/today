@@ -1,5 +1,4 @@
 export type View = "focus" | "vault" | "tags" | "docs";
-export const VALID_VIEWS: View[] = ["focus", "vault", "tags", "docs"];
 
 export type Destination = "on_deck" | "someday" | "in_progress";
 export type Consequence = "none" | "soft" | "hard";

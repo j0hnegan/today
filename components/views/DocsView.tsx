@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDocs, useCategories, useGoals } from "@/lib/hooks";
-import { DocEditor } from "@/components/docs/DocEditor";
+import { useDocs } from "@/lib/hooks";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import type { Document } from "@/lib/types";
@@ -15,8 +16,17 @@ function refreshDocs() {
   );
 }
 
-function formatDate(dateStr: string): string {
+function formatRelativeDate(dateStr: string): string {
+  const now = new Date();
   const date = new Date(dateStr);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfDate.getTime()) / 86400000
+  );
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays >= 2 && diffDays <= 4) return `${diffDays} days ago`;
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -55,10 +65,8 @@ function DocsSkeleton() {
 }
 
 export function DocsView() {
+  const router = useRouter();
   const { data: docs, isLoading } = useDocs();
-  const { data: categories } = useCategories();
-  const { data: goals } = useGoals();
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [creating, setCreating] = useState(false);
 
   async function handleCreate() {
@@ -76,35 +84,13 @@ export function DocsView() {
       if (!res.ok) throw new Error("Failed");
       const newDoc: Document = await res.json();
       refreshDocs();
-      setSelectedDoc(newDoc);
+      router.push(`/docs/${newDoc.id}`);
       toast.success("Document created");
     } catch {
       toast.error("Failed to create document");
     } finally {
       setCreating(false);
     }
-  }
-
-  function handleBack() {
-    setSelectedDoc(null);
-    refreshDocs();
-  }
-
-  // When viewing a doc, keep it in sync with fresh data
-  const freshDoc =
-    selectedDoc && docs
-      ? docs.find((d) => d.id === selectedDoc.id) ?? selectedDoc
-      : selectedDoc;
-
-  if (selectedDoc && freshDoc) {
-    return (
-      <DocEditor
-        doc={freshDoc}
-        onBack={handleBack}
-        allCategories={categories ?? []}
-        allGoals={goals ?? []}
-      />
-    );
   }
 
   if (isLoading) {
@@ -134,10 +120,9 @@ export function DocsView() {
           </p>
         )}
         {docs?.map((doc) => (
-          <button
+          <Link
             key={doc.id}
-            type="button"
-            onClick={() => setSelectedDoc(doc)}
+            href={`/docs/${doc.id}`}
             className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
           >
             <div className="flex-1 min-w-0">
@@ -145,11 +130,10 @@ export function DocsView() {
                 {doc.title || "Untitled"}
               </span>
               <span className="text-xs text-muted-foreground">
-                {formatDate(doc.updated_at)}
+                {formatRelativeDate(doc.updated_at)}
               </span>
             </div>
 
-            {/* Category / goal chips */}
             <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
               {doc.categories?.slice(0, 2).map((cat) => (
                 <span
@@ -177,7 +161,7 @@ export function DocsView() {
                 </span>
               )}
             </div>
-          </button>
+          </Link>
         ))}
       </div>
     </div>

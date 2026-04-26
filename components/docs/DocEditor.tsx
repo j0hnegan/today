@@ -112,6 +112,84 @@ export function DocEditor({
     }, DEBOUNCE_MS);
   }, [save]);
 
+  // Tab / Shift+Tab indent — line-aware via Selection.modify lineboundary
+  const handleTabIndent = useCallback(
+    (outdent: boolean) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const sel = window.getSelection();
+      if (
+        !sel ||
+        sel.rangeCount === 0 ||
+        !sel.anchorNode ||
+        !editor.contains(sel.anchorNode)
+      ) {
+        return;
+      }
+
+      const range = sel.getRangeAt(0);
+      const indentTwo = /^[  ]{2}$/;
+      const indentOne = /^[  ]/;
+
+      const outdentLineAtCursor = () => {
+        sel.modify("move", "backward", "lineboundary");
+        sel.modify("extend", "forward", "character");
+        sel.modify("extend", "forward", "character");
+        const leading = sel.toString();
+        if (indentTwo.test(leading)) {
+          document.execCommand("delete");
+          return true;
+        }
+        if (indentOne.test(leading)) {
+          sel.modify("move", "backward", "lineboundary");
+          sel.modify("extend", "forward", "character");
+          document.execCommand("delete");
+          return true;
+        }
+        sel.collapseToStart();
+        return false;
+      };
+
+      if (range.collapsed) {
+        if (outdent) {
+          const savedRange = range.cloneRange();
+          if (!outdentLineAtCursor()) {
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+            return;
+          }
+        } else {
+          document.execCommand("insertText", false, "  ");
+        }
+        handleContentInput();
+        return;
+      }
+
+      const lineCount = (sel.toString().match(/\n/g)?.length ?? 0) + 1;
+      const startRange = document.createRange();
+      startRange.setStart(range.startContainer, range.startOffset);
+      startRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(startRange);
+      sel.modify("move", "backward", "lineboundary");
+
+      for (let i = 0; i < lineCount; i++) {
+        if (outdent) {
+          outdentLineAtCursor();
+        } else {
+          document.execCommand("insertText", false, "  ");
+          sel.modify("move", "backward", "lineboundary");
+        }
+        if (i < lineCount - 1) {
+          sel.modify("move", "forward", "line");
+          sel.modify("move", "backward", "lineboundary");
+        }
+      }
+      handleContentInput();
+    },
+    [handleContentInput]
+  );
+
   // Slash command menu
   const slashContext = useMemo(
     () => ({
@@ -500,7 +578,14 @@ export function DocEditor({
           contentEditable
           suppressContentEditableWarning
           onInput={() => { handleContentInput(); slash.onInput(); }}
-          onKeyDown={slash.onKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === "Tab" && !slash.isOpen) {
+              e.preventDefault();
+              handleTabIndent(e.shiftKey);
+              return;
+            }
+            slash.onKeyDown(e);
+          }}
           onPaste={handlePaste}
           onClick={handleEditorClick}
           className="h-full text-sm leading-relaxed outline-none focus:outline-none whitespace-pre-wrap"

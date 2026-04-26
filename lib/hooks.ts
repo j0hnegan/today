@@ -1,9 +1,7 @@
 "use client";
 
-import { useSyncExternalStore, useCallback } from "react";
 import useSWR from "swr";
-import type { Task, Tag, Category, Goal, Document, CheckIn, Note, Attachment, View } from "./types";
-import { VALID_VIEWS } from "./types";
+import type { Task, Tag, Category, Goal, Document, CheckIn, Note, Attachment } from "./types";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -43,6 +41,10 @@ export function useDocs() {
   return useSWR<Document[]>("/api/docs", fetcher);
 }
 
+export function useDoc(id: number | null) {
+  return useSWR<Document>(id ? `/api/docs/${id}` : null, fetcher);
+}
+
 export function useNote(date: string) {
   return useSWR<Note>(date ? `/api/notes?date=${date}` : null, fetcher);
 }
@@ -67,38 +69,3 @@ export function useSettings() {
   return useSWR<Record<string, string>>("/api/settings", fetcher);
 }
 
-// --- Persisted view (localStorage-backed, flash-free) ---
-
-const VIEW_STORAGE_KEY = "focus_current_view";
-
-function getViewSnapshot(): View {
-  try {
-    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-    if (saved && VALID_VIEWS.includes(saved as View)) {
-      return saved as View;
-    }
-  } catch {
-    // localStorage unavailable
-  }
-  return "focus";
-}
-
-function getViewServerSnapshot(): View | null {
-  return null;
-}
-
-function subscribeView(callback: () => void): () => void {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-export function usePersistedView(): [View | null, (v: View) => void] {
-  const view = useSyncExternalStore(subscribeView, getViewSnapshot, getViewServerSnapshot);
-
-  const setView = useCallback((v: View) => {
-    localStorage.setItem(VIEW_STORAGE_KEY, v);
-    window.dispatchEvent(new StorageEvent("storage", { key: VIEW_STORAGE_KEY }));
-  }, []);
-
-  return [view, setView];
-}

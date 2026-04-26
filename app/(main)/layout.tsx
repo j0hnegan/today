@@ -1,4 +1,5 @@
 import { SWRProvider } from "@/components/shared/SWRProvider";
+import { MainShell } from "@/components/shared/MainShell";
 
 export default function MainLayout({
   children,
@@ -7,7 +8,7 @@ export default function MainLayout({
 }) {
   return (
     <SWRProvider>
-      {children}
+      <MainShell>{children}</MainShell>
     </SWRProvider>
   );
 }
