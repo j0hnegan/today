@@ -23,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, AlertTriangle, Target } from "lucide-react";
+import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
 import { cn } from "@/lib/utils";
@@ -150,10 +150,6 @@ export function VaultView() {
     someday: "due_date",
     done: "due_date",
   });
-
-  // Today overflow warning (> 4 tasks)
-  const [overflowOpen, setOverflowOpen] = useState(false);
-  const overflowDismissedUntilRef = useRef<number>(0);
 
   // Close dropdowns on click outside
   useEffect(() => {
@@ -621,14 +617,6 @@ export function VaultView() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedIds.size]);
-
-  // --- Today overflow check ---
-  const todayCount = filteredGrouped.onDeck.length;
-  useEffect(() => {
-    if (todayCount > 4 && Date.now() >= overflowDismissedUntilRef.current) {
-      setOverflowOpen(true);
-    }
-  }, [todayCount]);
 
   // --- Render ---
 
@@ -1119,40 +1107,6 @@ export function VaultView() {
         </DialogContent>
       </Dialog>
 
-      {/* Today overflow warning */}
-      <Dialog
-        open={overflowOpen}
-        onOpenChange={(v) => {
-          if (!v) {
-            overflowDismissedUntilRef.current = Date.now() + 30 * 60 * 1000;
-            setOverflowOpen(false);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-              Too much on your plate
-            </DialogTitle>
-            <DialogDescription>
-              You have {todayCount} tasks in Today. Try to keep it to 4 or fewer so you can actually focus. Move some tasks to Someday or knock a few out first.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                overflowDismissedUntilRef.current = Date.now() + 30 * 60 * 1000;
-                setOverflowOpen(false);
-              }}
-            >
-              Got it
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

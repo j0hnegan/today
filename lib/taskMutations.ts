@@ -5,6 +5,11 @@ import type { Task, Destination, Size } from "./types";
 const TODAY_KEY = "/api/tasks?destination=on_deck&status=active";
 const IN_PROGRESS_KEY = "/api/tasks?destination=in_progress&status=active";
 const SOMEDAY_KEY = "/api/tasks?destination=someday&status=active";
+// Vault uses the unfiltered /api/tasks endpoint and groups locally by status
+// + destination. Every mutation that touches a per-filter list also has to
+// mirror into this cache, otherwise marking a task done on Today still
+// shows it as active on /vault until the next page refresh.
+const ALL_KEY = "/api/tasks";
 
 function keyForDestination(dest: Destination): string {
   if (dest === "on_deck") return TODAY_KEY;
@@ -14,6 +19,10 @@ function keyForDestination(dest: Destination): string {
 
 function rollbackAllTaskLists() {
   mutate((k: unknown) => typeof k === "string" && k.startsWith("/api/tasks"));
+}
+
+function mirrorAll(updater: (curr: Task[] | undefined) => Task[]) {
+  mutate(ALL_KEY, updater, { revalidate: false });
 }
 
 function invalidateDatesWithContent() {
@@ -67,6 +76,7 @@ export async function createTask(input: {
 
   const key = keyForDestination(input.destination);
   mutate(key, (curr: Task[] | undefined) => append(curr, optimistic), { revalidate: false });
+  mirrorAll((curr) => append(curr, optimistic));
 
   try {
     const res = await fetch("/api/tasks", {
@@ -82,11 +92,13 @@ export async function createTask(input: {
       (curr: Task[] | undefined) => (curr ?? []).map((t) => (t.id === tempId ? real : t)),
       { revalidate: false }
     );
+    mirrorAll((curr) => (curr ?? []).map((t) => (t.id === tempId ? real : t)));
     invalidateDatesWithContent();
     return real;
   } catch {
     // Rollback: drop the temp row and re-validate from server
     mutate(key, (curr: Task[] | undefined) => without(curr, tempId), { revalidate: false });
+    mirrorAll((curr) => without(curr, tempId));
     rollbackAllTaskLists();
     toast.error("Failed to create task");
     throw new Error("create failed");
@@ -103,7 +115,8 @@ export async function patchTask(task: Task, patch: Partial<Task>): Promise<Task>
   const optimistic: Task = { ...task, ...patch, updated_at: new Date().toISOString() };
 
   if (patch.status === "done") {
-    // Done means it leaves all active lists
+    // Done means it leaves all active per-destination lists, but stays in
+    // the unfiltered cache with status=done so /vault's Done section sees it.
     mutate(prevKey, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
   } else if (nextDest !== prevDest) {
     mutate(prevKey, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
@@ -111,6 +124,7 @@ export async function patchTask(task: Task, patch: Partial<Task>): Promise<Task>
   } else {
     mutate(prevKey, (curr: Task[] | undefined) => replace(curr, optimistic), { revalidate: false });
   }
+  mirrorAll((curr) => replace(curr, optimistic));
 
   try {
     const res = await fetch(`/api/tasks/${task.id}`, {
@@ -132,6 +146,7 @@ export async function patchTask(task: Task, patch: Partial<Task>): Promise<Task>
     } else {
       mutate(prevKey, (curr: Task[] | undefined) => replace(curr, real), { revalidate: false });
     }
+    mirrorAll((curr) => replace(curr, real));
     return real;
   } catch {
     rollbackAllTaskLists();
@@ -159,6 +174,7 @@ export async function moveToSomeday(task: Task): Promise<void> {
 export async function deleteTask(task: Task): Promise<void> {
   const key = keyForDestination(task.destination);
   mutate(key, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
+  mirrorAll((curr) => without(curr, task.id));
 
   try {
     const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
