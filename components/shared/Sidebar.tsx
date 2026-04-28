@@ -2,19 +2,57 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { preload } from "swr";
 import { CircleCheck, ListTodo, Target, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { fetcher } from "@/lib/hooks";
 import type { User } from "@supabase/supabase-js";
 
-const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string }[] = [
-  { href: "/", label: "Today", icon: CircleCheck, color: "#22c55e" },
-  { href: "/vault", label: "My Tasks", icon: ListTodo, color: "#a855f7" },
-  { href: "/tags", label: "Goals", icon: Target, color: "#f59e0b" },
-  { href: "/docs", label: "Docs", icon: FileText, color: "#06b6d4" },
+// Endpoints to warm in SWR's cache when the user hovers a nav link. Hovering
+// fires these in parallel so the data is in flight (or cached) by the time
+// the click registers ~100ms later.
+const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string; preloadKeys: string[] }[] = [
+  {
+    href: "/",
+    label: "Today",
+    icon: CircleCheck,
+    color: "#22c55e",
+    preloadKeys: [
+      "/api/tasks?destination=on_deck&status=active",
+      "/api/tasks?destination=in_progress&status=active",
+      "/api/tags",
+      "/api/goals",
+    ],
+  },
+  {
+    href: "/vault",
+    label: "My Tasks",
+    icon: ListTodo,
+    color: "#a855f7",
+    preloadKeys: ["/api/tasks", "/api/tags", "/api/settings"],
+  },
+  {
+    href: "/tags",
+    label: "Goals",
+    icon: Target,
+    color: "#f59e0b",
+    preloadKeys: ["/api/tags", "/api/goals"],
+  },
+  {
+    href: "/docs",
+    label: "Docs",
+    icon: FileText,
+    color: "#06b6d4",
+    preloadKeys: ["/api/docs"],
+  },
 ];
+
+function preloadKeys(keys: string[]) {
+  for (const key of keys) preload(key, fetcher);
+}
 
 function isActiveRoute(href: string, pathname: string): boolean {
   if (href === "/") return pathname === "/";
@@ -191,6 +229,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 title={item.label}
+                onMouseEnter={() => preloadKeys(item.preloadKeys)}
                 className={cn(
                   "flex items-center justify-center w-9 h-9 rounded-[10px] transition-colors",
                   isActive ? "bg-accent" : "hover:bg-accent/50"
@@ -235,7 +274,10 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  onMouseEnter={() => setHoveredHref(item.href)}
+                  onMouseEnter={() => {
+                    setHoveredHref(item.href);
+                    preloadKeys(item.preloadKeys);
+                  }}
                   onMouseLeave={() => setHoveredHref(null)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm font-medium transition-colors",

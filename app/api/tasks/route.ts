@@ -2,7 +2,10 @@ import { requireAuth } from "@/lib/api-auth";
 import { isDueToday } from "@/lib/triage";
 import { validateBody, validateSearchParams } from "@/lib/validation/helpers";
 import { createTaskSchema, taskListQuerySchema } from "@/lib/validation/task";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth();
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     if (!tasks || tasks.length === 0) {
-      return NextResponse.json([]);
+      return NextResponse.json([], { headers: SWR_HEADERS });
     }
 
     // Batch-fetch all tags for returned tasks (avoids N+1 queries)
@@ -57,7 +60,7 @@ export async function GET(request: NextRequest) {
       tags: tagsByTask.get(task.id) ?? [],
     }));
 
-    return NextResponse.json(tasksWithTags);
+    return NextResponse.json(tasksWithTags, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/tasks error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

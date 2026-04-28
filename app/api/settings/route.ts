@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { validateBody } from "@/lib/validation/helpers";
 import { updateSettingsSchema } from "@/lib/validation/settings";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET() {
   const auth = await requireAuth();
@@ -16,7 +19,7 @@ export async function GET() {
     for (const row of rows || []) {
       settings[row.key] = row.value;
     }
-    return NextResponse.json(settings);
+    return NextResponse.json(settings, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/settings error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

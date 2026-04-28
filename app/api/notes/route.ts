@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { validateBody, validateSearchParams } from "@/lib/validation/helpers";
 import { noteQuerySchema, upsertNoteSchema } from "@/lib/validation/note";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth();
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!note) {
-      return NextResponse.json({ id: null, date, content: "", blocks: null });
+      return NextResponse.json({ id: null, date, content: "", blocks: null }, { headers: SWR_HEADERS });
     }
 
     // Parse blocks JSON if present
@@ -41,7 +44,10 @@ export async function GET(request: NextRequest) {
       .eq("entity_id", note.id)
       .order("created_at", { ascending: false });
 
-    return NextResponse.json({ ...note, blocks, attachments: attachments || [] });
+    return NextResponse.json(
+      { ...note, blocks, attachments: attachments || [] },
+      { headers: SWR_HEADERS }
+    );
   } catch (e) {
     console.error("GET /api/notes error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

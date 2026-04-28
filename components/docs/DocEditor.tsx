@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import DOMPurify from "dompurify";
 import { ChevronLeft, Trash2, Check, Paperclip, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,9 +69,16 @@ export function DocEditor({
   const [catSearch, setCatSearch] = useState("");
   const [goalSearch, setGoalSearch] = useState("");
 
-  // Load content into editor
+  // Load content into editor. DOMPurify is dynamically imported so it lands
+  // in its own chunk (~50KB gzipped) and doesn't block the editor's first
+  // paint — the page shell, title, and chips render immediately while the
+  // sanitizer loads in the background.
   useEffect(() => {
-    if (editorRef.current) {
+    if (!editorRef.current) return;
+    let cancelled = false;
+    void (async () => {
+      const DOMPurify = (await import("dompurify")).default;
+      if (cancelled || !editorRef.current) return;
       editorRef.current.innerHTML = DOMPurify.sanitize(doc.content ?? "", {
         ADD_TAGS: ["span", "img", "div", "br"],
         ADD_ATTR: [
@@ -82,7 +88,10 @@ export function DocEditor({
           "contenteditable", "class", "style", "alt", "src",
         ],
       });
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [doc.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save helper

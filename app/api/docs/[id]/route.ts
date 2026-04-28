@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { parseIdParam, validateBody } from "@/lib/validation/helpers";
 import { updateDocSchema } from "@/lib/validation/doc";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET(
   _request: NextRequest,
@@ -31,11 +34,14 @@ export async function GET(
         .eq("document_id", id),
     ]);
 
-    return NextResponse.json({
-      ...doc,
-      categories: (categories || []).map((r) => r.categories),
-      goals: (goals || []).map((r) => r.goals),
-    });
+    return NextResponse.json(
+      {
+        ...doc,
+        categories: (categories || []).map((r) => r.categories),
+        goals: (goals || []).map((r) => r.goals),
+      },
+      { headers: SWR_HEADERS }
+    );
   } catch (e) {
     console.error("GET /api/docs/[id] error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

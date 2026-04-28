@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { validateBody } from "@/lib/validation/helpers";
 import { createCheckinSchema } from "@/lib/validation/checkin";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET() {
   const auth = await requireAuth();
@@ -18,11 +21,11 @@ export async function GET() {
 
     if (error && error.code === "PGRST116") {
       // No rows found
-      return NextResponse.json(null);
+      return NextResponse.json(null, { headers: SWR_HEADERS });
     }
     if (error) throw error;
 
-    return NextResponse.json(checkin);
+    return NextResponse.json(checkin, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/checkins error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDocs } from "@/lib/hooks";
-import { mutate } from "swr";
+import { useDocs, fetcher } from "@/lib/hooks";
+import { mutate, preload } from "swr";
 import { toast } from "sonner";
 import type { Document } from "@/lib/types";
 
@@ -66,7 +66,7 @@ function DocsSkeleton() {
 
 export function DocsView() {
   const router = useRouter();
-  const { data: docs, isLoading } = useDocs();
+  const { data: docs } = useDocs();
   const [creating, setCreating] = useState(false);
 
   async function handleCreate() {
@@ -93,7 +93,7 @@ export function DocsView() {
     }
   }
 
-  if (isLoading) {
+  if (!docs) {
     return <DocsSkeleton />;
   }
 
@@ -123,6 +123,7 @@ export function DocsView() {
           <Link
             key={doc.id}
             href={`/docs/${doc.id}`}
+            onMouseEnter={() => preload(`/api/docs/${doc.id}`, fetcher)}
             className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
           >
             <div className="flex-1 min-w-0">

@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { validateBody } from "@/lib/validation/helpers";
 import { createDocSchema } from "@/lib/validation/doc";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 export async function GET() {
   const auth = await requireAuth();
@@ -15,7 +18,7 @@ export async function GET() {
       .order("updated_at", { ascending: false });
     if (error) throw error;
 
-    if (!docs || docs.length === 0) return NextResponse.json([]);
+    if (!docs || docs.length === 0) return NextResponse.json([], { headers: SWR_HEADERS });
 
     const docIds = docs.map((d) => d.id);
 
@@ -48,7 +51,7 @@ export async function GET() {
       goals: goalsByDoc.get(doc.id) ?? [],
     }));
 
-    return NextResponse.json(docsWithRelations);
+    return NextResponse.json(docsWithRelations, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/docs error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

@@ -4,6 +4,8 @@ import { parseIdParam, validateBody } from "@/lib/validation/helpers";
 import { updateTaskSchema } from "@/lib/validation/task";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

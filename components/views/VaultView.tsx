@@ -119,7 +119,7 @@ async function saveFilter(key: string, value: boolean) {
 // --- Component ---
 
 export function VaultView() {
-  const { data: tasks, isLoading } = useTasks();
+  const { data: tasks } = useTasks();
   const { data: tags } = useTags();
   const { data: settings } = useSettings();
   const [filterSomeday, setFilterSomeday] = useState(false);
@@ -630,7 +630,7 @@ export function VaultView() {
 
   // --- Render ---
 
-  if (isLoading) {
+  if (!tasks) {
     return <VaultSkeleton />;
   }
 

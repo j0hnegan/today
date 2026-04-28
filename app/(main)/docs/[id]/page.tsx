@@ -1,37 +1,46 @@
-"use client";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase-server";
+import {
+  fetchDoc,
+  fetchTags,
+  fetchGoals,
+  fetchAttachments,
+  fetchTasks,
+} from "@/lib/server-fetchers";
+import { ServerSWR } from "@/components/shared/ServerSWR";
+import { DocDetailClient } from "./DocDetailClient";
 
-import { useRouter } from "next/navigation";
-import { DocEditor } from "@/components/docs/DocEditor";
-import { useDoc, useCategories, useGoals } from "@/lib/hooks";
-
-export default function DocDetailPage({
+export default async function DocDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const docId = Number(params.id);
-  const router = useRouter();
-  const { data: doc, isLoading } = useDoc(Number.isFinite(docId) ? docId : null);
-  const { data: categories } = useCategories();
-  const { data: goals } = useGoals();
+  const id = Number(params.id);
+  if (!Number.isFinite(id)) notFound();
 
-  if (isLoading || !doc) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 pt-[80px] pb-8">
-        <div className="skeleton h-5 w-16 mb-6" />
-        <div className="skeleton h-8 w-2/3 mb-4" />
-        <div className="skeleton h-7 w-48 mb-6" />
-        <div className="skeleton h-64 w-full rounded-[10px]" />
-      </div>
-    );
-  }
+  const supabase = createClient();
+  const [doc, tags, goals, attachments, onDeck, someday] = await Promise.all([
+    fetchDoc(supabase, id),
+    fetchTags(supabase),
+    fetchGoals(supabase),
+    fetchAttachments(supabase, "document", id),
+    fetchTasks(supabase, { destination: "on_deck", status: "active" }),
+    fetchTasks(supabase, { destination: "someday", status: "active" }),
+  ]);
+  if (!doc) notFound();
+
+  const fallback = {
+    [`/api/docs/${id}`]: doc,
+    "/api/tags": tags,
+    "/api/goals": goals,
+    [`/api/uploads?entity_type=document&entity_id=${id}`]: attachments,
+    "/api/tasks?destination=on_deck&status=active": onDeck,
+    "/api/tasks?destination=someday&status=active": someday,
+  };
 
   return (
-    <DocEditor
-      doc={doc}
-      onBack={() => router.push("/docs")}
-      allCategories={categories ?? []}
-      allGoals={goals ?? []}
-    />
+    <ServerSWR fallback={fallback}>
+      <DocDetailClient docId={id} />
+    </ServerSWR>
   );
 }

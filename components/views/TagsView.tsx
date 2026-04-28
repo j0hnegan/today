@@ -63,8 +63,8 @@ function refreshAll() {
 }
 
 export function TagsView() {
-  const { data: tags, isLoading: tagsLoading } = useTags();
-  const { data: goals, isLoading: goalsLoading } = useGoals();
+  const { data: tags } = useTags();
+  const { data: goals } = useGoals();
 
   // --- Category state ---
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -264,7 +264,7 @@ export function TagsView() {
 
   // ===================== Render =====================
 
-  if (tagsLoading || goalsLoading) {
+  if (!tags || !goals) {
     return <TagsSkeleton />;
   }
 

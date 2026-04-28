@@ -3,6 +3,8 @@ import { validateBody } from "@/lib/validation/helpers";
 import { reorderTasksSchema } from "@/lib/validation/task";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 export async function POST(request: NextRequest) {
   const auth = await requireAuth();
   if (auth instanceof Response) return auth;

@@ -3,6 +3,8 @@ import { parseIdParam, validateBody } from "@/lib/validation/helpers";
 import { updateTagSchema } from "@/lib/validation/tag";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

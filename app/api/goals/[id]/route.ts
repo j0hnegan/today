@@ -3,6 +3,8 @@ import { parseIdParam, validateBody } from "@/lib/validation/helpers";
 import { updateGoalSchema } from "@/lib/validation/goal";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 function rowToGoal(row: Record<string, unknown>) {
   const { categories, ...goal } = row;
   const cat = categories as { id: number; name: string; color: string } | null;

@@ -1,7 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
 import { validateBody } from "@/lib/validation/helpers";
 import { createGoalSchema } from "@/lib/validation/goal";
+import { SWR_HEADERS } from "@/lib/api-cache";
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 
 function rowToGoal(row: Record<string, unknown>) {
   const { categories, ...goal } = row;
@@ -24,7 +27,7 @@ export async function GET() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return NextResponse.json((rows || []).map(rowToGoal));
+    return NextResponse.json((rows || []).map(rowToGoal), { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/goals error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
