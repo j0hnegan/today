@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { preload } from "swr";
-import { CircleCheck, ListTodo, Target, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
+import { CircleCheck, ListTodo, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -23,8 +23,6 @@ const navItems: { href: string; label: string; icon: typeof CircleCheck; color: 
     preloadKeys: [
       "/api/tasks?destination=on_deck&status=active",
       "/api/tasks?destination=in_progress&status=active",
-      "/api/tags",
-      "/api/goals",
     ],
   },
   {
@@ -32,14 +30,7 @@ const navItems: { href: string; label: string; icon: typeof CircleCheck; color: 
     label: "My Tasks",
     icon: ListTodo,
     color: "#a855f7",
-    preloadKeys: ["/api/tasks", "/api/tags", "/api/settings"],
-  },
-  {
-    href: "/tags",
-    label: "Goals",
-    icon: Target,
-    color: "#f59e0b",
-    preloadKeys: ["/api/tags", "/api/goals"],
+    preloadKeys: ["/api/tasks"],
   },
   {
     href: "/docs",

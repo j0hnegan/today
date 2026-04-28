@@ -23,7 +23,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, AlertTriangle } from "lucide-react";
+import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, AlertTriangle, Target } from "lucide-react";
+import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
@@ -123,6 +124,7 @@ export function VaultView() {
   const { data: tags } = useTags();
   const { data: settings } = useSettings();
   const [filterSomeday, setFilterSomeday] = useState(false);
+  const [tagsModalOpen, setTagsModalOpen] = useState(false);
 
   // Column visibility filters (default true, persisted via settings)
   const [showSize, setShowSize] = useState(true);
@@ -696,6 +698,15 @@ export function VaultView() {
     <div className="mx-auto max-w-3xl px-6 pt-[80px] pb-8" onDragEnd={handleDragEnd}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold tracking-tight">My Tasks</h1>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setTagsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Target className="h-3.5 w-3.5" />
+            Goals
+          </button>
         <Popover>
           <PopoverTrigger asChild>
             <button className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -956,7 +967,10 @@ export function VaultView() {
             </div>
           </PopoverContent>
         </Popover>
+        </div>
       </div>
+
+      <TagsModal open={tagsModalOpen} onOpenChange={setTagsModalOpen} />
 
       <WeeklyNudge
         nudgeDay={settings?.weekly_nudge_day ?? "sunday"}
