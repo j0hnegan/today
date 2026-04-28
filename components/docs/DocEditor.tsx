@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { ChevronLeft, Trash2, Check, Paperclip, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,29 +70,21 @@ export function DocEditor({
   const [catSearch, setCatSearch] = useState("");
   const [goalSearch, setGoalSearch] = useState("");
 
-  // Load content into editor. DOMPurify is dynamically imported so it lands
-  // in its own chunk (~50KB gzipped) and doesn't block the editor's first
-  // paint — the page shell, title, and chips render immediately while the
-  // sanitizer loads in the background.
+  // Load content into editor. DOMPurify is statically imported so it ships
+  // with the doc-route chunk and runs synchronously here — otherwise the
+  // dynamic import created a second waterfall where the title/chips
+  // painted but the body stayed empty for ~500ms while the chunk loaded.
   useEffect(() => {
     if (!editorRef.current) return;
-    let cancelled = false;
-    void (async () => {
-      const DOMPurify = (await import("dompurify")).default;
-      if (cancelled || !editorRef.current) return;
-      editorRef.current.innerHTML = DOMPurify.sanitize(doc.content ?? "", {
-        ADD_TAGS: ["span", "img", "div", "br"],
-        ADD_ATTR: [
-          "data-inline-file", "data-filename", "data-attachment-id",
-          "data-embed-type", "data-embed-id", "data-slash-block",
-          "data-natural-w", "data-natural-h", "data-current-w",
-          "contenteditable", "class", "style", "alt", "src",
-        ],
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
+    editorRef.current.innerHTML = DOMPurify.sanitize(doc.content ?? "", {
+      ADD_TAGS: ["span", "img", "div", "br"],
+      ADD_ATTR: [
+        "data-inline-file", "data-filename", "data-attachment-id",
+        "data-embed-type", "data-embed-id", "data-slash-block",
+        "data-natural-w", "data-natural-h", "data-current-w",
+        "contenteditable", "class", "style", "alt", "src",
+      ],
+    });
   }, [doc.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save helper

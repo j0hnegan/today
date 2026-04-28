@@ -112,30 +112,36 @@ export async function fetchDoc(
   supabase: SB,
   id: number
 ): Promise<Document | null> {
-  const { data: doc } = await supabase
+  // Single round-trip: nest the join tables in the select so Supabase
+  // returns the doc + its categories + goals in one response. The earlier
+  // version did three sequential queries which dominated the doc-detail
+  // page's TTFB.
+  const { data: row } = await supabase
     .from("documents")
-    .select("*")
+    .select(`
+      *,
+      document_categories(categories(id, name, color)),
+      document_goals(goals(id, title, description, category_id, status))
+    `)
     .eq("id", id)
     .single();
-  if (!doc) return null;
+  if (!row) return null;
 
-  const [{ data: categories }, { data: goals }] = await Promise.all([
-    supabase
-      .from("document_categories")
-      .select("categories(id, name, color)")
-      .eq("document_id", id),
-    supabase
-      .from("document_goals")
-      .select("goals(id, title, description, category_id, status)")
-      .eq("document_id", id),
-  ]);
+  const docCategories = (row.document_categories ?? []).map(
+    (r: { categories: Category | null }) => r.categories
+  ).filter(Boolean) as Category[];
+  const docGoals = (row.document_goals ?? []).map(
+    (r: { goals: Goal | null }) => r.goals
+  ).filter(Boolean) as Goal[];
+
+  const { document_categories, document_goals, ...doc } = row;
+  void document_categories;
+  void document_goals;
 
   return {
     ...doc,
-    categories: (categories || []).map(
-      (r) => r.categories as unknown as Category
-    ),
-    goals: (goals || []).map((r) => r.goals as unknown as Goal),
+    categories: docCategories,
+    goals: docGoals,
   } as Document;
 }
 

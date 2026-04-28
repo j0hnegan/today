@@ -1,11 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
-import {
-  fetchDoc,
-  fetchTags,
-  fetchGoals,
-  fetchAttachments,
-} from "@/lib/server-fetchers";
+import { fetchDoc } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
 import { DocDetailClient } from "./DocDetailClient";
 
@@ -17,26 +12,15 @@ export default async function DocDetailPage({
   const id = Number(params.id);
   if (!Number.isFinite(id)) notFound();
 
-  // Fetch only what blocks the first paint of the editor: the doc itself
-  // and the chip lookup tables (categories/goals). Attachments render
-  // below the content and slash-command task lookups only matter when the
-  // user types `/`, so let those load client-side via SWR — they don't
-  // belong on the critical path.
+  // Only the doc itself blocks first paint. Tags/goals/attachments load
+  // client-side via SWR — they're virtually always already in cache from
+  // the prior /docs render, and on direct visits they fetch in parallel
+  // with the editor mount instead of blocking the server response.
   const supabase = createClient();
-  const [doc, tags, goals, attachments] = await Promise.all([
-    fetchDoc(supabase, id),
-    fetchTags(supabase),
-    fetchGoals(supabase),
-    fetchAttachments(supabase, "document", id),
-  ]);
+  const doc = await fetchDoc(supabase, id);
   if (!doc) notFound();
 
-  const fallback = {
-    [`/api/docs/${id}`]: doc,
-    "/api/tags": tags,
-    "/api/goals": goals,
-    [`/api/uploads?entity_type=document&entity_id=${id}`]: attachments,
-  };
+  const fallback = { [`/api/docs/${id}`]: doc };
 
   return (
     <ServerSWR fallback={fallback}>
