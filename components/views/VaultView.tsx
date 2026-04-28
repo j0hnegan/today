@@ -683,7 +683,7 @@ export function VaultView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 pt-[80px] pb-8" onDragEnd={handleDragEnd}>
+    <div className="max-w-3xl px-6 pt-[80px] pb-8" onDragEnd={handleDragEnd}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold tracking-tight">My Tasks</h1>
         <div className="flex items-center gap-4">
