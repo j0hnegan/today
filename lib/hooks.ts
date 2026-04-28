@@ -42,7 +42,15 @@ export function useDocs() {
 }
 
 export function useDoc(id: number | null) {
-  return useSWR<Document>(id ? `/api/docs/${id}` : null, fetcher);
+  // Fall back to the docs-list cache when it's already populated. The list
+  // endpoint returns full doc objects, so navigating from /docs into
+  // /docs/[id] paints content from cache while SWR revalidates the
+  // single-doc endpoint in the background — no skeleton flash on warm navs.
+  const { data: docs } = useSWR<Document[]>("/api/docs", fetcher);
+  const fallback = docs?.find((d) => d.id === id);
+  return useSWR<Document>(id ? `/api/docs/${id}` : null, fetcher, {
+    fallbackData: fallback,
+  });
 }
 
 export function useNote(date: string) {

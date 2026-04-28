@@ -5,7 +5,6 @@ import {
   fetchTags,
   fetchGoals,
   fetchAttachments,
-  fetchTasks,
 } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
 import { DocDetailClient } from "./DocDetailClient";
@@ -18,14 +17,17 @@ export default async function DocDetailPage({
   const id = Number(params.id);
   if (!Number.isFinite(id)) notFound();
 
+  // Fetch only what blocks the first paint of the editor: the doc itself
+  // and the chip lookup tables (categories/goals). Attachments render
+  // below the content and slash-command task lookups only matter when the
+  // user types `/`, so let those load client-side via SWR — they don't
+  // belong on the critical path.
   const supabase = createClient();
-  const [doc, tags, goals, attachments, onDeck, someday] = await Promise.all([
+  const [doc, tags, goals, attachments] = await Promise.all([
     fetchDoc(supabase, id),
     fetchTags(supabase),
     fetchGoals(supabase),
     fetchAttachments(supabase, "document", id),
-    fetchTasks(supabase, { destination: "on_deck", status: "active" }),
-    fetchTasks(supabase, { destination: "someday", status: "active" }),
   ]);
   if (!doc) notFound();
 
@@ -34,8 +36,6 @@ export default async function DocDetailPage({
     "/api/tags": tags,
     "/api/goals": goals,
     [`/api/uploads?entity_type=document&entity_id=${id}`]: attachments,
-    "/api/tasks?destination=on_deck&status=active": onDeck,
-    "/api/tasks?destination=someday&status=active": someday,
   };
 
   return (
