@@ -123,6 +123,7 @@ export function DocsView() {
           <Link
             key={doc.id}
             href={`/docs/${doc.id}`}
+            prefetch
             onMouseEnter={() => preload(`/api/docs/${doc.id}`, fetcher)}
             className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
           >

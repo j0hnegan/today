@@ -9,6 +9,18 @@ const csp = `default-src 'self'; ${scriptSrc}; style-src 'self' 'unsafe-inline';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep RSC payloads in the App Router client cache longer. Next.js 14.2's
+  // default evicts dynamic-segment payloads after 30s, which means hopping
+  // between pages re-fetches the Server Component every time. Bumping the
+  // `dynamic` window to 5min and `static` to 15min so back/forward and
+  // sidebar nav within a session reuse the cache instead of round-tripping
+  // to the edge for every click.
+  experimental: {
+    staleTimes: {
+      dynamic: 300,
+      static: 900,
+    },
+  },
   async headers() {
     return [
       {

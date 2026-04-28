@@ -228,6 +228,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 title={item.label}
                 onMouseEnter={() => preloadKeys(item.preloadKeys)}
                 className={cn(
@@ -274,6 +275,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch
                   onMouseEnter={() => {
                     setHoveredHref(item.href);
                     preloadKeys(item.preloadKeys);
