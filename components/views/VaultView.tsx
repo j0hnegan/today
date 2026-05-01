@@ -3,9 +3,9 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { VaultSection } from "@/components/vault/VaultSection";
 import { VaultSkeleton } from "@/components/vault/VaultSkeleton";
-import { TaskList } from "@/components/vault/TaskList";
-import { TaskEditModal } from "@/components/vault/TaskEditModal";
 import { WeeklyNudge } from "@/components/vault/WeeklyNudge";
+import { TaskItem } from "@/components/shared/TaskItem";
+import type { SelectionPosition } from "@/components/shared/TaskItem";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -26,6 +26,13 @@ import {
 import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
+import {
+  patchTask,
+  deleteTask,
+  moveToInProgress,
+  moveToToday,
+  moveToSomeday,
+} from "@/lib/taskMutations";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
 import { mutate } from "swr";
@@ -34,6 +41,7 @@ import { normalizeConsequence } from "@/lib/types";
 import type { Task, Size } from "@/lib/types";
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
+type SectionKey = "on_deck" | "in_progress" | "someday" | "done";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "due_date", label: "Due date" },
@@ -80,12 +88,10 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
 
     if (primary !== 0) return primary;
 
-    // Secondary: consequence (priority tasks float to top)
     if (sortKey !== "consequence" && aPriority !== bPriority) {
       return aPriority - bPriority;
     }
 
-    // Stable fallback: older tasks first (newer at bottom)
     return (a.id as number) - (b.id as number);
   });
 }
@@ -97,8 +103,6 @@ const SIZE_LABELS: Record<Size, string> = {
   medium: "30-60 min",
   large: "60+ min",
 };
-
-// --- Helpers ---
 
 function refreshAll() {
   mutate(
@@ -117,7 +121,36 @@ async function saveFilter(key: string, value: boolean) {
   mutate("/api/settings");
 }
 
-// --- Component ---
+function AddTaskButton({ section }: { section: SectionKey }) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center rounded-lg px-2 py-2 text-sm text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-colors"
+      onClick={() => {
+        document.dispatchEvent(
+          new CustomEvent("quick-add-destination", { detail: section })
+        );
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "k",
+            metaKey: true,
+            bubbles: true,
+          })
+        );
+      }}
+    >
+      <span className="pl-[26px]">+ Add a task</span>
+    </button>
+  );
+}
+
+function DropIndicator() {
+  return (
+    <div className="relative h-0 z-10">
+      <div className="absolute left-2 right-2 top-0 -translate-y-[1px] h-[2px] bg-accent rounded-full" />
+    </div>
+  );
+}
 
 export function VaultView() {
   const { data: tasks } = useTasks();
@@ -126,12 +159,10 @@ export function VaultView() {
   const [filterSomeday, setFilterSomeday] = useState(false);
   const [tagsModalOpen, setTagsModalOpen] = useState(false);
 
-  // Column visibility filters (default true, persisted via settings)
   const [showSize, setShowSize] = useState(true);
   const [showDates, setShowDates] = useState(true);
   const [showGoals, setShowGoals] = useState(true);
 
-  // Filter values (session-only, not persisted)
   const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
@@ -144,14 +175,13 @@ export function VaultView() {
   const goalContainerRef = useRef<HTMLDivElement>(null);
   const sizeContainerRef = useRef<HTMLDivElement>(null);
 
-  // Per-section sort keys
-  const [sortKeys, setSortKeys] = useState<Record<string, SortKey>>({
+  const [sortKeys, setSortKeys] = useState<Record<SectionKey, SortKey>>({
     on_deck: "due_date",
+    in_progress: "due_date",
     someday: "due_date",
     done: "due_date",
   });
 
-  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -171,7 +201,6 @@ export function VaultView() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Initialize filters from settings
   useEffect(() => {
     if (settings) {
       if (settings.vault_show_size !== undefined)
@@ -183,26 +212,23 @@ export function VaultView() {
     }
   }, [settings]);
 
-  // Edit modal
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
-  // Delete modal
   const [deletingTasks, setDeletingTasks] = useState<Task[]>([]);
   const [deleting, setDeleting] = useState(false);
 
-  // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [lastClickedId, setLastClickedId] = useState<number | null>(null);
 
-  // Drag state
   const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
-  const [dragOverSection, setDragOverSection] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<{ section: string; index: number } | null>(null);
+  const [dragOverSection, setDragOverSection] = useState<SectionKey | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<{ section: SectionKey; index: number } | null>(null);
 
   const grouped = useMemo(() => {
-    if (!tasks) return { onDeck: [], someday: [], done: [] };
+    if (!tasks) return { onDeck: [], inProgress: [], someday: [], done: [] };
 
     const onDeck: Task[] = [];
+    const inProgress: Task[] = [];
     const someday: Task[] = [];
     const done: Task[] = [];
 
@@ -211,25 +237,24 @@ export function VaultView() {
         done.push(task);
       } else if (task.destination === "on_deck") {
         onDeck.push(task);
+      } else if (task.destination === "in_progress") {
+        inProgress.push(task);
       } else {
         someday.push(task);
       }
     }
 
-    return { onDeck, someday, done };
+    return { onDeck, inProgress, someday, done };
   }, [tasks]);
 
-  // Apply active filters to grouped tasks
   const filteredGrouped = useMemo(() => {
     function applyFilters(list: Task[]): Task[] {
       let filtered = list;
 
-      // Size filter: only when toggle is ON and not all sizes selected
       if (showSize && sizeFilter.length < ALL_SIZES.length) {
         filtered = filtered.filter((t) => sizeFilter.includes(t.size));
       }
 
-      // Date filter: only when toggle is ON and at least one bound is set
       if (showDates && (dateFrom || dateTo)) {
         filtered = filtered.filter((t) => {
           if (!t.due_date) return false;
@@ -244,7 +269,6 @@ export function VaultView() {
         });
       }
 
-      // Goal filter: only when toggle is ON and specific goals selected
       if (showGoals && goalFilterIds !== null) {
         filtered = filtered.filter((t) =>
           t.tags?.some((tag) => goalFilterIds.includes(tag.id))
@@ -256,30 +280,34 @@ export function VaultView() {
 
     return {
       onDeck: sortTasks(applyFilters(grouped.onDeck), sortKeys.on_deck),
+      inProgress: sortTasks(applyFilters(grouped.inProgress), sortKeys.in_progress),
       someday: sortTasks(applyFilters(grouped.someday), sortKeys.someday),
       done: sortTasks(applyFilters(grouped.done), sortKeys.done),
     };
   }, [grouped, showSize, sizeFilter, showDates, dateFrom, dateTo, showGoals, goalFilterIds, sortKeys]);
 
-  // Map task ID → section name (for detecting same-section drag)
   const taskSectionMap = useMemo(() => {
-    const map = new Map<number, string>();
+    const map = new Map<number, SectionKey>();
     for (const t of filteredGrouped.onDeck) map.set(t.id, "on_deck");
+    for (const t of filteredGrouped.inProgress) map.set(t.id, "in_progress");
     for (const t of filteredGrouped.someday) map.set(t.id, "someday");
     for (const t of filteredGrouped.done) map.set(t.id, "done");
     return map;
   }, [filteredGrouped]);
 
-  // Flat ordered list for shift-range selection (uses filtered data)
   const allTasksOrdered = useMemo(() => {
-    return [...filteredGrouped.onDeck, ...filteredGrouped.someday, ...filteredGrouped.done];
+    return [
+      ...filteredGrouped.onDeck,
+      ...filteredGrouped.inProgress,
+      ...filteredGrouped.someday,
+      ...filteredGrouped.done,
+    ];
   }, [filteredGrouped]);
 
   function handleReviewSomeday() {
     setFilterSomeday(true);
   }
 
-  // --- Filter toggle handlers ---
   function toggleFilter(
     key: string,
     current: boolean,
@@ -310,15 +338,12 @@ export function VaultView() {
     }).then(() => mutate("/api/settings"));
   }
 
-  // --- Size filter helpers ---
   function toggleSize(s: Size) {
     setSizeFilter((prev) => {
-      // If all are selected, clicking one selects only that one
       if (prev.length === ALL_SIZES.length) {
         return [s];
       }
       if (prev.includes(s)) {
-        // Last one standing — deselecting it reselects all
         if (prev.length === 1) return [...ALL_SIZES];
         return prev.filter((x) => x !== s);
       }
@@ -326,7 +351,6 @@ export function VaultView() {
     });
   }
 
-  // --- Goal filter helpers ---
   function setGoalAll() {
     setGoalFilterIds(null);
     setGoalSearch("");
@@ -344,7 +368,6 @@ export function VaultView() {
           Array.from(selectedIds).join(",")
         );
 
-        // Build custom drag image showing stacked tasks
         const dragEl = document.createElement("div");
         dragEl.style.cssText =
           "position:fixed;top:-1000px;left:-1000px;pointer-events:none;z-index:9999;display:flex;flex-direction:column;gap:2px;";
@@ -383,13 +406,13 @@ export function VaultView() {
     [selectedIds, allTasksOrdered]
   );
 
-  function handleDragOver(e: React.DragEvent, section: string) {
+  function handleDragOverSection(e: React.DragEvent, section: SectionKey) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOverSection(section);
   }
 
-  function handleDragLeave(e: React.DragEvent) {
+  function handleDragLeaveSection(e: React.DragEvent) {
     const relatedTarget = e.relatedTarget as Node | null;
     const currentTarget = e.currentTarget as Node;
     if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
@@ -404,17 +427,24 @@ export function VaultView() {
   }
 
   const handleRowDragOver = useCallback(
-    (section: string, index: number) => {
+    (e: React.DragEvent, section: SectionKey, index: number) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const insertIndex = e.clientY < midY ? index : index + 1;
+
       setDropIndicator((prev) => {
-        if (prev && prev.section === section && prev.index === index) return prev;
-        return { section, index };
+        if (prev && prev.section === section && prev.index === insertIndex) return prev;
+        return { section, index: insertIndex };
       });
       setDragOverSection(section);
     },
     []
   );
 
-  async function handleDrop(e: React.DragEvent, targetSection: string) {
+  async function handleDrop(e: React.DragEvent, targetSection: SectionKey) {
     e.preventDefault();
     const savedIndicator = dropIndicator;
     setDragOverSection(null);
@@ -428,27 +458,29 @@ export function VaultView() {
       .filter((id) => !isNaN(id));
     if (taskIds.length === 0) return;
 
-    // Check if this is a same-section reorder
     const sourceSection = taskIds.length > 0 ? taskSectionMap.get(taskIds[0]) : undefined;
     const isSameSection = sourceSection === targetSection && savedIndicator?.section === targetSection;
 
     if (isSameSection && savedIndicator) {
-      // Same-section reorder
-      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "done" ? "done" : "someday";
+      const sectionKey =
+        targetSection === "on_deck"
+          ? "onDeck"
+          : targetSection === "in_progress"
+            ? "inProgress"
+            : targetSection === "done"
+              ? "done"
+              : "someday";
       const sectionTasks = filteredGrouped[sectionKey as keyof typeof filteredGrouped];
       const draggedSet = new Set(taskIds);
 
-      // Build new order: remove dragged tasks, insert at indicator position
       const remaining = sectionTasks.filter((t) => !draggedSet.has(t.id));
       const dragged = sectionTasks.filter((t) => draggedSet.has(t.id));
 
-      // Adjust insertion index: count how many non-dragged tasks are before the indicator
-      let insertAt = savedIndicator.index;
       let nonDraggedBefore = 0;
       for (let i = 0; i < sectionTasks.length && i < savedIndicator.index; i++) {
         if (!draggedSet.has(sectionTasks[i].id)) nonDraggedBefore++;
       }
-      insertAt = nonDraggedBefore;
+      const insertAt = nonDraggedBefore;
 
       const newOrder = [...remaining];
       newOrder.splice(insertAt, 0, ...dragged);
@@ -468,13 +500,17 @@ export function VaultView() {
       return;
     }
 
-    // Cross-section move (existing behavior)
     function getBody(task: Task): Record<string, string> | null {
       if (
         targetSection === "on_deck" &&
         (task.destination !== "on_deck" || task.status === "done")
       ) {
         return { destination: "on_deck", status: "active" };
+      } else if (
+        targetSection === "in_progress" &&
+        (task.destination !== "in_progress" || task.status === "done")
+      ) {
+        return { destination: "in_progress", status: "active" };
       } else if (
         targetSection === "someday" &&
         (task.destination !== "someday" || task.status === "done")
@@ -512,8 +548,9 @@ export function VaultView() {
 
     setSelectedIds(new Set());
 
-    const sectionNames: Record<string, string> = {
+    const sectionNames: Record<SectionKey, string> = {
       on_deck: "Today",
+      in_progress: "In Progress",
       someday: "Someday",
       done: "Done",
     };
@@ -525,58 +562,109 @@ export function VaultView() {
     );
   }
 
-  // --- Task click handler (with selection support) ---
-  function handleTaskClick(task: Task, e: React.MouseEvent) {
-    if (e.shiftKey) {
-      // Shift+click: range select if there's already a selection anchor, otherwise just select this one
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (lastClickedId !== null && prev.size > 0) {
-          // Range select between last clicked and current
-          const startIdx = allTasksOrdered.findIndex(
-            (t) => t.id === lastClickedId
-          );
-          const endIdx = allTasksOrdered.findIndex((t) => t.id === task.id);
-          if (startIdx !== -1 && endIdx !== -1) {
-            const [lo, hi] =
-              startIdx < endIdx
-                ? [startIdx, endIdx]
-                : [endIdx, startIdx];
-            for (let i = lo; i <= hi; i++) {
-              next.add(allTasksOrdered[i].id);
+  // --- Selection handler ---
+  const handleRowClick = useCallback(
+    (task: Task, e: React.MouseEvent) => {
+      // Plain click should fall through to the title's inline edit handler;
+      // only intercept when a modifier is held (multi-select).
+      if (e.shiftKey) {
+        e.preventDefault();
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          if (lastClickedId !== null && prev.size > 0) {
+            const startIdx = allTasksOrdered.findIndex(
+              (t) => t.id === lastClickedId
+            );
+            const endIdx = allTasksOrdered.findIndex((t) => t.id === task.id);
+            if (startIdx !== -1 && endIdx !== -1) {
+              const [lo, hi] =
+                startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+              for (let i = lo; i <= hi; i++) {
+                next.add(allTasksOrdered[i].id);
+              }
             }
+          } else {
+            next.add(task.id);
           }
-        } else {
-          // First shift+click — just select this one
-          next.add(task.id);
+          return next;
+        });
+        setLastClickedId(task.id);
+      } else if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(task.id)) {
+            next.delete(task.id);
+          } else {
+            next.add(task.id);
+          }
+          return next;
+        });
+        setLastClickedId(task.id);
+      } else if (selectedIds.size > 0) {
+        // Clear selection on plain click; let title edit handle the rest.
+        setSelectedIds(new Set());
+      }
+    },
+    [allTasksOrdered, lastClickedId, selectedIds.size]
+  );
+
+  // --- Inline title save ---
+  const saveTaskTitle = useCallback(
+    async (taskId: number, newTitle: string) => {
+      const trimmed = newTitle.trim();
+      const task = tasks?.find((t) => t.id === taskId);
+      if (task && trimmed && trimmed !== task.title) {
+        try {
+          await patchTask(task, { title: trimmed });
+        } catch {
+          /* helper already toasted */
         }
-        return next;
-      });
-      setLastClickedId(task.id);
-    } else if (e.metaKey || e.ctrlKey) {
-      // Cmd+click: toggle individual (non-sequential)
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(task.id)) {
-          next.delete(task.id);
-        } else {
-          next.add(task.id);
-        }
-        return next;
-      });
-      setLastClickedId(task.id);
-    } else {
-      // Normal click — clear selection and open edit
-      setSelectedIds(new Set());
-      setEditingTask(task);
+      }
+      setEditingTaskId(null);
+    },
+    [tasks]
+  );
+
+  // --- Task action handlers (using mutation helpers for optimistic updates) ---
+  const handleMarkDone = useCallback(async (task: Task) => {
+    await markTaskDone(task);
+  }, []);
+
+  const handleDeleteTask = useCallback(async (task: Task) => {
+    try {
+      await deleteTask(task);
+      toast.success("Task deleted");
+    } catch {
+      /* helper already toasted */
     }
-  }
+  }, []);
+
+  const handleNotTodayTask = useCallback(async (task: Task) => {
+    try {
+      await moveToSomeday(task);
+    } catch {
+      /* helper already toasted */
+    }
+  }, []);
+
+  const handleInProgressTask = useCallback(async (task: Task) => {
+    try {
+      await moveToInProgress(task);
+    } catch {
+      /* helper already toasted */
+    }
+  }, []);
+
+  const handleBackToTodayTask = useCallback(async (task: Task) => {
+    try {
+      await moveToToday(task);
+    } catch {
+      /* helper already toasted */
+    }
+  }, []);
 
   // --- Delete handlers ---
-  function handleDeleteRequest(task: Task) {
-    setDeletingTasks([task]);
-  }
-
   function handleBulkDeleteRequest() {
     const tasksToDelete = allTasksOrdered.filter((t) =>
       selectedIds.has(t.id)
@@ -607,7 +695,6 @@ export function VaultView() {
     }
   }
 
-  // --- Escape to deselect ---
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && selectedIds.size > 0) {
@@ -618,7 +705,30 @@ export function VaultView() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedIds.size]);
 
-  // --- Render ---
+  // Compute selection positions for contiguous block visuals
+  const selectionPositionsBySection = useMemo(() => {
+    const result = new Map<SectionKey, Map<number, SelectionPosition>>();
+    const sections: { key: SectionKey; tasks: Task[] }[] = [
+      { key: "on_deck", tasks: filteredGrouped.onDeck },
+      { key: "in_progress", tasks: filteredGrouped.inProgress },
+      { key: "someday", tasks: filteredGrouped.someday },
+      { key: "done", tasks: filteredGrouped.done },
+    ];
+    for (const { key, tasks: list } of sections) {
+      const map = new Map<number, SelectionPosition>();
+      for (let i = 0; i < list.length; i++) {
+        if (!selectedIds.has(list[i].id)) continue;
+        const prev = i > 0 && selectedIds.has(list[i - 1].id);
+        const next = i < list.length - 1 && selectedIds.has(list[i + 1].id);
+        if (prev && next) map.set(list[i].id, "middle");
+        else if (prev) map.set(list[i].id, "last");
+        else if (next) map.set(list[i].id, "first");
+        else map.set(list[i].id, "solo");
+      }
+      result.set(key, map);
+    }
+    return result;
+  }, [filteredGrouped, selectedIds]);
 
   if (!tasks) {
     return <VaultSkeleton />;
@@ -627,24 +737,72 @@ export function VaultView() {
   const dropHighlight =
     "ring-2 ring-accent ring-offset-2 ring-offset-background rounded-[10px]";
 
-  async function handleMarkDone(task: Task) {
-    await markTaskDone(task);
+  function renderSection(
+    section: SectionKey,
+    title: string,
+    list: Task[],
+    longPress: ((task: Task) => void) | undefined,
+    defaultOpen: boolean
+  ) {
+    const positions = selectionPositionsBySection.get(section) ?? new Map();
+    const dropIdxForSection =
+      dropIndicator?.section === section ? dropIndicator.index : null;
+
+    return (
+      <div
+        onDragOver={(e) => handleDragOverSection(e, section)}
+        onDragLeave={handleDragLeaveSection}
+        onDrop={(e) => handleDrop(e, section)}
+        className={cn(
+          "transition-all",
+          dragOverSection === section && dropHighlight
+        )}
+      >
+        <VaultSection
+          title={title}
+          count={list.length}
+          defaultOpen={defaultOpen}
+          headerExtra={renderSortDropdown(section)}
+        >
+          <div>
+            {list.map((task, i) => (
+              <div
+                key={task.id}
+                onDragOver={(e) => handleRowDragOver(e, section, i)}
+              >
+                {dropIdxForSection === i && <DropIndicator />}
+                <TaskItem
+                  task={task}
+                  onMarkDone={handleMarkDone}
+                  onLongPress={longPress}
+                  onDeleteTask={handleDeleteTask}
+                  onNotTodayTask={handleNotTodayTask}
+                  editingTaskId={editingTaskId}
+                  setEditingTaskId={setEditingTaskId}
+                  saveTaskTitle={saveTaskTitle}
+                  isSelected={selectedIds.has(task.id)}
+                  selectionPosition={positions.get(task.id) ?? null}
+                  onRowClick={handleRowClick}
+                  draggable={editingTaskId !== task.id}
+                  isDragging={
+                    draggingTaskId === task.id ||
+                    (draggingTaskId != null &&
+                      selectedIds.has(draggingTaskId) &&
+                      selectedIds.has(task.id))
+                  }
+                  onDragStart={handleDragStart}
+                />
+              </div>
+            ))}
+            {dropIdxForSection === list.length && <DropIndicator />}
+            <AddTaskButton section={section} />
+          </div>
+        </VaultSection>
+      </div>
+    );
   }
 
-  const taskListProps = {
-    onTaskClick: handleTaskClick,
-    onDragStart: handleDragStart,
-    draggingTaskId,
-    selectedIds,
-    onDelete: handleDeleteRequest,
-    onMarkDone: handleMarkDone,
-    showSize,
-    showDates,
-    showGoals,
-    onRowDragOver: handleRowDragOver,
-  };
-
-  function renderSortDropdown(section: string) {
+  function renderSortDropdown(section: SectionKey) {
     const current = sortKeys[section] ?? "due_date";
     const currentLabel = SORT_OPTIONS.find((o) => o.value === current)?.label ?? "Due date";
     return (
@@ -704,7 +862,6 @@ export function VaultView() {
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="end">
             <div className="space-y-3">
-              {/* SIZE */}
               <div>
                 <label className="flex items-center justify-between cursor-pointer">
                   <span className="text-sm">Size</span>
@@ -754,7 +911,6 @@ export function VaultView() {
                 )}
               </div>
 
-              {/* DATES */}
               <div>
                 <label className="flex items-center justify-between cursor-pointer">
                   <span className="text-sm">Dates</span>
@@ -857,7 +1013,6 @@ export function VaultView() {
                 )}
               </div>
 
-              {/* GOALS */}
               <div>
                 <label className="flex items-center justify-between cursor-pointer">
                   <span className="text-sm">Goals</span>
@@ -893,7 +1048,6 @@ export function VaultView() {
                           autoFocus
                         />
                         <div className="max-h-36 overflow-auto">
-                          {/* All option */}
                           {"all".includes(goalSearch.toLowerCase()) && (
                             <button
                               type="button"
@@ -916,7 +1070,6 @@ export function VaultView() {
                                   type="button"
                                   onClick={() => {
                                     if (goalFilterIds === null) {
-                                      // Switching from "All" to this single goal
                                       setGoalFilterIds([tag.id]);
                                     } else if (goalFilterIds.includes(tag.id)) {
                                       const next = goalFilterIds.filter((id) => id !== tag.id);
@@ -981,62 +1134,39 @@ export function VaultView() {
       )}
 
       <div className="space-y-2">
-        {!filterSomeday && (
-          <div
-            onDragOver={(e) => handleDragOver(e, "on_deck")}
-            onDragLeave={(e) => handleDragLeave(e)}
-            onDrop={(e) => handleDrop(e, "on_deck")}
-            className={`transition-all ${dragOverSection === "on_deck" ? dropHighlight : ""}`}
-          >
-            <VaultSection
-              title="Today"
-              count={filteredGrouped.onDeck.length}
-              defaultOpen={true}
-              headerExtra={renderSortDropdown("on_deck")}
-            >
-              <TaskList tasks={filteredGrouped.onDeck} {...taskListProps} section="on_deck" dropIndicatorIndex={dropIndicator?.section === "on_deck" ? dropIndicator.index : null} />
-            </VaultSection>
-          </div>
+        {!filterSomeday && renderSection(
+          "on_deck",
+          "Today",
+          filteredGrouped.onDeck,
+          handleInProgressTask,
+          true
         )}
 
-        <div
-          onDragOver={(e) => handleDragOver(e, "someday")}
-          onDragLeave={(e) => handleDragLeave(e)}
-          onDrop={(e) => handleDrop(e, "someday")}
-          className={`transition-all ${dragOverSection === "someday" ? dropHighlight : ""}`}
-        >
-          <VaultSection
-            title="Someday"
-            count={filteredGrouped.someday.length}
-            defaultOpen={true}
-            headerExtra={renderSortDropdown("someday")}
-          >
-            <TaskList tasks={filteredGrouped.someday} {...taskListProps} section="someday" dropIndicatorIndex={dropIndicator?.section === "someday" ? dropIndicator.index : null} />
-          </VaultSection>
-        </div>
+        {!filterSomeday && renderSection(
+          "in_progress",
+          "In Progress",
+          filteredGrouped.inProgress,
+          handleBackToTodayTask,
+          true
+        )}
 
-        {!filterSomeday && (
-          <>
-            <div
-              onDragOver={(e) => handleDragOver(e, "done")}
-              onDragLeave={(e) => handleDragLeave(e)}
-              onDrop={(e) => handleDrop(e, "done")}
-              className={`transition-all ${dragOverSection === "done" ? dropHighlight : ""}`}
-            >
-              <VaultSection
-                title="Done"
-                count={filteredGrouped.done.length}
-                defaultOpen={false}
-                headerExtra={renderSortDropdown("done")}
-              >
-                <TaskList tasks={filteredGrouped.done} {...taskListProps} section="done" dropIndicatorIndex={dropIndicator?.section === "done" ? dropIndicator.index : null} />
-              </VaultSection>
-            </div>
-          </>
+        {renderSection(
+          "someday",
+          "Someday",
+          filteredGrouped.someday,
+          undefined,
+          true
+        )}
+
+        {!filterSomeday && renderSection(
+          "done",
+          "Done",
+          filteredGrouped.done,
+          undefined,
+          false
         )}
       </div>
 
-      {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-background border border-border rounded-full px-4 py-2 shadow-lg flex items-center gap-3">
           <span className="text-sm font-medium">
@@ -1051,17 +1181,6 @@ export function VaultView() {
         </div>
       )}
 
-      {/* Edit modal */}
-      {editingTask && (
-        <TaskEditModal
-          task={editingTask}
-          allTags={tags ?? []}
-          open={true}
-          onClose={() => setEditingTask(null)}
-        />
-      )}
-
-      {/* Delete confirmation modal */}
       <Dialog
         open={deletingTasks.length > 0}
         onOpenChange={(v) => {

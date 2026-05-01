@@ -1,22 +1,19 @@
 "use client";
 
-import { useRef, useCallback, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import {
   GripVertical,
   SlidersHorizontal,
   ArrowUpDown,
   Check,
-  X,
-  CalendarOff,
-  CalendarPlus,
 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { Task, Size } from "@/lib/types";
 import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { patchTask, reorderTasks } from "@/lib/taskMutations";
+import { reorderTasks } from "@/lib/taskMutations";
 import { TaskListSkeleton } from "@/components/focus/TaskListSkeleton";
+import { TaskItem } from "@/components/shared/TaskItem";
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
@@ -32,306 +29,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "goal", label: "Goal" },
   { value: "consequence", label: "Priority" },
 ];
-
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className={className}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-      />
-    </svg>
-  );
-}
-
-/** Long-press check circle that fills up over duration then fires */
-function LongPressCheck({
-  task,
-  onMarkDone,
-  onLongPress,
-}: {
-  task: Task;
-  onMarkDone: (t: Task) => void;
-  onLongPress: (t: Task) => void;
-}) {
-  const [pressing, setPressing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startRef = useRef<number>(0);
-  const firedRef = useRef(false);
-  const DURATION = 750;
-
-  const startPress = useCallback(() => {
-    firedRef.current = false;
-    setPressing(true);
-    setProgress(0);
-    startRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startRef.current;
-      const pct = Math.min(elapsed / DURATION, 1);
-      setProgress(pct);
-      if (pct >= 1) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = null;
-        firedRef.current = true;
-        setPressing(false);
-        setProgress(0);
-        onLongPress(task);
-      }
-    }, 30);
-  }, [task, onLongPress]);
-
-  const endPress = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (!firedRef.current && pressing) {
-      onMarkDone(task);
-    }
-    setPressing(false);
-    setProgress(0);
-  }, [pressing, task, onMarkDone]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        startPress();
-      }}
-      onMouseUp={endPress}
-      onMouseLeave={() => {
-        if (pressing) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          setPressing(false);
-          setProgress(0);
-        }
-      }}
-      onTouchStart={(e) => {
-        e.stopPropagation();
-        startPress();
-      }}
-      onTouchEnd={endPress}
-      className="inline-flex items-center justify-center w-5 h-5 flex-shrink-0 text-muted-foreground group-hover/task:text-green-400 hover:!text-green-400 transition-colors relative"
-    >
-      {pressing ? (
-        <svg viewBox="0 0 24 24" className="h-5 w-5">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            opacity="0.2"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="rgb(74, 222, 128)"
-            strokeWidth="1.5"
-            strokeDasharray={`${progress * 56.55} 56.55`}
-            strokeLinecap="round"
-            transform="rotate(-90 12 12)"
-            style={{ transition: "stroke-dasharray 30ms linear" }}
-          />
-        </svg>
-      ) : (
-        <CheckCircleIcon className="h-5 w-5" />
-      )}
-    </button>
-  );
-}
-
-/** A single task row — used by both Today and In Progress tabs. */
-function TaskRow({
-  task,
-  editingTaskId,
-  setEditingTaskId,
-  saveTaskTitle,
-  onMarkDone,
-  onLongPress,
-  onDeleteTask,
-  onNotTodayTask,
-  onEnterAfterEdit,
-  isLastRow,
-}: {
-  task: Task;
-  editingTaskId: number | null;
-  setEditingTaskId: (id: number | null) => void;
-  saveTaskTitle: (id: number, title: string) => void;
-  onMarkDone: (task: Task) => void;
-  onLongPress: (task: Task) => void;
-  onDeleteTask: (task: Task) => void;
-  onNotTodayTask: (task: Task) => void;
-  onEnterAfterEdit?: () => void;
-  isLastRow?: boolean;
-}) {
-  const isEditing = editingTaskId === (task.id as number);
-
-  return (
-    <>
-      {!isEditing && (
-        <LongPressCheck task={task} onMarkDone={onMarkDone} onLongPress={onLongPress} />
-      )}
-      {isEditing ? (
-        <input
-          type="text"
-          defaultValue={task.title}
-          autoFocus
-          className="flex-1 min-w-0 text-left text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
-          onBlur={(e) => saveTaskTitle(task.id as number, e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              saveTaskTitle(task.id as number, (e.target as HTMLInputElement).value);
-              if (isLastRow && onEnterAfterEdit) onEnterAfterEdit();
-            }
-            if (e.key === "Escape") setEditingTaskId(null);
-          }}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        <div className="flex-1 min-w-0 flex items-center gap-1">
-          <span
-            className="min-w-0 truncate text-left cursor-text"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditingTaskId(task.id as number);
-            }}
-          >
-            {task.title}
-          </span>
-          {task.due_date && (
-            <span className="group/date inline-flex items-center gap-0.5 flex-shrink-0">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
-                    style={{ letterSpacing: "-0.25px" }}
-                    title="Change due date"
-                  >
-                    {`${new Date(task.due_date + "T00:00:00").getMonth() + 1}/${new Date(task.due_date + "T00:00:00").getDate()}`}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start" onClick={(e) => e.stopPropagation()}>
-                  <Calendar
-                    mode="single"
-                    selected={new Date(task.due_date + "T00:00:00")}
-                    onSelect={async (day) => {
-                      const dateStr = day
-                        ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`
-                        : null;
-                      try {
-                        await patchTask(task, { due_date: dateStr });
-                      } catch {
-                        /* helper already toasted */
-                      }
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              <button
-                type="button"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  try {
-                    await patchTask(task, { due_date: null });
-                  } catch {
-                    /* helper already toasted */
-                  }
-                }}
-                className="opacity-0 group-hover/date:opacity-100 transition-opacity inline-flex items-center justify-center h-3 w-3 rounded text-muted-foreground hover:text-destructive"
-                title="Clear due date"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
-          )}
-        </div>
-      )}
-      {!isEditing && (
-        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                title="Set due date"
-              >
-                <CalendarPlus className="h-3 w-3" />
-                <span className="hidden sm:inline">Date</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end" onClick={(e) => e.stopPropagation()}>
-              <Calendar
-                mode="single"
-                selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
-                onSelect={async (day) => {
-                  const dateStr = day
-                    ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`
-                    : null;
-                  try {
-                    await patchTask(task, { due_date: dateStr });
-                  } catch {
-                    /* helper already toasted */
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNotTodayTask(task);
-            }}
-            className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title="Move to someday"
-          >
-            <CalendarOff className="h-3 w-3" />
-            <span className="hidden sm:inline">Not today</span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteTask(task);
-            }}
-            className="inline-flex items-center justify-center h-5 w-5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-            title="Delete task"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-    </>
-  );
-}
 
 /** Today / In Progress tabbed task list. */
 export function TaskListPanel({
@@ -570,12 +267,19 @@ export function TaskListPanel({
                     draggingTaskIdx !== taskIdx && (
                       <div className="h-0.5 bg-ring/60 rounded-full my-0.5" />
                     )}
-                  <div
-                    className={cn(
-                      "flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task",
-                      draggingTaskIdx === taskIdx && "opacity-30"
-                    )}
-                    draggable={editingTaskId !== (task.id as number)}
+                  <TaskItem
+                    task={task}
+                    onMarkDone={onMarkDone}
+                    onLongPress={onInProgressTask}
+                    onDeleteTask={onDeleteTask}
+                    onNotTodayTask={onNotTodayTask}
+                    editingTaskId={editingTaskId}
+                    setEditingTaskId={setEditingTaskId}
+                    saveTaskTitle={saveTaskTitle}
+                    onEnterAfterEdit={onEnterAfterEdit}
+                    isLastRow={taskIdx === sortedTasks.length - 1}
+                    draggable={editingTaskId !== task.id}
+                    isDragging={draggingTaskIdx === taskIdx}
                     onDragStart={(e) => {
                       e.stopPropagation();
                       e.dataTransfer.setData("text/task-reorder", String(taskIdx));
@@ -614,20 +318,7 @@ export function TaskListPanel({
                       setDraggingTaskIdx(null);
                       setTaskDropIdx(null);
                     }}
-                  >
-                    <TaskRow
-                      task={task}
-                      editingTaskId={editingTaskId}
-                      setEditingTaskId={setEditingTaskId}
-                      saveTaskTitle={saveTaskTitle}
-                      onMarkDone={onMarkDone}
-                      onLongPress={onInProgressTask}
-                      onDeleteTask={onDeleteTask}
-                      onNotTodayTask={onNotTodayTask}
-                      onEnterAfterEdit={onEnterAfterEdit}
-                      isLastRow={taskIdx === sortedTasks.length - 1}
-                    />
-                  </div>
+                  />
                 </div>
               ))}
               {taskDropIdx === sortedTasks.length && draggingTaskIdx !== null && (
@@ -646,21 +337,17 @@ export function TaskListPanel({
             </div>
           ) : (
             inProgressTasks.map((task) => (
-              <div
+              <TaskItem
                 key={task.id}
-                className="flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task"
-              >
-                <TaskRow
-                  task={task}
-                  editingTaskId={editingTaskId}
-                  setEditingTaskId={setEditingTaskId}
-                  saveTaskTitle={saveTaskTitle}
-                  onMarkDone={onMarkDone}
-                  onLongPress={onBackToTodayTask}
-                  onDeleteTask={onDeleteTask}
-                  onNotTodayTask={onNotTodayTask}
-                />
-              </div>
+                task={task}
+                onMarkDone={onMarkDone}
+                onLongPress={onBackToTodayTask}
+                onDeleteTask={onDeleteTask}
+                onNotTodayTask={onNotTodayTask}
+                editingTaskId={editingTaskId}
+                setEditingTaskId={setEditingTaskId}
+                saveTaskTitle={saveTaskTitle}
+              />
             ))
           )}
         </div>
