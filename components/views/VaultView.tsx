@@ -26,6 +26,7 @@ import {
 import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
+import { patchTask } from "@/lib/taskMutations";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
 import { mutate } from "swr";
@@ -147,6 +148,7 @@ export function VaultView() {
   // Per-section sort keys
   const [sortKeys, setSortKeys] = useState<Record<string, SortKey>>({
     on_deck: "due_date",
+    upcoming: "due_date",
     someday: "due_date",
     done: "due_date",
   });
@@ -200,9 +202,10 @@ export function VaultView() {
   const [dropIndicator, setDropIndicator] = useState<{ section: string; index: number } | null>(null);
 
   const grouped = useMemo(() => {
-    if (!tasks) return { onDeck: [], someday: [], done: [] };
+    if (!tasks) return { onDeck: [], upcoming: [], someday: [], done: [] };
 
     const onDeck: Task[] = [];
+    const upcoming: Task[] = [];
     const someday: Task[] = [];
     const done: Task[] = [];
 
@@ -211,12 +214,14 @@ export function VaultView() {
         done.push(task);
       } else if (task.destination === "on_deck") {
         onDeck.push(task);
+      } else if (task.destination === "upcoming") {
+        upcoming.push(task);
       } else {
         someday.push(task);
       }
     }
 
-    return { onDeck, someday, done };
+    return { onDeck, upcoming, someday, done };
   }, [tasks]);
 
   // Apply active filters to grouped tasks
@@ -256,6 +261,7 @@ export function VaultView() {
 
     return {
       onDeck: sortTasks(applyFilters(grouped.onDeck), sortKeys.on_deck),
+      upcoming: sortTasks(applyFilters(grouped.upcoming), sortKeys.upcoming),
       someday: sortTasks(applyFilters(grouped.someday), sortKeys.someday),
       done: sortTasks(applyFilters(grouped.done), sortKeys.done),
     };
@@ -265,6 +271,7 @@ export function VaultView() {
   const taskSectionMap = useMemo(() => {
     const map = new Map<number, string>();
     for (const t of filteredGrouped.onDeck) map.set(t.id, "on_deck");
+    for (const t of filteredGrouped.upcoming) map.set(t.id, "upcoming");
     for (const t of filteredGrouped.someday) map.set(t.id, "someday");
     for (const t of filteredGrouped.done) map.set(t.id, "done");
     return map;
@@ -272,7 +279,7 @@ export function VaultView() {
 
   // Flat ordered list for shift-range selection (uses filtered data)
   const allTasksOrdered = useMemo(() => {
-    return [...filteredGrouped.onDeck, ...filteredGrouped.someday, ...filteredGrouped.done];
+    return [...filteredGrouped.onDeck, ...filteredGrouped.upcoming, ...filteredGrouped.someday, ...filteredGrouped.done];
   }, [filteredGrouped]);
 
   function handleReviewSomeday() {
@@ -434,7 +441,7 @@ export function VaultView() {
 
     if (isSameSection && savedIndicator) {
       // Same-section reorder
-      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "done" ? "done" : "someday";
+      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "upcoming" ? "upcoming" : targetSection === "done" ? "done" : "someday";
       const sectionTasks = filteredGrouped[sectionKey as keyof typeof filteredGrouped];
       const draggedSet = new Set(taskIds);
 
@@ -476,6 +483,11 @@ export function VaultView() {
       ) {
         return { destination: "on_deck", status: "active" };
       } else if (
+        targetSection === "upcoming" &&
+        (task.destination !== "upcoming" || task.status === "done")
+      ) {
+        return { destination: "upcoming", status: "active" };
+      } else if (
         targetSection === "someday" &&
         (task.destination !== "someday" || task.status === "done")
       ) {
@@ -486,38 +498,27 @@ export function VaultView() {
       return null;
     }
 
-    const updates: Promise<Response>[] = [];
+    const movedTasks: Task[] = [];
     for (const id of taskIds) {
       const task = tasks?.find((t) => t.id === id);
       if (!task) continue;
       const body = getBody(task);
       if (!body) continue;
-      updates.push(
-        fetch(`/api/tasks/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        })
-      );
+      movedTasks.push(task);
+      patchTask(task, body);
     }
 
-    if (updates.length === 0) return;
-
-    await Promise.all(updates);
-
-    mutate(
-      (key: unknown) =>
-        typeof key === "string" && key.startsWith("/api/tasks")
-    );
+    if (movedTasks.length === 0) return;
 
     setSelectedIds(new Set());
 
     const sectionNames: Record<string, string> = {
       on_deck: "Today",
+      upcoming: "Upcoming",
       someday: "Someday",
       done: "Done",
     };
-    const count = updates.length;
+    const count = movedTasks.length;
     toast.success(
       count === 1
         ? `Moved to ${sectionNames[targetSection]}`
@@ -995,6 +996,24 @@ export function VaultView() {
               headerExtra={renderSortDropdown("on_deck")}
             >
               <TaskList tasks={filteredGrouped.onDeck} {...taskListProps} section="on_deck" dropIndicatorIndex={dropIndicator?.section === "on_deck" ? dropIndicator.index : null} />
+            </VaultSection>
+          </div>
+        )}
+
+        {!filterSomeday && (
+          <div
+            onDragOver={(e) => handleDragOver(e, "upcoming")}
+            onDragLeave={(e) => handleDragLeave(e)}
+            onDrop={(e) => handleDrop(e, "upcoming")}
+            className={`transition-all ${dragOverSection === "upcoming" ? dropHighlight : ""}`}
+          >
+            <VaultSection
+              title="Upcoming"
+              count={filteredGrouped.upcoming.length}
+              defaultOpen={true}
+              headerExtra={renderSortDropdown("upcoming")}
+            >
+              <TaskList tasks={filteredGrouped.upcoming} {...taskListProps} section="upcoming" dropIndicatorIndex={dropIndicator?.section === "upcoming" ? dropIndicator.index : null} />
             </VaultSection>
           </div>
         )}

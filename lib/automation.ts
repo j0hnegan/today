@@ -19,7 +19,7 @@ async function promoteDueTodayTasks(supabase: SupabaseClient): Promise<{ count: 
   const { data: dueToday } = await supabase
     .from("tasks")
     .select("id, title")
-    .eq("destination", "someday")
+    .in("destination", ["someday", "upcoming"])
     .eq("status", "active")
     .not("due_date", "is", null)
     .lte("due_date", today);

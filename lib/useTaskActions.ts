@@ -6,6 +6,7 @@ import {
   moveToInProgress,
   moveToToday,
   moveToSomeday,
+  moveToUpcoming,
   patchTask,
 } from "@/lib/taskMutations";
 import type { Task } from "@/lib/types";
@@ -49,6 +50,14 @@ export function useTaskActions(allTasks: Task[]) {
     }
   }, []);
 
+  const onUpcomingTask = useCallback(async (task: Task) => {
+    try {
+      await moveToUpcoming(task);
+    } catch {
+      /* helper already toasted */
+    }
+  }, []);
+
   const saveTaskTitle = useCallback(
     async (taskId: number, newTitle: string) => {
       const trimmed = newTitle.trim();
@@ -70,6 +79,7 @@ export function useTaskActions(allTasks: Task[]) {
     onInProgressTask,
     onBackToTodayTask,
     onNotTodayTask,
+    onUpcomingTask,
     saveTaskTitle,
   };
 }

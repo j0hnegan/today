@@ -1,6 +1,6 @@
 export type View = "focus" | "vault" | "tags" | "docs";
 
-export type Destination = "on_deck" | "someday" | "in_progress";
+export type Destination = "on_deck" | "someday" | "in_progress" | "upcoming";
 export type Consequence = "none" | "soft" | "hard";
 export type Size = "xs" | "small" | "medium" | "large";
 export type TaskStatus = "active" | "done";

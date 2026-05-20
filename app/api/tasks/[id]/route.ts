@@ -51,14 +51,14 @@ export async function PATCH(
       }
     }
 
-    // Auto-triage: enforce due-today rule when due_date changes
     if ("due_date" in fields) {
       const { data: current } = await supabase.from("tasks").select("destination, due_date, status").eq("id", id).single();
       if (current && current.status !== "done" && current.due_date) {
         const shouldBeToday = isDueToday(current.due_date);
-        const correctDest = shouldBeToday ? "on_deck" : "someday";
-        if (current.destination !== correctDest) {
-          await supabase.from("tasks").update({ destination: correctDest }).eq("id", id);
+        if (shouldBeToday && current.destination !== "on_deck") {
+          await supabase.from("tasks").update({ destination: "on_deck" }).eq("id", id);
+        } else if (!shouldBeToday && current.destination === "on_deck") {
+          await supabase.from("tasks").update({ destination: "someday" }).eq("id", id);
         }
       }
     }

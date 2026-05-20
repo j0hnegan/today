@@ -85,15 +85,16 @@ export async function POST(request: NextRequest) {
   } = parsed;
 
   try {
-    // Auto-triage: due today or past → Today, otherwise → Someday
     let destination: string;
     if (due_date && isDueToday(due_date)) {
       destination = "on_deck";
-    } else if (due_date && !isDueToday(due_date)) {
-      destination = "someday";
+    } else if (due_date) {
+      destination = reqDestination === "upcoming" ? "upcoming" : "someday";
     } else {
-      // No due date — respect user's choice, default someday
-      destination = reqDestination === "on_deck" ? "on_deck" : "someday";
+      destination =
+        reqDestination === "on_deck" ? "on_deck" :
+        reqDestination === "upcoming" ? "upcoming" :
+        "someday";
     }
 
     const { data: task, error } = await supabase

@@ -4,6 +4,7 @@ import type { Task, Destination, Size } from "./types";
 
 const TODAY_KEY = "/api/tasks?destination=on_deck&status=active";
 const IN_PROGRESS_KEY = "/api/tasks?destination=in_progress&status=active";
+const UPCOMING_KEY = "/api/tasks?destination=upcoming&status=active";
 const SOMEDAY_KEY = "/api/tasks?destination=someday&status=active";
 // Vault uses the unfiltered /api/tasks endpoint and groups locally by status
 // + destination. Every mutation that touches a per-filter list also has to
@@ -14,6 +15,7 @@ const ALL_KEY = "/api/tasks";
 function keyForDestination(dest: Destination): string {
   if (dest === "on_deck") return TODAY_KEY;
   if (dest === "in_progress") return IN_PROGRESS_KEY;
+  if (dest === "upcoming") return UPCOMING_KEY;
   return SOMEDAY_KEY;
 }
 
@@ -169,6 +171,10 @@ export async function moveToToday(task: Task): Promise<void> {
 
 export async function moveToSomeday(task: Task): Promise<void> {
   await patchTask(task, { destination: "someday", due_date: null, consequence: "none" });
+}
+
+export async function moveToUpcoming(task: Task): Promise<void> {
+  await patchTask(task, { destination: "upcoming" });
 }
 
 export async function deleteTask(task: Task): Promise<void> {

@@ -10,7 +10,7 @@ const positiveInt = z.number().int().positive();
 
 const tagIds = z.array(positiveInt).max(50);
 
-export const destinationEnum = z.enum(["on_deck", "someday", "in_progress"]);
+export const destinationEnum = z.enum(["on_deck", "someday", "in_progress", "upcoming"]);
 export const consequenceEnum = z.enum(["none", "soft", "hard"]);
 export const sizeEnum = z.enum(["xs", "small", "medium", "large"]);
 export const taskStatusEnum = z.enum(["active", "done"]);
