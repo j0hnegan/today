@@ -31,7 +31,7 @@ import { useAttachments } from "@/lib/hooks";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { normalizeConsequence } from "@/lib/types";
-import type { Task, Tag, Consequence, Size } from "@/lib/types";
+import type { Task, Tag, Consequence, Size, Destination } from "@/lib/types";
 
 interface TaskEditModalProps {
   task: Task;
@@ -63,6 +63,7 @@ export function TaskEditModal({
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
     task.tags?.map((t) => t.id) ?? []
   );
+  const [destination, setDestination] = useState<Destination>(task.destination);
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -78,10 +79,11 @@ export function TaskEditModal({
       description !== (task.description || "") ||
       consequence !== normalizeConsequence(task.consequence) ||
       size !== task.size ||
+      destination !== task.destination ||
       currentDue !== initialDue ||
       currentTagIds !== initialTagIds
     );
-  }, [title, description, consequence, size, dueDate, selectedTagIds, task]);
+  }, [title, description, consequence, size, destination, dueDate, selectedTagIds, task]);
 
   function refreshAll() {
     mutate(
@@ -104,6 +106,7 @@ export function TaskEditModal({
           description,
           consequence,
           size,
+          destination,
           due_date: dueDate ? dueDate.toISOString().split("T")[0] : null,
           tag_ids: selectedTagIds,
         }),
@@ -161,7 +164,26 @@ export function TaskEditModal({
             rows={2}
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-mono">
+                Section
+              </label>
+              <Select
+                value={destination}
+                onValueChange={(v) => setDestination(v as Destination)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="on_deck">Today</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="someday">Someday</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-mono">
                 Due date

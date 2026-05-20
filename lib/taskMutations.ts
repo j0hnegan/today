@@ -193,9 +193,11 @@ export async function deleteTask(task: Task): Promise<void> {
   }
 }
 
-export async function reorderTasks(orderedIds: number[]): Promise<void> {
+export async function reorderTasks(orderedIds: number[], destination?: Destination): Promise<void> {
+  const cacheKey = destination ? keyForDestination(destination) : TODAY_KEY;
+
   mutate(
-    TODAY_KEY,
+    cacheKey,
     (curr: Task[] | undefined) => {
       if (!curr) return curr;
       const byId = new Map(curr.map((t) => [t.id, t]));
@@ -204,12 +206,22 @@ export async function reorderTasks(orderedIds: number[]): Promise<void> {
         const t = byId.get(id);
         if (t) next.push(t);
       }
-      // Append any that weren't in the order list (shouldn't happen)
       for (const t of curr) if (!orderedIds.includes(t.id)) next.push(t);
       return next;
     },
     { revalidate: false }
   );
+
+  mirrorAll((curr) => {
+    if (!curr) return [];
+    const orderMap = new Map(orderedIds.map((id, i) => [id, i]));
+    return [...curr].sort((a, b) => {
+      const ai = orderMap.get(a.id);
+      const bi = orderMap.get(b.id);
+      if (ai !== undefined && bi !== undefined) return ai - bi;
+      return 0;
+    });
+  });
 
   try {
     const res = await fetch("/api/tasks/reorder", {

@@ -372,6 +372,42 @@ export function TaskListPanel({
   useEffect(() => {
     taskDropRef.current = taskDropIdx;
   }, [taskDropIdx]);
+
+  useEffect(() => {
+    if (draggingTaskIdx === null) return;
+    const scrollEl = document.querySelector("main");
+    if (!scrollEl) return;
+
+    const EDGE_ZONE = 80;
+    const MAX_SPEED = 18;
+    let mouseY = 0;
+    let raf = 0;
+
+    function onDragOver(e: DragEvent) {
+      mouseY = e.clientY;
+    }
+
+    function tick() {
+      const rect = scrollEl!.getBoundingClientRect();
+      const distFromTop = mouseY - rect.top;
+      const distFromBottom = rect.bottom - mouseY;
+
+      if (distFromTop < EDGE_ZONE && distFromTop > 0) {
+        scrollEl!.scrollTop -= MAX_SPEED * (1 - distFromTop / EDGE_ZONE);
+      } else if (distFromBottom < EDGE_ZONE && distFromBottom > 0) {
+        scrollEl!.scrollTop += MAX_SPEED * (1 - distFromBottom / EDGE_ZONE);
+      }
+
+      raf = requestAnimationFrame(tick);
+    }
+
+    document.addEventListener("dragover", onDragOver);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      document.removeEventListener("dragover", onDragOver);
+      cancelAnimationFrame(raf);
+    };
+  }, [draggingTaskIdx]);
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
 

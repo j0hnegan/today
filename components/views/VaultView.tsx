@@ -26,13 +26,13 @@ import {
 import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
-import { patchTask } from "@/lib/taskMutations";
+import { patchTask, reorderTasks } from "@/lib/taskMutations";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { normalizeConsequence } from "@/lib/types";
-import type { Task, Size } from "@/lib/types";
+import type { Task, Size, Destination } from "@/lib/types";
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
 
@@ -410,6 +410,44 @@ export function VaultView() {
     setDropIndicator(null);
   }
 
+  useEffect(() => {
+    if (!draggingTaskId) return;
+    const scrollEl = document.querySelector("main");
+    if (!scrollEl) return;
+
+    const EDGE_ZONE = 80;
+    const MAX_SPEED = 18;
+    let mouseY = 0;
+    let raf = 0;
+
+    function onDragOver(e: DragEvent) {
+      mouseY = e.clientY;
+    }
+
+    function tick() {
+      const rect = scrollEl!.getBoundingClientRect();
+      const distFromTop = mouseY - rect.top;
+      const distFromBottom = rect.bottom - mouseY;
+
+      if (distFromTop < EDGE_ZONE && distFromTop > 0) {
+        const speed = MAX_SPEED * (1 - distFromTop / EDGE_ZONE);
+        scrollEl!.scrollTop -= speed;
+      } else if (distFromBottom < EDGE_ZONE && distFromBottom > 0) {
+        const speed = MAX_SPEED * (1 - distFromBottom / EDGE_ZONE);
+        scrollEl!.scrollTop += speed;
+      }
+
+      raf = requestAnimationFrame(tick);
+    }
+
+    document.addEventListener("dragover", onDragOver);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      document.removeEventListener("dragover", onDragOver);
+      cancelAnimationFrame(raf);
+    };
+  }, [draggingTaskId]);
+
   const handleRowDragOver = useCallback(
     (section: string, index: number) => {
       setDropIndicator((prev) => {
@@ -461,17 +499,7 @@ export function VaultView() {
       newOrder.splice(insertAt, 0, ...dragged);
 
       const newOrderIds = newOrder.map((t) => t.id);
-
-      await fetch("/api/tasks/reorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task_ids: newOrderIds }),
-      });
-
-      mutate(
-        (key: unknown) =>
-          typeof key === "string" && key.startsWith("/api/tasks")
-      );
+      reorderTasks(newOrderIds, targetSection as Destination);
       return;
     }
 
