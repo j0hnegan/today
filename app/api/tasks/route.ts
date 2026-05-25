@@ -97,21 +97,22 @@ export async function POST(request: NextRequest) {
         "someday";
     }
 
-    const { data: task, error } = await supabase
-      .from("tasks")
-      .insert({
-        title,
-        description,
-        destination,
-        consequence,
-        size,
-        due_date,
-      })
-      .select()
-      .single();
-    if (error) throw error;
+    // Run tag lookup and task insert in parallel
+    const [tagResult, taskResult] = await Promise.all([
+      tag_ids.length > 0
+        ? supabase.from("categories").select("id, name, color").in("id", tag_ids)
+        : Promise.resolve({ data: [] as { id: number; name: string; color: string }[], error: null }),
+      supabase
+        .from("tasks")
+        .insert({ title, description, destination, consequence, size, due_date })
+        .select()
+        .single(),
+    ]);
+    if (taskResult.error) throw taskResult.error;
+    if (tagResult.error) throw tagResult.error;
+    const task = taskResult.data;
 
-    // Insert tag associations
+    // Insert tag associations (needs task.id, so must be sequential)
     if (tag_ids.length > 0) {
       const tagRows = tag_ids.map((tagId: number) => ({
         task_id: task.id,
@@ -121,15 +122,7 @@ export async function POST(request: NextRequest) {
       if (tagError) throw tagError;
     }
 
-    // Fetch tags for response
-    const { data: tags } = await supabase
-      .from("task_categories")
-      .select("categories(id, name, color)")
-      .eq("task_id", task.id);
-
-    const formattedTags = (tags || []).map((t) => t.categories as unknown as { id: number; name: string; color: string });
-
-    return NextResponse.json({ ...task, tags: formattedTags }, { status: 201 });
+    return NextResponse.json({ ...task, tags: tagResult.data ?? [] }, { status: 201 });
   } catch (e) {
     console.error("POST /api/tasks error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

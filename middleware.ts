@@ -19,6 +19,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // Bot/cron Bearer-token paths handle auth in the route via requireAuth().
+  // Skip the cookie-session check so the Authorization header reaches the handler.
+  if (
+    request.nextUrl.pathname.startsWith("/api/discord/") ||
+    request.nextUrl.pathname.startsWith("/api/cron/") ||
+    request.nextUrl.pathname.startsWith("/api/mcp/")
+  ) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -45,6 +55,18 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Pass user ID to API routes so requireAuth() can skip the second getUser() call
+  if (user) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-hush-user-id", user.id);
+    const newResponse = NextResponse.next({ request: { headers: requestHeaders } });
+    // Carry over any cookies Supabase set during token refresh
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      newResponse.cookies.set(cookie.name, cookie.value);
+    });
+    supabaseResponse = newResponse;
+  }
 
   // Not logged in and not on login page → redirect to login (or 401 for API)
   if (!user && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {

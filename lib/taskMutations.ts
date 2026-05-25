@@ -1,6 +1,7 @@
 import { mutate } from "swr";
 import { toast } from "sonner";
-import type { Task, Destination, Size } from "./types";
+import { isDueToday } from "./triage";
+import type { Task, Tag, Destination, Consequence, Size } from "./types";
 
 const TODAY_KEY = "/api/tasks?destination=on_deck&status=active";
 const IN_PROGRESS_KEY = "/api/tasks?destination=in_progress&status=active";
@@ -53,30 +54,45 @@ function replace(list: Task[] | undefined, task: Task): Task[] {
 
 export async function createTask(input: {
   title: string;
-  destination: Destination;
+  destination?: Destination;
   size?: Size;
+  description?: string;
+  consequence?: Consequence;
+  due_date?: string | null;
+  tag_ids?: number[];
+  tags?: Tag[];
 }): Promise<Task> {
+  // Replicate server-side auto-triage so the optimistic task lands in the right list
+  let destination: Destination;
+  if (input.due_date && isDueToday(input.due_date)) {
+    destination = "on_deck";
+  } else if (input.due_date) {
+    destination = input.destination === "upcoming" ? "upcoming" : "someday";
+  } else {
+    destination = input.destination ?? "someday";
+  }
+
   const tempId = -Date.now();
   const now = new Date().toISOString();
   const optimistic: Task = {
     id: tempId,
     title: input.title,
-    description: "",
-    destination: input.destination,
-    consequence: "none",
+    description: input.description ?? "",
+    destination,
+    consequence: input.consequence ?? "none",
     size: input.size ?? "small",
     status: "active",
-    due_date: null,
+    due_date: input.due_date ?? null,
     snoozed_until: null,
     snooze_reason: null,
     done_at: null,
     sort_order: 0,
     created_at: now,
     updated_at: now,
-    tags: [],
+    tags: input.tags ?? [],
   };
 
-  const key = keyForDestination(input.destination);
+  const key = keyForDestination(destination);
   mutate(key, (curr: Task[] | undefined) => append(curr, optimistic), { revalidate: false });
   mirrorAll((curr) => append(curr, optimistic));
 
@@ -84,7 +100,15 @@ export async function createTask(input: {
     const res = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: input.title, destination: input.destination, size: input.size ?? "small" }),
+      body: JSON.stringify({
+        title: input.title,
+        destination: input.destination ?? "someday",
+        size: input.size ?? "small",
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.consequence ? { consequence: input.consequence } : {}),
+        ...(input.due_date !== undefined ? { due_date: input.due_date } : {}),
+        ...(input.tag_ids?.length ? { tag_ids: input.tag_ids } : {}),
+      }),
     });
     if (!res.ok) throw new Error();
     const real: Task = await res.json();

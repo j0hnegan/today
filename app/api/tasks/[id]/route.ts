@@ -23,11 +23,6 @@ export async function PATCH(
   const tagIds = parsedTagIds ?? category_ids;
 
   try {
-    const { data: existing } = await supabase.from("tasks").select("*").eq("id", id).single();
-    if (!existing) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
-
     const updates: Record<string, unknown> = { ...fields };
 
     // Auto-set done_at when marking as done
@@ -35,43 +30,62 @@ export async function PATCH(
       updates.done_at = new Date().toISOString();
     }
 
+    // Update task and get the result in one call (replaces separate SELECT + UPDATE)
     if (Object.keys(updates).length > 0) {
       updates.updated_at = new Date().toISOString();
-      const { error } = await supabase.from("tasks").update(updates).eq("id", id);
-      if (error) throw error;
+    }
+    const { data: task, error: updateError } = Object.keys(updates).length > 0
+      ? await supabase.from("tasks").update(updates).eq("id", id).select().single()
+      : await supabase.from("tasks").select("*").eq("id", id).single();
+    if (updateError || !task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    // Re-link categories if provided
-    if (tagIds) {
-      await supabase.from("task_categories").delete().eq("task_id", id);
-      if (tagIds.length > 0) {
-        const rows = tagIds.map((catId: number) => ({ task_id: id, category_id: catId }));
-        const { error } = await supabase.from("task_categories").insert(rows);
-        if (error) throw error;
+    // Re-link categories if provided, and fetch tag details in parallel
+    const [, tagResult] = await Promise.all([
+      tagIds
+        ? (async () => {
+            await supabase.from("task_categories").delete().eq("task_id", id);
+            if (tagIds.length > 0) {
+              const rows = tagIds.map((catId: number) => ({ task_id: id, category_id: catId }));
+              const { error } = await supabase.from("task_categories").insert(rows);
+              if (error) throw error;
+            }
+          })()
+        : Promise.resolve(),
+      tagIds
+        ? tagIds.length > 0
+          ? supabase.from("categories").select("id, name, color").in("id", tagIds)
+          : Promise.resolve({ data: [] as { id: number; name: string; color: string }[], error: null })
+        : supabase
+            .from("task_categories")
+            .select("categories(id, name, color)")
+            .eq("task_id", id),
+    ]);
+
+    // Auto-triage: compute in-memory from the updated row instead of re-fetching
+    let finalTask = task;
+    if ("due_date" in fields && task.status !== "done" && task.due_date) {
+      const shouldBeToday = isDueToday(task.due_date);
+      if (shouldBeToday && task.destination !== "on_deck") {
+        const { data: triaged } = await supabase
+          .from("tasks").update({ destination: "on_deck" }).eq("id", id).select().single();
+        if (triaged) finalTask = triaged;
+      } else if (!shouldBeToday && task.destination === "on_deck") {
+        const { data: triaged } = await supabase
+          .from("tasks").update({ destination: "someday" }).eq("id", id).select().single();
+        if (triaged) finalTask = triaged;
       }
     }
 
-    if ("due_date" in fields) {
-      const { data: current } = await supabase.from("tasks").select("destination, due_date, status").eq("id", id).single();
-      if (current && current.status !== "done" && current.due_date) {
-        const shouldBeToday = isDueToday(current.due_date);
-        if (shouldBeToday && current.destination !== "on_deck") {
-          await supabase.from("tasks").update({ destination: "on_deck" }).eq("id", id);
-        } else if (!shouldBeToday && current.destination === "on_deck") {
-          await supabase.from("tasks").update({ destination: "someday" }).eq("id", id);
-        }
-      }
-    }
+    // Build tags from the result — different shape depending on whether tagIds was provided
+    const formattedTags = tagIds
+      ? (tagResult?.data ?? []) as { id: number; name: string; color: string }[]
+      : ((tagResult?.data ?? []) as { categories: unknown }[]).map(
+          (t) => t.categories as { id: number; name: string; color: string }
+        );
 
-    const { data: task } = await supabase.from("tasks").select("*").eq("id", id).single();
-    const { data: tags } = await supabase
-      .from("task_categories")
-      .select("categories(id, name, color)")
-      .eq("task_id", id);
-
-    const formattedTags = (tags || []).map((t) => t.categories as unknown as { id: number; name: string; color: string });
-
-    return NextResponse.json({ ...task, tags: formattedTags });
+    return NextResponse.json({ ...finalTask, tags: formattedTags });
   } catch (e) {
     console.error("PATCH /api/tasks/[id] error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -90,13 +104,11 @@ export async function DELETE(
   if (id instanceof NextResponse) return id;
 
   try {
-    const { data: existing } = await supabase.from("tasks").select("id").eq("id", id).single();
-    if (!existing) {
+    const { data, error } = await supabase
+      .from("tasks").delete().eq("id", id).select("id").single();
+    if (error || !data) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
-    if (error) throw error;
 
     return new NextResponse(null, { status: 204 });
   } catch (e) {

@@ -28,8 +28,8 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { TagInput } from "@/components/shared/TagInput";
 import { useTags } from "@/lib/hooks";
+import { createTask } from "@/lib/taskMutations";
 import { toast } from "sonner";
-import { mutate } from "swr";
 import type { Consequence, Size } from "@/lib/types";
 
 export function QuickAddModal() {
@@ -40,7 +40,6 @@ export function QuickAddModal() {
   const [size, setSize] = useState<Size | "">("");
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [saving, setSaving] = useState(false);
   const [multiAdd, setMultiAdd] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [destination, setDestination] = useState<string | null>(null);
@@ -62,7 +61,6 @@ export function QuickAddModal() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setSaving(false);
         setOpen(true);
       }
     }
@@ -103,42 +101,35 @@ export function QuickAddModal() {
     e.preventDefault();
     if (!title.trim()) return;
 
-    setSaving(true);
-    try {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description,
-          consequence,
-          ...(size ? { size } : {}),
-          due_date: dueDate ? dueDate.toISOString().split("T")[0] : null,
-          tag_ids: selectedTagIds,
-          ...(destination ? { destination } : {}),
-        }),
-      });
+    // Resolve tag objects for optimistic display
+    const resolvedTags = selectedTagIds
+      .map((id) => (tags ?? []).find((t) => t.id === id))
+      .filter(Boolean) as { id: number; name: string; color: string }[];
 
-      if (!res.ok) throw new Error("Failed to create task");
+    const dueDateStr = dueDate ? dueDate.toISOString().split("T")[0] : null;
 
-      toast.success("Task added");
-      mutate(
-        (key: unknown) =>
-          typeof key === "string" && key.startsWith("/api/tasks")
-      );
-
-      if (multiAdd) {
-        resetForMultiAdd();
-        setSaving(false);
-      } else {
-        reset();
-        setOpen(false);
-        // Don't setSaving(false) — modal is closing, avoids flicker
-      }
-    } catch {
-      toast.error("Failed to add task");
-      setSaving(false);
+    // Close modal / reset immediately — createTask handles optimistic updates
+    toast.success("Task added");
+    if (multiAdd) {
+      resetForMultiAdd();
+    } else {
+      reset();
+      setOpen(false);
     }
+
+    // Fire-and-forget — optimistic update already shows the task in the list
+    createTask({
+      title: title.trim(),
+      description: description || undefined,
+      consequence: consequence !== "none" ? consequence : undefined,
+      ...(size ? { size: size as Size } : {}),
+      due_date: dueDateStr,
+      tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+      tags: resolvedTags.length > 0 ? resolvedTags : undefined,
+      ...(destination ? { destination: destination as "on_deck" | "someday" | "upcoming" } : {}),
+    }).catch(() => {
+      // createTask already handles rollback + error toast
+    });
   }
 
   return (
@@ -148,7 +139,6 @@ export function QuickAddModal() {
         setOpen(v);
         if (!v) {
           reset();
-          setSaving(false);
         }
       }}
     >
@@ -287,8 +277,8 @@ export function QuickAddModal() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={!title.trim() || saving}>
-                {saving ? "Adding..." : "Add Task"}
+              <Button type="submit" disabled={!title.trim()}>
+                Add Task
               </Button>
             </div>
           </div>
