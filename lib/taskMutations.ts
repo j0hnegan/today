@@ -69,7 +69,7 @@ export async function createTask(input: {
   } else if (input.due_date) {
     destination = input.destination === "upcoming" ? "upcoming" : "someday";
   } else {
-    destination = input.destination ?? "someday";
+    destination = input.destination ?? "on_deck";
   }
 
   const tempId = -Date.now();
@@ -102,7 +102,7 @@ export async function createTask(input: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: input.title,
-        destination: input.destination ?? "someday",
+        destination: input.destination ?? "on_deck",
         size: input.size ?? "small",
         ...(input.description ? { description: input.description } : {}),
         ...(input.consequence ? { consequence: input.consequence } : {}),

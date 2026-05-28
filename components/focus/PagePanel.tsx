@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import { useNote, useTasks, useTags, useGoals, useCategories, useDatesWithContent } from "@/lib/hooks";
-import { TaskEditModal } from "@/components/vault/TaskEditModal";
-import { BlockEditor } from "@/components/focus/BlockEditor";
-import { htmlToBlocks, blocksToHtml, createBlock, padBlocks, stripTrailingEmpty } from "@/lib/blocks";
+import { useRef, useCallback, useState, useMemo } from "react";
+import { useNote, useDatesWithContent } from "@/lib/hooks";
+import { NoteEditor } from "@/components/focus/NoteEditor";
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,18 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { markTaskDone } from "@/lib/done-toast";
-import {
-  createTask,
-  deleteTask,
-  moveToInProgress,
-  moveToToday,
-  moveToSomeday,
-} from "@/lib/taskMutations";
 import { toast } from "sonner";
-import type { Task, Block } from "@/lib/types";
-
-const DEBOUNCE_MS = 500;
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -44,16 +31,8 @@ function formatDateHeader(d: Date): string {
 }
 
 export function PagePanel() {
-  const { data: tasks } = useTasks({ destination: "on_deck", status: "active" });
-  const { data: inProgressTasks } = useTasks({ destination: "in_progress", status: "active" });
-  const { data: tags } = useTags();
-  const { data: goals } = useGoals();
-  const { data: categories } = useCategories();
   const attachInputRef = useRef<HTMLInputElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadedDateRef = useRef<string>("");
   const [uploading, setUploading] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Date navigation
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
@@ -77,80 +56,8 @@ export function PagePanel() {
 
   const isToday = useMemo(() => toDateStr(selectedDate) === toDateStr(new Date()), [selectedDate]);
 
-  // Block state — pre-filled with lines
-  const [blocks, setBlocks] = useState<Block[]>(() => padBlocks([createBlock("task-list")]));
-  const blocksInitialized = useRef(false);
-
-  // Load blocks when note data arrives
-  useEffect(() => {
-    if (note === undefined) return;
-    if (loadedDateRef.current === dateStr && blocksInitialized.current) return;
-    loadedDateRef.current = dateStr;
-    blocksInitialized.current = true;
-
-    let newBlocks: Block[];
-    if (note?.blocks && Array.isArray(note.blocks) && note.blocks.length > 0) {
-      newBlocks = note.blocks;
-    } else if (note?.content) {
-      newBlocks = htmlToBlocks(note.content);
-    } else {
-      newBlocks = [];
-    }
-
-    // Ensure task-list block exists
-    if (!newBlocks.some((b) => b.type === "task-list")) {
-      newBlocks = [createBlock("task-list"), ...newBlocks];
-    }
-
-    // Pad with empty lines to fill the panel
-    setBlocks(padBlocks(newBlocks));
-  }, [note, dateStr]);
-
-  // Reset init flag when date changes
-  useEffect(() => {
-    blocksInitialized.current = false;
-  }, [dateStr]);
-
-  // Save blocks with debounce
-  const saveBlocks = useCallback(
-    async (newBlocks: Block[]) => {
-      const trimmed = stripTrailingEmpty(newBlocks);
-      const content = blocksToHtml(trimmed);
-      await fetch("/api/notes", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: dateStr, content, blocks: trimmed }),
-      });
-      mutateNote();
-    },
-    [dateStr, mutateNote]
-  );
-
-  const handleBlocksChange = useCallback(
-    (newBlocks: Block[]) => {
-      setBlocks(newBlocks);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => saveBlocks(newBlocks), DEBOUNCE_MS);
-    },
-    [saveBlocks]
-  );
-
-  // Cleanup timeout
-  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
-
-  // Flush save
-  function flushPendingSave() {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-      saveBlocks(blocks);
-    }
-  }
-
   // Date navigation — smart skip past days
   function navigateDate(delta: number) {
-    flushPendingSave();
-    loadedDateRef.current = "";
     const todayStr = toDateStr(new Date());
     setSelectedDate((prev) => {
       const currentStr = toDateStr(prev);
@@ -178,59 +85,7 @@ export function PagePanel() {
   }
 
   function goToToday() {
-    flushPendingSave();
-    loadedDateRef.current = "";
     setSelectedDate(new Date());
-  }
-
-  // Task actions — optimistic updates via taskMutations helpers
-  async function handleMarkDone(task: Task) {
-    await markTaskDone(task);
-  }
-
-  async function handleDeleteTask(task: Task) {
-    try {
-      await deleteTask(task);
-      toast.success("Task deleted");
-    } catch {
-      /* helper already toasted */
-    }
-  }
-
-  async function handleInProgressTask(task: Task) {
-    try {
-      await moveToInProgress(task);
-    } catch {
-      /* helper already toasted */
-    }
-  }
-
-  async function handleBackToTodayTask(task: Task) {
-    try {
-      await moveToToday(task);
-    } catch {
-      /* helper already toasted */
-    }
-  }
-
-  async function handleNotTodayTask(task: Task) {
-    try {
-      await moveToSomeday(task);
-    } catch {
-      /* helper already toasted */
-    }
-  }
-
-  async function handleCreateTask(title: string) {
-    // Ensure task-list block exists (synchronous — runs immediately)
-    if (!blocks.some((b) => b.type === "task-list")) {
-      handleBlocksChange([createBlock("task-list"), ...blocks]);
-    }
-    try {
-      await createTask({ title, destination: "on_deck", size: "small" });
-    } catch {
-      /* helper already toasted */
-    }
   }
 
   // File upload
@@ -260,24 +115,8 @@ export function PagePanel() {
     [note?.id, mutateNote]
   );
 
-  // Today tasks sorted by ID (older first)
-  // Show all on-deck tasks for today and future dates; only matching tasks for past dates
-  const todayTasks = useMemo(() => {
-    if (!tasks) return [];
-    const todayStr = toDateStr(new Date());
-    let filtered: Task[];
-    if (dateStr >= todayStr) {
-      // Today or future: show all on-deck tasks
-      filtered = [...tasks];
-    } else {
-      // Past: only tasks due on that specific date
-      filtered = tasks.filter((t) => t.due_date === dateStr);
-    }
-    return filtered.sort((a, b) => a.created_at.localeCompare(b.created_at));
-  }, [tasks, dateStr]);
-
   return (
-    <div className="px-6 pt-[80px] pb-6 h-full flex flex-col overflow-y-auto w-full xl:max-w-[75%]">
+    <div className="px-6 pt-[80px] pb-6 h-full flex flex-col overflow-y-auto w-full">
       {/* Date header row */}
       <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
         <h1 className="text-lg font-semibold tracking-tight">
@@ -334,7 +173,7 @@ export function PagePanel() {
                   hasContent: "has-content-dot",
                 }}
                 onSelect={(day) => {
-                  if (day) { flushPendingSave(); loadedDateRef.current = ""; setSelectedDate(day); }
+                  if (day) setSelectedDate(day);
                   setDatePickerOpen(false);
                 }}
               />
@@ -351,24 +190,13 @@ export function PagePanel() {
         </div>
       </div>
 
-      {/* Block editor panel */}
-      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-0 overflow-y-auto" style={{ padding: "1.5rem" }}>
-        <BlockEditor
-          blocks={blocks}
-          onChange={handleBlocksChange}
-          tasks={todayTasks}
-          inProgressTasks={inProgressTasks ?? []}
-          tasksLoading={tasks === undefined || inProgressTasks === undefined}
-          goals={goals ?? []}
-          categories={categories ?? []}
-          attachments={note?.attachments ?? []}
-          onCreateTask={handleCreateTask}
-          onMarkDone={handleMarkDone}
-          onEditTask={setEditingTask}
-          onDeleteTask={handleDeleteTask}
-          onNotTodayTask={handleNotTodayTask}
-          onInProgressTask={handleInProgressTask}
-          onBackToTodayTask={handleBackToTodayTask}
+      {/* Note editor panel */}
+      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-0 overflow-y-auto p-6">
+        <NoteEditor
+          note={note}
+          dateStr={dateStr}
+          noteId={note?.id ?? null}
+          mutateNote={mutateNote}
         />
       </div>
 
@@ -380,16 +208,6 @@ export function PagePanel() {
         className="hidden"
         onChange={handleAttachUpload}
       />
-
-      {/* Edit modal */}
-      {editingTask && (
-        <TaskEditModal
-          task={editingTask}
-          allTags={tags ?? []}
-          open={true}
-          onClose={() => setEditingTask(null)}
-        />
-      )}
     </div>
   );
 }

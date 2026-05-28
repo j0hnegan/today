@@ -49,7 +49,6 @@ const ENERGY_OPTIONS: {
 ];
 
 function showRailFor(pathname: string): boolean {
-  if (pathname === "/") return false;
   if (pathname === "/vault" || pathname.startsWith("/vault/")) return false;
   return true;
 }
@@ -153,7 +152,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         {railVisible && (
-          <div className="flex-[4] min-w-0">
+          <div className="flex-[3] min-w-[280px] max-w-[360px]">
             <RightRail />
           </div>
         )}
