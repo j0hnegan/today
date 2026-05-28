@@ -24,7 +24,9 @@ export async function fetchTasks(
   supabase: SB,
   params: { destination?: string; status?: string } = {}
 ): Promise<Task[]> {
-  let query = supabase.from("tasks").select("*");
+  let query = supabase
+    .from("tasks")
+    .select("*, task_categories(categories(id, name, color))");
   if (params.destination) query = query.eq("destination", params.destination);
   if (params.status) query = query.eq("status", params.status);
   query = query
@@ -34,21 +36,13 @@ export async function fetchTasks(
   const { data: tasks } = await query;
   if (!tasks || tasks.length === 0) return [];
 
-  const taskIds = tasks.map((t) => t.id);
-  const { data: rows } = await supabase
-    .from("task_categories")
-    .select("task_id, categories(id, name, color)")
-    .in("task_id", taskIds);
-
-  const tagsByTask = new Map<number, Category[]>();
-  for (const row of rows || []) {
-    const cat = row.categories as unknown as Category | null;
-    if (!cat) continue;
-    if (!tagsByTask.has(row.task_id)) tagsByTask.set(row.task_id, []);
-    tagsByTask.get(row.task_id)!.push(cat);
-  }
-
-  return tasks.map((t) => ({ ...t, tags: tagsByTask.get(t.id) ?? [] })) as Task[];
+  return tasks.map((t) => {
+    const { task_categories, ...rest } = t as Record<string, unknown>;
+    const tags = ((task_categories as { categories: Category | null }[]) ?? [])
+      .map((r) => r.categories)
+      .filter(Boolean) as Category[];
+    return { ...rest, tags } as Task;
+  });
 }
 
 export async function fetchTags(supabase: SB): Promise<Tag[]> {
@@ -162,7 +156,7 @@ export async function fetchAttachments(
 export async function fetchNote(supabase: SB, date: string): Promise<Note> {
   const { data: note } = await supabase
     .from("notes")
-    .select("*")
+    .select("*, attachments(*)")
     .eq("date", date)
     .single();
 
@@ -179,14 +173,11 @@ export async function fetchNote(supabase: SB, date: string): Promise<Note> {
     }
   }
 
-  const { data: attachments } = await supabase
-    .from("attachments")
-    .select("*")
-    .eq("entity_type", "note")
-    .eq("entity_id", note.id)
-    .order("created_at", { ascending: false });
+  const attachments = (note.attachments ?? []).sort(
+    (a: Attachment, b: Attachment) => b.created_at.localeCompare(a.created_at)
+  );
 
-  return { ...note, blocks, attachments: attachments || [] } as Note;
+  return { ...note, blocks, attachments } as Note;
 }
 
 export async function fetchSettings(

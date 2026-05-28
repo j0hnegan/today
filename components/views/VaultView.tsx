@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { VaultSection } from "@/components/vault/VaultSection";
-import { VaultSkeleton } from "@/components/vault/VaultSkeleton";
+
 import { TaskList } from "@/components/vault/TaskList";
 import { TaskEditModal } from "@/components/vault/TaskEditModal";
 import { WeeklyNudge } from "@/components/vault/WeeklyNudge";
@@ -650,7 +650,7 @@ export function VaultView() {
   // --- Render ---
 
   if (!tasks) {
-    return <VaultSkeleton />;
+    return null;
   }
 
   const dropHighlight =

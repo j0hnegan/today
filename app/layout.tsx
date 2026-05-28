@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
         {supabaseUrl && (
           <>

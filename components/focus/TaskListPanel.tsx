@@ -16,7 +16,7 @@ import type { Task, Size } from "@/lib/types";
 import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { patchTask, reorderTasks } from "@/lib/taskMutations";
-import { TaskListSkeleton } from "@/components/focus/TaskListSkeleton";
+
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
@@ -455,7 +455,7 @@ export function TaskListPanel({
   }, [tasks, sortKey, sizeFilter]);
 
   if (loading && tasks.length === 0 && inProgressTasks.length === 0) {
-    return <TaskListSkeleton />;
+    return null;
   }
 
   if (tasks.length === 0 && inProgressTasks.length === 0) {
