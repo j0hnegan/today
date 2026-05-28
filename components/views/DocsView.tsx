@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDocs, fetcher } from "@/lib/hooks";
+import { useDocs, useNotesList, fetcher } from "@/lib/hooks";
 import { preload } from "swr";
 import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
@@ -34,6 +34,27 @@ function formatRelativeDate(dateStr: string): string {
     year: "numeric",
   });
 }
+
+function formatNoteDate(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00");
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function contentPreview(html: string): string {
+  // Strip HTML tags to get plain text, then take first ~80 chars
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (text.length <= 80) return text;
+  return text.slice(0, 80).trimEnd() + "…";
+}
+
+type ListItem =
+  | { kind: "doc"; doc: Document }
+  | { kind: "note"; id: number; date: string; content: string; updated_at: string };
 
 function DocsSkeleton() {
   return (
@@ -68,7 +89,34 @@ function DocsSkeleton() {
 export function DocsView() {
   const router = useRouter();
   const { data: docs } = useDocs();
+  const { data: notes } = useNotesList();
   const [creating, setCreating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const items = useMemo<ListItem[]>(() => {
+    const list: ListItem[] = [];
+    if (docs) {
+      for (const doc of docs) {
+        list.push({ kind: "doc", doc });
+      }
+    }
+    if (mounted && notes) {
+      for (const note of notes) {
+        // Skip notes with trivial content (just dashes, whitespace, empty divs)
+        const text = note.content.replace(/<[^>]*>/g, "").replace(/[\s\-]+/g, "").trim();
+        if (!text) continue;
+        list.push({ kind: "note", ...note });
+      }
+    }
+    // Sort by updated_at descending
+    list.sort((a, b) => {
+      const aDate = a.kind === "doc" ? a.doc.updated_at : a.updated_at;
+      const bDate = b.kind === "doc" ? b.doc.updated_at : b.updated_at;
+      return bDate.localeCompare(aDate);
+    });
+    return list;
+  }, [docs, notes, mounted]);
 
   async function handleCreate() {
     setCreating(true);
@@ -115,57 +163,84 @@ export function DocsView() {
       </div>
 
       <div className="space-y-1">
-        {(!docs || docs.length === 0) && (
+        {items.length === 0 && (
           <p className="text-sm text-muted-foreground py-8 text-center">
             No documents yet. Create one to get started.
           </p>
         )}
-        {docs?.map((doc) => (
-          <Link
-            key={doc.id}
-            href={`/docs/${doc.id}`}
-            prefetch
-            onMouseEnter={() => preload(`/api/docs/${doc.id}`, fetcher)}
-            className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
-          >
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium block truncate">
-                {doc.title || "Untitled"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatRelativeDate(doc.updated_at)}
-              </span>
-            </div>
+        {items.map((item) => {
+          if (item.kind === "doc") {
+            const doc = item.doc;
+            return (
+              <Link
+                key={`doc-${doc.id}`}
+                href={`/docs/${doc.id}`}
+                prefetch
+                onMouseEnter={() => preload(`/api/docs/${doc.id}`, fetcher)}
+                className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium block truncate">
+                    {doc.title || "Untitled"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeDate(doc.updated_at)}
+                  </span>
+                </div>
 
-            <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
-              {doc.categories?.slice(0, 2).map((cat) => (
-                <span
-                  key={cat.id}
-                  className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium"
-                  style={{
-                    backgroundColor: cat.color + "26",
-                    color: cat.color,
-                  }}
-                >
-                  {cat.name}
+                <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
+                  {doc.categories?.slice(0, 2).map((cat) => (
+                    <span
+                      key={cat.id}
+                      className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium"
+                      style={{
+                        backgroundColor: cat.color + "26",
+                        color: cat.color,
+                      }}
+                    >
+                      {cat.name}
+                    </span>
+                  ))}
+                  {doc.goals?.slice(0, 2).map((goal) => (
+                    <span
+                      key={goal.id}
+                      className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium bg-accent text-muted-foreground"
+                    >
+                      {goal.title}
+                    </span>
+                  ))}
+                  {((doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) > 4) && (
+                    <span className="text-[10px] text-muted-foreground">
+                      +{(doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) - 4}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          }
+
+          // Note entry — links to Today page with that date
+          return (
+            <Link
+              key={`note-${item.date}`}
+              href={`/?date=${item.date}`}
+              className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
+            >
+              <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium block truncate">
+                  {formatNoteDate(item.date)}
                 </span>
-              ))}
-              {doc.goals?.slice(0, 2).map((goal) => (
-                <span
-                  key={goal.id}
-                  className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium bg-accent text-muted-foreground"
-                >
-                  {goal.title}
+                <span className="text-xs text-muted-foreground block truncate">
+                  {contentPreview(item.content)}
                 </span>
-              ))}
-              {((doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) > 4) && (
-                <span className="text-[10px] text-muted-foreground">
-                  +{(doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) - 4}
-                </span>
-              )}
-            </div>
-          </Link>
-        ))}
+              </div>
+              <span className="text-[10px] text-muted-foreground flex-shrink-0 pt-0.5 font-mono">
+                {formatRelativeDate(item.updated_at)}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

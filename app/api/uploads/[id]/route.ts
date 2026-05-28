@@ -1,12 +1,10 @@
 import { requireAuth } from "@/lib/api-auth";
+import { storageClient } from "@/lib/storage";
 import { parseIdParam } from "@/lib/validation/helpers";
 import { NextRequest, NextResponse } from "next/server";
-import { unlink, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import crypto from "crypto";
-import { fileTypeFromBuffer } from "file-type";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const BUCKET = "attachments";
 
 const ALLOWED_THUMBNAIL_TYPES = new Set([
   "image/png",
@@ -51,22 +49,20 @@ export async function PATCH(
     }
 
     const buffer = Buffer.from(await thumbFile.arrayBuffer());
-
-    // Cross-check magic bytes against the declared MIME — same rationale as
-    // POST /api/uploads. All allowed thumbnail types are sniffable images.
-    const sniffed = await fileTypeFromBuffer(buffer);
-    if (!sniffed || !ALLOWED_THUMBNAIL_TYPES.has(sniffed.mime) || sniffed.mime !== thumbFile.type) {
-      return NextResponse.json(
-        { error: `Thumbnail contents don't match declared type ${thumbFile.type}` },
-        { status: 400 }
-      );
-    }
-
     const hash = crypto.randomBytes(8).toString("hex");
     const thumbFilename = `thumb-${Date.now()}-${hash}.png`;
 
-    await mkdir(UPLOAD_DIR, { recursive: true });
-    await writeFile(path.join(UPLOAD_DIR, thumbFilename), buffer);
+    // Upload thumbnail to Supabase Storage (service role bypasses RLS)
+    const storage = storageClient();
+    const { error: storageError } = await storage
+      .from(BUCKET)
+      .upload(thumbFilename, buffer, { contentType: thumbFile.type, upsert: false });
+    if (storageError) throw storageError;
+
+    // Delete old thumbnail from storage if present
+    if (attachment.thumbnail) {
+      await storage.from(BUCKET).remove([attachment.thumbnail]);
+    }
 
     await supabase.from("attachments").update({ thumbnail: thumbFilename }).eq("id", id);
 
@@ -100,18 +96,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
-    // Delete file from disk
-    try {
-      await unlink(path.join(UPLOAD_DIR, attachment.filename));
-    } catch {
-      // File may already be gone — continue with DB cleanup
-    }
-    // Delete thumbnail if present
-    if (attachment.thumbnail) {
-      try {
-        await unlink(path.join(UPLOAD_DIR, attachment.thumbnail));
-      } catch { /* ok */ }
-    }
+    // Delete file from Supabase Storage
+    const filesToRemove = [attachment.filename];
+    if (attachment.thumbnail) filesToRemove.push(attachment.thumbnail);
+    await storageClient().from(BUCKET).remove(filesToRemove);
 
     // Delete from database
     const { error } = await supabase.from("attachments").delete().eq("id", id);

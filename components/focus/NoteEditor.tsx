@@ -121,28 +121,46 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
     onInsertDone: handleContentInput,
   });
 
-  // Paste handling — upload files
+  // Paste handling — upload files and insert inline
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
+    async (e: React.ClipboardEvent) => {
       const files = e.clipboardData?.files;
-      if (files && files.length > 0 && noteId) {
-        e.preventDefault();
-        for (let i = 0; i < files.length; i++) {
-          const formData = new FormData();
-          formData.append("file", files[i]);
-          formData.append("entity_type", "note");
-          formData.append("entity_id", String(noteId));
-          fetch("/api/uploads", { method: "POST", body: formData })
-            .then((res) => {
-              if (!res.ok) throw new Error();
-              toast.success(`Uploaded ${files[i].name}`);
-              mutateNote();
-            })
-            .catch(() => toast.error("Upload failed"));
+      if (!files || files.length === 0 || !noteId) return;
+
+      e.preventDefault();
+
+      // Save cursor position so we can restore after async upload
+      const sel = window.getSelection();
+      const savedRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+
+      const uploads: { filename: string; original_name: string; mime_type: string }[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        formData.append("entity_type", "note");
+        formData.append("entity_id", String(noteId));
+        try {
+          const res = await fetch("/api/uploads", { method: "POST", body: formData });
+          if (!res.ok) throw new Error();
+          const att = await res.json();
+          uploads.push({ filename: att.filename, original_name: att.original_name, mime_type: att.mime_type });
+        } catch {
+          toast.error("Upload failed");
         }
       }
+
+      if (uploads.length > 0) {
+        // Restore cursor and insert inline
+        if (savedRange && sel) {
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        }
+        document.execCommand("insertHTML", false, buildInlineFileHTML(uploads));
+        handleContentInput();
+        mutateNote();
+      }
     },
-    [noteId, mutateNote]
+    [noteId, mutateNote, handleContentInput]
   );
 
   // Slash file upload

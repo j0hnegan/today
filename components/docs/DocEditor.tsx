@@ -227,28 +227,44 @@ export function DocEditor({
     };
   }, []);
 
-  // Handle paste — check for files first
+  // Handle paste — upload files and insert inline
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
+    async (e: React.ClipboardEvent) => {
       const files = e.clipboardData?.files;
-      if (files && files.length > 0) {
-        e.preventDefault();
-        for (let i = 0; i < files.length; i++) {
-          const formData = new FormData();
-          formData.append("file", files[i]);
-          formData.append("entity_type", "document");
-          formData.append("entity_id", String(doc.id));
-          fetch("/api/uploads", { method: "POST", body: formData })
-            .then((res) => {
-              if (!res.ok) throw new Error();
-              toast.success(`Uploaded ${files[i].name}`);
-              mutateAttachments();
-            })
-            .catch(() => toast.error("Upload failed"));
+      if (!files || files.length === 0) return;
+
+      e.preventDefault();
+
+      const sel = window.getSelection();
+      const savedRange = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+
+      const uploads: { filename: string; original_name: string; mime_type: string }[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        formData.append("entity_type", "document");
+        formData.append("entity_id", String(doc.id));
+        try {
+          const res = await fetch("/api/uploads", { method: "POST", body: formData });
+          if (!res.ok) throw new Error();
+          const att = await res.json();
+          uploads.push({ filename: att.filename, original_name: att.original_name, mime_type: att.mime_type });
+        } catch {
+          toast.error("Upload failed");
         }
       }
+
+      if (uploads.length > 0) {
+        if (savedRange && sel) {
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        }
+        document.execCommand("insertHTML", false, buildInlineFileHTML(uploads));
+        handleContentInput();
+        mutateAttachments();
+      }
     },
-    [doc.id, mutateAttachments]
+    [doc.id, mutateAttachments, handleContentInput]
   );
 
   // Handle Attach button file upload (entity-level attachment)

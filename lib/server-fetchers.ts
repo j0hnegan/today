@@ -153,6 +153,16 @@ export async function fetchAttachments(
   return (data ?? []) as Attachment[];
 }
 
+export async function fetchNotesList(supabase: SB) {
+  const { data } = await supabase
+    .from("notes")
+    .select("id, date, content, updated_at")
+    .not("content", "is", null)
+    .neq("content", "")
+    .order("date", { ascending: false });
+  return data ?? [];
+}
+
 export async function fetchNote(supabase: SB, date: string): Promise<Note> {
   const { data: note } = await supabase
     .from("notes")

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useCallback, useState, useMemo } from "react";
+import { useRef, useCallback, useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useNote, useDatesWithContent } from "@/lib/hooks";
 import { NoteEditor } from "@/components/focus/NoteEditor";
 import {
@@ -34,9 +35,24 @@ export function PagePanel() {
   const attachInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Date navigation
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  // Date navigation — initialize from ?date= if present
+  const searchParams = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const param = searchParams?.get("date");
+    if (param && /^\d{4}-\d{2}-\d{2}$/.test(param)) {
+      return new Date(param + "T00:00:00");
+    }
+    return new Date();
+  });
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  // Sync when ?date= changes (e.g. navigating from Docs page)
+  useEffect(() => {
+    const param = searchParams?.get("date");
+    if (param && /^\d{4}-\d{2}-\d{2}$/.test(param)) {
+      setSelectedDate(new Date(param + "T00:00:00"));
+    }
+  }, [searchParams]);
 
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const { data: note, mutate: mutateNote } = useNote(dateStr);

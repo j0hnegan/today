@@ -13,6 +13,7 @@ import {
   Paperclip,
   type LucideIcon,
 } from "lucide-react";
+import { getUploadUrl } from "@/lib/uploads";
 import type { Task } from "./types";
 
 function escapeHTML(s: string): string {
@@ -110,13 +111,13 @@ export function buildInlineFileHTML(uploads: InlineUpload[]): string {
         if (u.mime_type.startsWith("image/")) {
           const nw = u.naturalWidth || 300;
           const initialW = Math.min(300, nw);
-          return `<span data-inline-file data-filename="${fname}"${idAttr} data-natural-w="${nw}" data-natural-h="${u.naturalHeight || 300}" data-current-w="${initialW}" contenteditable="false" class="slash-inline-file" style="width:${initialW}px"><img src="/uploads/${fname}" alt="${origName}" class="slash-inline-img" /></span>`;
+          return `<span data-inline-file data-filename="${fname}"${idAttr} data-natural-w="${nw}" data-natural-h="${u.naturalHeight || 300}" data-current-w="${initialW}" contenteditable="false" class="slash-inline-file" style="width:${initialW}px"><img src="${getUploadUrl(fname)}" alt="${origName}" class="slash-inline-img" /></span>`;
         }
 
         if (isDocMime(u.mime_type)) {
           const thumbName = u.thumbnail ? escapeHTML(u.thumbnail) : "";
           const previewInner = u.thumbnail
-            ? `<img src="/uploads/${thumbName}" alt="${origName}" class="slash-doc-preview-thumb" />`
+            ? `<img src="${getUploadUrl(thumbName)}" alt="${origName}" class="slash-doc-preview-thumb" />`
             : `<div class="slash-doc-preview-icon">${getDocIcon(u.mime_type)}</div>`;
           return `<span data-inline-file data-filename="${fname}"${idAttr} contenteditable="false" class="slash-inline-file slash-inline-doc-preview">${previewInner}<span class="slash-doc-preview-name">${origName}</span></span>`;
         }

@@ -4,6 +4,7 @@ import { useRef, useCallback, useState } from "react";
 import { Paperclip, Upload, X, FileText, Film, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "@/lib/swr-helpers";
+import { getUploadUrl } from "@/lib/uploads";
 import type { Attachment } from "@/lib/types";
 
 interface FileUploadProps {
@@ -184,7 +185,7 @@ function AttachmentItem({
   attachment: Attachment;
   onDelete: () => void;
 }) {
-  const url = `/uploads/${attachment.filename}`;
+  const url = getUploadUrl(attachment.filename);
 
   return (
     <div className="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent/30 transition-colors">
@@ -247,13 +248,13 @@ export function InlineAttachments({ attachments }: { attachments: Attachment[] }
           {images.map((img) => (
             <a
               key={img.id}
-              href={`/uploads/${img.filename}`}
+              href={getUploadUrl(img.filename)}
               target="_blank"
               rel="noopener noreferrer"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/uploads/${img.filename}`}
+                src={getUploadUrl(img.filename)}
                 alt={img.original_name}
                 className="rounded-lg max-h-48 object-contain border border-border"
               />
@@ -266,7 +267,7 @@ export function InlineAttachments({ attachments }: { attachments: Attachment[] }
       {videos.map((vid) => (
         <video
           key={vid.id}
-          src={`/uploads/${vid.filename}`}
+          src={getUploadUrl(vid.filename)}
           controls
           className="rounded-lg max-h-64 border border-border"
         />
@@ -278,7 +279,7 @@ export function InlineAttachments({ attachments }: { attachments: Attachment[] }
           {files.map((file) => (
             <a
               key={file.id}
-              href={`/uploads/${file.filename}`}
+              href={getUploadUrl(file.filename)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"

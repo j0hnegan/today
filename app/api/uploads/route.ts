@@ -1,20 +1,11 @@
 import { requireAuth } from "@/lib/api-auth";
+import { storageClient } from "@/lib/storage";
 import { validateSearchParams } from "@/lib/validation/helpers";
 import { uploadFormSchema, uploadsQuerySchema } from "@/lib/validation/upload";
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import crypto from "crypto";
-import { fileTypeFromBuffer } from "file-type";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
-// Types where we trust the client-supplied MIME because file-type can't sniff
-// them (plain text, CSV, markdown have no magic bytes). For these we still
-// allow upload but skip the byte-level cross-check.
-const UNSNIFFABLE_TYPES = new Set([
-  "text/plain", "text/csv", "text/markdown",
-]);
 
 const ALLOWED_TYPES = new Set<string>([
   // Images
@@ -27,11 +18,11 @@ const ALLOWED_TYPES = new Set<string>([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  // Text (no magic bytes — see UNSNIFFABLE_TYPES)
+  // Text
   "text/plain", "text/csv", "text/markdown",
 ]);
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const BUCKET = "attachments";
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth();
@@ -64,35 +55,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `File type not allowed: ${file.type}` }, { status: 400 });
     }
 
-    // Read into memory once so we can both byte-sniff and persist.
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Cross-check the client-supplied MIME against the file's actual magic
-    // bytes. Without this, an attacker could rename a `.html` payload as
-    // `evil.png` with `Content-Type: image/png` and we'd happily serve it
-    // back from /uploads. Sniffable types must match; unsniffable text
-    // formats fall through (no magic bytes to check against).
-    if (!UNSNIFFABLE_TYPES.has(file.type)) {
-      const sniffed = await fileTypeFromBuffer(buffer);
-      if (!sniffed || !ALLOWED_TYPES.has(sniffed.mime) || sniffed.mime !== file.type) {
-        return NextResponse.json(
-          { error: `File contents don't match declared type ${file.type}` },
-          { status: 400 }
-        );
-      }
-    }
-
     // Generate unique filename
-    const ext = path.extname(file.name) || "";
+    const lastDot = file.name.lastIndexOf(".");
+    const ext = lastDot >= 0 ? file.name.slice(lastDot) : "";
     const hash = crypto.randomBytes(8).toString("hex");
     const filename = `${Date.now()}-${hash}${ext}`;
 
-    // Ensure upload directory exists
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
-    // Write file to disk
-    const filePath = path.join(UPLOAD_DIR, filename);
-    await writeFile(filePath, buffer);
+    // Upload to Supabase Storage (uses service role to bypass RLS)
+    const { error: storageError } = await storageClient()
+      .from(BUCKET)
+      .upload(filename, buffer, { contentType: file.type, upsert: false });
+    if (storageError) throw storageError;
 
     // Record in database
     const { data: attachment, error } = await supabase

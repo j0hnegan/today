@@ -64,6 +64,13 @@ export function useAttachments(entityType: string, entityId: number | null) {
   return useSWR<Attachment[]>(url, fetcher);
 }
 
+export function useNotesList() {
+  return useSWR<{ id: number; date: string; content: string; updated_at: string }[]>(
+    "/api/notes/list",
+    fetcher
+  );
+}
+
 export function useDatesWithContent(from: string, to: string) {
   const url = from && to ? `/api/dates-with-content?from=${from}&to=${to}` : null;
   return useSWR<string[]>(url, fetcher);
