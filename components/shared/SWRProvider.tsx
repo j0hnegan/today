@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef } from "react";
-import { SWRConfig } from "swr";
+import { SWRConfig, type Cache } from "swr";
 
 const CACHE_KEY = "hush-swr";
 
-function localStorageProvider(): Map<string, unknown> {
+function localStorageProvider(): Cache {
+  if (typeof window === "undefined") return new Map() as unknown as Cache;
+
   let init: [string, unknown][] = [];
   try {
     const stored = localStorage.getItem(CACHE_KEY);
@@ -20,7 +22,7 @@ function localStorageProvider(): Map<string, unknown> {
     } catch {}
   });
 
-  return map;
+  return map as unknown as Cache;
 }
 
 export function SWRProvider({ children }: { children: React.ReactNode }) {
