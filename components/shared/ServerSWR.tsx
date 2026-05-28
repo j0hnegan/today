@@ -1,18 +1,32 @@
 "use client";
 
-import { SWRConfig } from "swr";
+import { useRef } from "react";
+import { SWRConfig, useSWRConfig } from "swr";
 
 /**
- * Wraps a tree with an SWRConfig that pre-populates SWR's cache from a
- * server-rendered fallback dictionary. Keys must be the exact URLs that
- * the matching `useXxx` hooks fetch — this lets Server Components hydrate
- * the cache so the first render in the client never shows a skeleton.
- *
- * Uses the function form of `value` so the parent SWRProvider's config
- * (revalidateOnFocus, dedupingInterval, etc.) is preserved while we layer
- * fallback data on top — and so each navigation's fallback stomps the
- * previous one rather than persisting stale entries between routes.
+ * Overwrites stale localStorage-cached entries with fresh server data.
+ * Runs synchronously during render (before children mount) so useSWR
+ * hooks read the server's data on first render — matching SSR output.
  */
+function CacheSyncer({ data }: { data: Record<string, unknown> }) {
+  const { cache } = useSWRConfig();
+  const synced = useRef(false);
+  if (!synced.current) {
+    synced.current = true;
+    const map = cache as unknown as Map<string, unknown>;
+    for (const [key, value] of Object.entries(data)) {
+      const existing = map.get(key);
+      if (existing && typeof existing === "object") {
+        // Preserve SWR's internal state shape, overwrite data
+        map.set(key, { ...(existing as Record<string, unknown>), data: value });
+      } else {
+        map.set(key, { data: value, isLoading: false, isValidating: true });
+      }
+    }
+  }
+  return null;
+}
+
 export function ServerSWR({
   fallback,
   children,
@@ -20,5 +34,10 @@ export function ServerSWR({
   fallback: Record<string, unknown>;
   children: React.ReactNode;
 }) {
-  return <SWRConfig value={{ fallback }}>{children}</SWRConfig>;
+  return (
+    <SWRConfig value={{ fallback }}>
+      <CacheSyncer data={fallback} />
+      {children}
+    </SWRConfig>
+  );
 }
