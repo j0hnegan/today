@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDocs, fetcher } from "@/lib/hooks";
-import { mutate, preload } from "swr";
+import { preload } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import type { Document } from "@/lib/types";
 

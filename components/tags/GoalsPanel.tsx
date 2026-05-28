@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Trash2, Pencil, Check, X, ChevronRight, Circle, CheckCircle2 } from "lucide-react";
 import { useTags, useGoals } from "@/lib/hooks";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import type { Goal, Category } from "@/lib/types";
 

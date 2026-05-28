@@ -29,7 +29,7 @@ import { markTaskDone } from "@/lib/done-toast";
 import { patchTask, reorderTasks } from "@/lib/taskMutations";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import { normalizeConsequence } from "@/lib/types";
 import type { Task, Size, Destination } from "@/lib/types";

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { SWRConfig, type Cache } from "swr";
+import { SWRConfig, useSWRConfig, type Cache } from "swr";
+import { registerMutate } from "@/lib/swr-helpers";
 
 const CACHE_KEY = "hush-swr";
 
@@ -25,6 +26,12 @@ function localStorageProvider(): Cache {
   return map as unknown as Cache;
 }
 
+function MutateRegistrar() {
+  const { mutate } = useSWRConfig();
+  registerMutate(mutate);
+  return null;
+}
+
 export function SWRProvider({ children }: { children: React.ReactNode }) {
   const provider = useRef(localStorageProvider);
   return (
@@ -37,6 +44,7 @@ export function SWRProvider({ children }: { children: React.ReactNode }) {
         errorRetryCount: 3,
       }}
     >
+      <MutateRegistrar />
       {children}
     </SWRConfig>
   );

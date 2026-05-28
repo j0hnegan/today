@@ -16,7 +16,7 @@ import { SlashCommandMenu } from "@/components/shared/SlashCommandMenu";
 import { ItemPickerModal } from "@/components/shared/ItemPickerModal";
 import { useSlashCommand } from "@/lib/useSlashCommand";
 import { SLASH_COMMANDS, buildInlineFileHTML } from "@/lib/slashCommands";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import type { Document, Category, Goal } from "@/lib/types";
 

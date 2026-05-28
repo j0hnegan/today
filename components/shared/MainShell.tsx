@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { RightRail } from "@/components/shared/RightRail";
 import { QuickAddModal } from "@/components/shared/QuickAddModal";
@@ -146,13 +146,13 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         <main
           className={cn(
             "overflow-auto",
-            railVisible ? "flex-[8]" : "flex-1"
+            railVisible ? "flex-[7]" : "flex-1"
           )}
         >
           {children}
         </main>
         {railVisible && (
-          <div className="flex-[3] min-w-[280px] max-w-[360px]">
+          <div className="flex-[5] min-w-[280px] max-w-[460px]">
             <RightRail />
           </div>
         )}

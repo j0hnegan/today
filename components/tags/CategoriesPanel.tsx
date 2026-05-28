@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Pencil, Check, X } from "lucide-react";
 import { useTags } from "@/lib/hooks";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import type { Tag } from "@/lib/types";
 

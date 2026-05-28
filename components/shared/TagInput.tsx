@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import type { Tag } from "@/lib/types";
 
 const TAG_COLORS = [

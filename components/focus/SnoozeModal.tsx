@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Task } from "@/lib/types";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 
 interface SnoozeModalProps {
   task: Task;

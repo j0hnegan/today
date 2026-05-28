@@ -124,16 +124,14 @@ export function PagePanel() {
         </h1>
 
         <div className="flex items-center gap-1">
-          {note?.id && (
-            <button
-              type="button"
-              onClick={() => attachInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors mr-2"
-            >
-              {uploading ? <Upload className="h-3 w-3 animate-pulse" /> : <Paperclip className="h-3 w-3" />}
-              {uploading ? "Uploading..." : "Attach"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => attachInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors mr-2"
+          >
+            {uploading ? <Upload className="h-3 w-3 animate-pulse" /> : <Paperclip className="h-3 w-3" />}
+            {uploading ? "Uploading..." : "Attach"}
+          </button>
 
           <button
             type="button"

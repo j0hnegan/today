@@ -3,7 +3,7 @@
 import { useRef, useCallback, useState } from "react";
 import { Paperclip, Upload, X, FileText, Film, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import type { Attachment } from "@/lib/types";
 
 interface FileUploadProps {

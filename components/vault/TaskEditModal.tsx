@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { TagInput } from "@/components/shared/TagInput";
 import { FileUpload } from "@/components/shared/FileUpload";
 import { useAttachments } from "@/lib/hooks";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import { normalizeConsequence } from "@/lib/types";
 import type { Task, Tag, Consequence, Size, Destination } from "@/lib/types";

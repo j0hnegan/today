@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { mutate } from "swr";
+import { mutate } from "@/lib/swr-helpers";
 
 export function AutomationRunner() {
   useEffect(() => {

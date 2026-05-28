@@ -1,4 +1,4 @@
-import { mutate } from "swr";
+import { mutate } from "./swr-helpers";
 import { toast } from "sonner";
 import { isDueToday } from "./triage";
 import type { Task, Tag, Destination, Consequence, Size } from "./types";

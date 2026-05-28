@@ -2,12 +2,10 @@
 
 import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import {
-  GripVertical,
   SlidersHorizontal,
   ArrowUpDown,
   Check,
   X,
-  CalendarOff,
   CalendarPlus,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -52,7 +50,6 @@ function CheckCircleIcon({ className }: { className?: string }) {
   );
 }
 
-/** Long-press check circle that fills up over duration then fires */
 function LongPressCheck({
   task,
   onMarkDone,
@@ -164,7 +161,6 @@ function LongPressCheck({
   );
 }
 
-/** A single task row — used by both Today and In Progress tabs. */
 function TaskRow({
   task,
   editingTaskId,
@@ -173,7 +169,6 @@ function TaskRow({
   onMarkDone,
   onLongPress,
   onDeleteTask,
-  onNotTodayTask,
   onEnterAfterEdit,
   isLastRow,
 }: {
@@ -184,7 +179,6 @@ function TaskRow({
   onMarkDone: (task: Task) => void;
   onLongPress: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
-  onNotTodayTask: (task: Task) => void;
   onEnterAfterEdit?: () => void;
   isLastRow?: boolean;
 }) {
@@ -213,9 +207,9 @@ function TaskRow({
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <div className="flex-1 min-w-0 flex items-center gap-1">
+        <div className="flex-1 min-w-0 flex items-center gap-1 overflow-hidden">
           <span
-            className="min-w-0 truncate text-left cursor-text"
+            className="truncate text-left cursor-text"
             onClick={(e) => {
               e.stopPropagation();
               setEditingTaskId(task.id as number);
@@ -223,7 +217,7 @@ function TaskRow({
           >
             {task.title}
           </span>
-          {task.due_date && (
+          {task.due_date ? (
             <span className="group/date inline-flex items-center gap-0.5 flex-shrink-0">
               <Popover>
                 <PopoverTrigger asChild>
@@ -247,9 +241,7 @@ function TaskRow({
                         : null;
                       try {
                         await patchTask(task, { due_date: dateStr });
-                      } catch {
-                        /* helper already toasted */
-                      }
+                      } catch { /* */ }
                     }}
                   />
                 </PopoverContent>
@@ -260,9 +252,7 @@ function TaskRow({
                   e.stopPropagation();
                   try {
                     await patchTask(task, { due_date: null });
-                  } catch {
-                    /* helper already toasted */
-                  }
+                  } catch { /* */ }
                 }}
                 className="opacity-0 group-hover/date:opacity-100 transition-opacity inline-flex items-center justify-center h-3 w-3 rounded text-muted-foreground hover:text-destructive"
                 title="Clear due date"
@@ -270,52 +260,36 @@ function TaskRow({
                 <X className="h-2.5 w-2.5" />
               </button>
             </span>
+          ) : (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity inline-flex items-center justify-center h-4 w-4 text-muted-foreground hover:text-foreground"
+                  title="Set due date"
+                >
+                  <CalendarPlus className="h-3 w-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start" onClick={(e) => e.stopPropagation()}>
+                <Calendar
+                  mode="single"
+                  onSelect={async (day) => {
+                    if (!day) return;
+                    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+                    try {
+                      await patchTask(task, { due_date: dateStr });
+                    } catch { /* */ }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       )}
       {!isEditing && (
-        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                title="Set due date"
-              >
-                <CalendarPlus className="h-3 w-3" />
-                <span className="hidden sm:inline">Date</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end" onClick={(e) => e.stopPropagation()}>
-              <Calendar
-                mode="single"
-                selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
-                onSelect={async (day) => {
-                  const dateStr = day
-                    ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`
-                    : null;
-                  try {
-                    await patchTask(task, { due_date: dateStr });
-                  } catch {
-                    /* helper already toasted */
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNotTodayTask(task);
-            }}
-            className="inline-flex items-center gap-1 h-5 px-1.5 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title="Move to someday"
-          >
-            <CalendarOff className="h-3 w-3" />
-            <span className="hidden sm:inline">Not today</span>
-          </button>
+        <div className="absolute right-1 top-0 bottom-0 flex items-center opacity-0 group-hover/task:opacity-100 transition-opacity">
           <button
             type="button"
             onClick={(e) => {
@@ -333,17 +307,14 @@ function TaskRow({
   );
 }
 
-/** Today / In Progress tabbed task list. */
 export function TaskListPanel({
   tasks,
   inProgressTasks,
   loading,
   onMarkDone,
-  // Wired through for future edit-modal use; not invoked directly here.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onEditTask,
   onDeleteTask,
-  onNotTodayTask,
   onInProgressTask,
   onBackToTodayTask,
   editingTaskId,
@@ -357,7 +328,6 @@ export function TaskListPanel({
   onMarkDone: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
-  onNotTodayTask: (task: Task) => void;
   onInProgressTask: (task: Task) => void;
   onBackToTodayTask: (task: Task) => void;
   editingTaskId: number | null;
@@ -458,63 +428,49 @@ export function TaskListPanel({
     return null;
   }
 
-  if (tasks.length === 0 && inProgressTasks.length === 0) {
-    return (
-      <div className="text-xs text-muted-foreground italic py-1">
-        No tasks today. Type{" "}
-        <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px]">
-          -
-        </kbd>{" "}
-        to add one.
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-          <GripVertical className="h-3 w-3 text-muted-foreground/40" />
-          <div className="flex items-center gap-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTab("today");
-              }}
-              className={cn(
-                "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors",
-                activeTab === "today"
-                  ? "text-foreground"
-                  : "text-muted-foreground/50 hover:text-muted-foreground"
-              )}
-            >
-              Today · {tasks.length}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTab("in_progress");
-              }}
-              className={cn(
-                "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-1.5",
-                activeTab === "in_progress"
-                  ? "text-foreground"
-                  : "text-muted-foreground/50 hover:text-muted-foreground"
-              )}
-            >
-              In Progress
-              {inProgressTasks.length > 0 && (
-                <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-green-500 text-[10px] font-bold text-white leading-none">
-                  {inProgressTasks.length}
-                </span>
-              )}
-            </button>
-          </div>
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Header row — height matches PagePanel date header (text-lg = 28px) */}
+      <div className="flex items-center justify-between min-h-7" style={{ marginBottom: "1rem" }}>
+        <div className="flex items-center gap-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveTab("today");
+            }}
+            className={cn(
+              "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors",
+              activeTab === "today"
+                ? "text-foreground"
+                : "text-muted-foreground/50 hover:text-muted-foreground"
+            )}
+          >
+            Today · {tasks.length}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveTab("in_progress");
+            }}
+            className={cn(
+              "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-1.5",
+              activeTab === "in_progress"
+                ? "text-foreground"
+                : "text-muted-foreground/50 hover:text-muted-foreground"
+            )}
+          >
+            In Progress
+            {inProgressTasks.length > 0 && (
+              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-green-500 text-[10px] font-bold text-white leading-none">
+                {inProgressTasks.length}
+              </span>
+            )}
+          </button>
         </div>
         <div className="flex items-center gap-2">
-          {activeTab !== "today" ? null : (
+          {activeTab === "today" && (
             <>
               <Popover>
                 <PopoverTrigger asChild>
@@ -587,120 +543,120 @@ export function TaskListPanel({
           )}
         </div>
       </div>
-      {activeTab === "today" && (
-        <div className="space-y-0.5">
-          {tasks.length === 0 ? (
-            <div className="text-xs text-muted-foreground italic py-1">
-              No tasks today. Type{" "}
-              <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px]">
-                -
-              </kbd>{" "}
-              to add one.
-            </div>
-          ) : (
-            <>
-              {sortedTasks.map((task, taskIdx) => (
-                <div key={task.id}>
-                  {taskDropIdx === taskIdx &&
-                    draggingTaskIdx !== null &&
-                    draggingTaskIdx !== taskIdx && (
-                      <div className="h-0.5 bg-ring/60 rounded-full my-0.5" />
-                    )}
-                  <div
-                    className={cn(
-                      "flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task",
-                      draggingTaskIdx === taskIdx && "opacity-30"
-                    )}
-                    draggable={editingTaskId !== (task.id as number)}
-                    onDragStart={(e) => {
-                      e.stopPropagation();
-                      e.dataTransfer.setData("text/task-reorder", String(taskIdx));
-                      e.dataTransfer.effectAllowed = "move";
-                      setDraggingTaskIdx(taskIdx);
-                    }}
-                    onDragEnd={() => {
-                      setDraggingTaskIdx(null);
-                      setTaskDropIdx(null);
-                    }}
-                    onDragOver={(e) => {
-                      if (!e.dataTransfer.types.includes("text/task-reorder")) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setTaskDropIdx(taskIdx);
-                    }}
-                    onDrop={async (e) => {
-                      if (!e.dataTransfer.types.includes("text/task-reorder")) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const fromTaskIdx = parseInt(
-                        e.dataTransfer.getData("text/task-reorder"),
-                        10
-                      );
-                      const toTaskIdx = taskDropRef.current;
-                      if (toTaskIdx === null || fromTaskIdx === toTaskIdx) return;
 
-                      const reordered = sortedTasks.map((t) => t.id as number);
-                      const [movedId] = reordered.splice(fromTaskIdx, 1);
-                      reordered.splice(toTaskIdx, 0, movedId);
-                      try {
-                        await reorderTasks(reordered);
-                      } catch {
-                        /* helper already toasted */
-                      }
-                      setDraggingTaskIdx(null);
-                      setTaskDropIdx(null);
-                    }}
-                  >
-                    <TaskRow
-                      task={task}
-                      editingTaskId={editingTaskId}
-                      setEditingTaskId={setEditingTaskId}
-                      saveTaskTitle={saveTaskTitle}
-                      onMarkDone={onMarkDone}
-                      onLongPress={onInProgressTask}
-                      onDeleteTask={onDeleteTask}
-                      onNotTodayTask={onNotTodayTask}
-                      onEnterAfterEdit={onEnterAfterEdit}
-                      isLastRow={taskIdx === sortedTasks.length - 1}
-                    />
-                  </div>
-                </div>
-              ))}
-              {taskDropIdx === sortedTasks.length && draggingTaskIdx !== null && (
-                <div className="h-0.5 bg-ring/60 rounded-full my-0.5" />
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {activeTab === "in_progress" && (
-        <div className="space-y-0.5">
-          {inProgressTasks.length === 0 ? (
-            <div className="text-xs text-muted-foreground italic py-1">
-              No tasks in progress. Hold the check circle on a task to move it here.
-            </div>
-          ) : (
-            inProgressTasks.map((task) => (
-              <div
-                key={task.id}
-                className="flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task"
-              >
-                <TaskRow
-                  task={task}
-                  editingTaskId={editingTaskId}
-                  setEditingTaskId={setEditingTaskId}
-                  saveTaskTitle={saveTaskTitle}
-                  onMarkDone={onMarkDone}
-                  onLongPress={onBackToTodayTask}
-                  onDeleteTask={onDeleteTask}
-                  onNotTodayTask={onNotTodayTask}
-                />
+      {/* Task list in bordered panel */}
+      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-y-auto">
+        {activeTab === "today" && (
+          <div className="space-y-0.5">
+            {tasks.length === 0 ? (
+              <div className="text-xs text-muted-foreground italic py-1">
+                No tasks today. Press{" "}
+                <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px]">
+                  ⌘K
+                </kbd>{" "}
+                to add one.
               </div>
-            ))
-          )}
-        </div>
-      )}
+            ) : (
+              <>
+                {sortedTasks.map((task, taskIdx) => (
+                  <div key={task.id}>
+                    {taskDropIdx === taskIdx &&
+                      draggingTaskIdx !== null &&
+                      draggingTaskIdx !== taskIdx && (
+                        <div className="h-0.5 bg-ring/60 rounded-full my-0.5" />
+                      )}
+                    <div
+                      className={cn(
+                        "flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task relative",
+                        draggingTaskIdx === taskIdx && "opacity-30"
+                      )}
+                      draggable={editingTaskId !== (task.id as number)}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.setData("text/task-reorder", String(taskIdx));
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggingTaskIdx(taskIdx);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingTaskIdx(null);
+                        setTaskDropIdx(null);
+                      }}
+                      onDragOver={(e) => {
+                        if (!e.dataTransfer.types.includes("text/task-reorder")) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTaskDropIdx(taskIdx);
+                      }}
+                      onDrop={async (e) => {
+                        if (!e.dataTransfer.types.includes("text/task-reorder")) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const fromTaskIdx = parseInt(
+                          e.dataTransfer.getData("text/task-reorder"),
+                          10
+                        );
+                        const toTaskIdx = taskDropRef.current;
+                        if (toTaskIdx === null || fromTaskIdx === toTaskIdx) return;
+
+                        const reordered = sortedTasks.map((t) => t.id as number);
+                        const [movedId] = reordered.splice(fromTaskIdx, 1);
+                        reordered.splice(toTaskIdx, 0, movedId);
+                        try {
+                          await reorderTasks(reordered);
+                        } catch { /* */ }
+                        setDraggingTaskIdx(null);
+                        setTaskDropIdx(null);
+                      }}
+                    >
+                      <TaskRow
+                        task={task}
+                        editingTaskId={editingTaskId}
+                        setEditingTaskId={setEditingTaskId}
+                        saveTaskTitle={saveTaskTitle}
+                        onMarkDone={onMarkDone}
+                        onLongPress={onInProgressTask}
+                        onDeleteTask={onDeleteTask}
+                        onEnterAfterEdit={onEnterAfterEdit}
+                        isLastRow={taskIdx === sortedTasks.length - 1}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {taskDropIdx === sortedTasks.length && draggingTaskIdx !== null && (
+                  <div className="h-0.5 bg-ring/60 rounded-full my-0.5" />
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "in_progress" && (
+          <div className="space-y-0.5">
+            {inProgressTasks.length === 0 ? (
+              <div className="text-xs text-muted-foreground italic py-1">
+                No tasks in progress. Hold the check circle on a task to move it here.
+              </div>
+            ) : (
+              inProgressTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task relative"
+                >
+                  <TaskRow
+                    task={task}
+                    editingTaskId={editingTaskId}
+                    setEditingTaskId={setEditingTaskId}
+                    saveTaskTitle={saveTaskTitle}
+                    onMarkDone={onMarkDone}
+                    onLongPress={onBackToTodayTask}
+                    onDeleteTask={onDeleteTask}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
