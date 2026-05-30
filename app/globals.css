@@ -55,8 +55,22 @@
   * {
     @apply border-border;
   }
+  html {
+    /* Stop iOS from auto-inflating text in landscape; subtle themed tap flash. */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.06);
+  }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Drop the 300ms tap delay and double-tap-zoom on controls (page pinch-zoom
+     still works since this only targets interactive elements). */
+  button,
+  a,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
   }
 }
 
@@ -100,6 +114,12 @@
   content: attr(data-placeholder);
   color: hsl(var(--muted-foreground));
   pointer-events: none;
+}
+
+/* Cash flow forecast embed */
+.slash-cashflow {
+  display: block;
+  margin: 0.5rem 0;
 }
 
 /* Slash command block embeds */
@@ -289,11 +309,23 @@
   z-index: 10;
 }
 
-.slash-embed:hover::after,
-.slash-block:hover::after,
-.slash-inline-file:hover::after,
-.slash-inline-file-link:hover::after {
-  display: flex;
+@media (hover: hover) {
+  .slash-embed:hover::after,
+  .slash-block:hover::after,
+  .slash-inline-file:hover::after,
+  .slash-inline-file-link:hover::after {
+    display: flex;
+  }
+}
+
+/* No hover on touch — keep the remove button visible so embeds stay removable */
+@media (pointer: coarse) {
+  .slash-embed::after,
+  .slash-block::after,
+  .slash-inline-file::after,
+  .slash-inline-file-link::after {
+    display: flex;
+  }
 }
 
 /* Inline file/doc X sits inside the element (not clipped by overflow:hidden) */

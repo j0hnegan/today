@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchSettings } from "@/lib/server-fetchers";
 import { validateBody } from "@/lib/validation/helpers";
 import { updateSettingsSchema } from "@/lib/validation/settings";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -12,13 +13,7 @@ export async function GET() {
   const { supabase } = auth;
 
   try {
-    const { data: rows, error } = await supabase.from("settings").select("*");
-    if (error) throw error;
-
-    const settings: Record<string, string> = {};
-    for (const row of rows || []) {
-      settings[row.key] = row.value;
-    }
+    const settings = await fetchSettings(supabase);
     return NextResponse.json(settings, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/settings error:", e);

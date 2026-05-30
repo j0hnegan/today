@@ -16,6 +16,7 @@ import { SlashCommandMenu } from "@/components/shared/SlashCommandMenu";
 import { ItemPickerModal } from "@/components/shared/ItemPickerModal";
 import { useSlashCommand } from "@/lib/useSlashCommand";
 import { SLASH_COMMANDS, buildInlineFileHTML } from "@/lib/slashCommands";
+import { useCashflowEmbeds, serializeEditor } from "@/lib/useCashflowEmbeds";
 import { mutate } from "@/lib/swr-helpers";
 import { toast } from "sonner";
 import type { Document, Category, Goal } from "@/lib/types";
@@ -82,6 +83,7 @@ export function DocEditor({
         "data-inline-file", "data-filename", "data-attachment-id",
         "data-embed-type", "data-embed-id", "data-slash-block",
         "data-natural-w", "data-natural-h", "data-current-w",
+        "data-cashflow-id",
         "contenteditable", "class", "style", "alt", "src",
       ],
     });
@@ -109,7 +111,7 @@ export function DocEditor({
   const handleContentInput = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      const content = editorRef.current?.innerHTML ?? "";
+      const content = serializeEditor(editorRef.current);
       save({ content });
     }, DEBOUNCE_MS);
   }, [save]);
@@ -207,6 +209,8 @@ export function DocEditor({
     context: slashContext,
     onInsertDone: handleContentInput,
   });
+
+  const cashflowPortals = useCashflowEmbeds(editorRef, doc.id, handleContentInput);
 
   // Debounced title save
   const handleTitleChange = useCallback(
@@ -393,7 +397,7 @@ export function DocEditor({
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 pt-[80px] pb-8">
+    <div className="mx-auto max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
       {/* Back button */}
       <button
         type="button"
@@ -590,7 +594,7 @@ export function DocEditor({
       </div>
 
       {/* Content editor */}
-      <div className="rounded-[10px] border border-border bg-panel p-6 min-h-[calc(20*1.625em)]">
+      <div className="rounded-[10px] border border-border bg-panel p-4 md:p-6 min-h-[calc(20*1.625em)]">
         <div
           ref={editorRef}
           contentEditable
@@ -609,6 +613,8 @@ export function DocEditor({
           className="h-full text-sm leading-relaxed outline-none focus:outline-none whitespace-pre-wrap"
           data-placeholder="Start writing..."
         />
+
+        {cashflowPortals}
 
         {/* Inline attachments */}
         {attachments && attachments.length > 0 && (

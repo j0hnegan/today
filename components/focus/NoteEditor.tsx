@@ -8,6 +8,7 @@ import { ItemPickerModal } from "@/components/shared/ItemPickerModal";
 import { EditorContextMenu } from "@/components/focus/EditorContextMenu";
 import { useSlashCommand } from "@/lib/useSlashCommand";
 import { SLASH_COMMANDS, buildInlineFileHTML } from "@/lib/slashCommands";
+import { useCashflowEmbeds, serializeEditor } from "@/lib/useCashflowEmbeds";
 import { createTask } from "@/lib/taskMutations";
 import { toast } from "sonner";
 import type { Note } from "@/lib/types";
@@ -43,6 +44,7 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
         "data-inline-file", "data-filename", "data-attachment-id",
         "data-embed-type", "data-embed-id", "data-slash-block",
         "data-natural-w", "data-natural-h", "data-current-w",
+        "data-cashflow-id",
         "contenteditable", "class", "style", "alt", "src",
       ],
     });
@@ -55,7 +57,7 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
 
   // Save helper
   const save = useCallback(async () => {
-    const content = editorRef.current?.innerHTML ?? "";
+    const content = serializeEditor(editorRef.current);
     await fetch("/api/notes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -120,6 +122,8 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
     context: slashContext,
     onInsertDone: handleContentInput,
   });
+
+  const cashflowPortals = useCashflowEmbeds(editorRef, dateStr, handleContentInput);
 
   // Paste handling — upload files and insert inline
   const handlePaste = useCallback(
@@ -305,6 +309,8 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
         className="h-full text-sm leading-relaxed outline-none focus:outline-none whitespace-pre-wrap"
         data-placeholder="Start writing..."
       />
+
+      {cashflowPortals}
 
       {slash.isOpen && (
         <SlashCommandMenu

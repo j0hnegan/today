@@ -132,6 +132,19 @@ CREATE TABLE attachments (
 CREATE INDEX idx_attachments_entity ON attachments (entity_type, entity_id);
 
 -- =============================================================================
+-- CASH_FLOWS — interactive cash-flow forecast blocks embedded in notes/docs
+-- =============================================================================
+CREATE TABLE cash_flows (
+  id TEXT PRIMARY KEY,                       -- client-generated UUID
+  title TEXT NOT NULL DEFAULT 'Cash Flow Forecast',
+  starting_balance NUMERIC NOT NULL DEFAULT 0,
+  starting_date TEXT,                        -- 'YYYY-MM-DD'
+  rows JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- =============================================================================
 -- CHECKINS
 -- =============================================================================
 CREATE TABLE checkins (
@@ -169,7 +182,7 @@ BEGIN
   FOREACH tbl IN ARRAY ARRAY[
     'tasks', 'categories', 'task_categories', 'goals',
     'documents', 'document_categories', 'document_goals',
-    'notes', 'attachments', 'checkins', 'settings'
+    'notes', 'attachments', 'checkins', 'settings', 'cash_flows'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);

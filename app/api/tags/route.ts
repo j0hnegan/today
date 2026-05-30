@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchTags } from "@/lib/server-fetchers";
 import { validateBody } from "@/lib/validation/helpers";
 import { createTagSchema } from "@/lib/validation/tag";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -12,11 +13,7 @@ export async function GET() {
   const { supabase } = auth;
 
   try {
-    const { data: tags, error } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true });
-    if (error) throw error;
+    const tags = await fetchTags(supabase);
     return NextResponse.json(tags, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/tags error:", e);

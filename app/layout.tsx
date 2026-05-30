@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import "./globals.css";
@@ -21,6 +21,20 @@ export const metadata: Metadata = {
   icons: {
     icon: { url: "/icon.svg", type: "image/svg+xml" },
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Today",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Render under the iOS status bar / home indicator so the bottom nav can
+  // pad itself with env(safe-area-inset-*). Zoom stays enabled for a11y.
+  viewportFit: "cover",
+  themeColor: "#101012",
 };
 
 export default function RootLayout({

@@ -26,10 +26,10 @@ export function RightRail() {
   const allTasks: Task[] = [...(tasks ?? []), ...(inProgressTasks ?? [])];
   const actions = useTaskActions(allTasks);
 
-  if (!mounted) return <aside className="h-full pr-6 pt-[80px] pb-8" />;
+  if (!mounted) return <aside className="md:h-full px-4 md:px-0 md:pr-6 pt-2 md:pt-[80px] pb-8" />;
 
   return (
-    <aside className="h-full flex flex-col pr-6 pt-[80px] pb-8">
+    <aside className="md:h-full flex flex-col px-4 md:px-0 md:pr-6 pt-2 md:pt-[80px] pb-8">
       <TaskListPanel
         tasks={tasks ?? []}
         inProgressTasks={inProgressTasks ?? []}

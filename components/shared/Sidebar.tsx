@@ -14,7 +14,7 @@ import type { User } from "@supabase/supabase-js";
 // Endpoints to warm in SWR's cache when the user hovers a nav link. Hovering
 // fires these in parallel so the data is in flight (or cached) by the time
 // the click registers ~100ms later.
-const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string; preloadKeys: string[] }[] = [
+export const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string; preloadKeys: string[] }[] = [
   {
     href: "/",
     label: "Today",
@@ -41,11 +41,11 @@ const navItems: { href: string; label: string; icon: typeof CircleCheck; color: 
   },
 ];
 
-function preloadKeys(keys: string[]) {
+export function preloadKeys(keys: string[]) {
   for (const key of keys) preload(key, fetcher);
 }
 
-function isActiveRoute(href: string, pathname: string): boolean {
+export function isActiveRoute(href: string, pathname: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
 }
@@ -55,7 +55,7 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
+export function UserAvatar({ user, size = 32 }: { user: User | null; size?: number }) {
   const avatarUrl =
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
@@ -201,7 +201,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
 
   if (collapsed) {
     return (
-      <aside className="flex h-screen w-[52px] flex-col items-center bg-card">
+      <aside className="hidden md:flex h-screen w-[52px] flex-col items-center bg-card">
         <div className="px-0 py-6 flex flex-col items-center gap-1" style={{ paddingLeft: "14px", paddingRight: "14px" }}>
           <Eclipse className="h-5 w-5 text-foreground" />
           <button
@@ -243,7 +243,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   }
 
   return (
-    <aside className="flex h-screen w-[220px] flex-col bg-card">
+    <aside className="hidden md:flex h-screen w-[220px] flex-col bg-card">
       <div className="px-5 py-6 flex items-center justify-between">
         <h1 className="flex items-center gap-1 text-lg font-bold text-foreground" style={{ letterSpacing: "-0.5px" }}>
           <Eclipse className="h-5 w-5" />

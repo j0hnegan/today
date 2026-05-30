@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { Task, Tag, Category, Goal, Document, CheckIn, Note, Attachment } from "./types";
+import type { Task, Tag, Category, Goal, Document, CheckIn, Note, Attachment, CashFlow } from "./types";
 
 export const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -74,6 +74,21 @@ export function useNotesList() {
 export function useDatesWithContent(from: string, to: string) {
   const url = from && to ? `/api/dates-with-content?from=${from}&to=${to}` : null;
   return useSWR<string[]>(url, fetcher);
+}
+
+const cashFlowFetcher = async (url: string): Promise<CashFlow | null> => {
+  const res = await fetch(url);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+};
+
+export function useCashFlow(id: string | null) {
+  return useSWR<CashFlow | null>(
+    id ? `/api/cashflow/${id}` : null,
+    cashFlowFetcher,
+    { revalidateOnFocus: false }
+  );
 }
 
 export function useLatestCheckin() {

@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchLatestCheckin } from "@/lib/server-fetchers";
 import { validateBody } from "@/lib/validation/helpers";
 import { createCheckinSchema } from "@/lib/validation/checkin";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -12,19 +13,7 @@ export async function GET() {
   const { supabase } = auth;
 
   try {
-    const { data: checkin, error } = await supabase
-      .from("checkins")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error && error.code === "PGRST116") {
-      // No rows found
-      return NextResponse.json(null, { headers: SWR_HEADERS });
-    }
-    if (error) throw error;
-
+    const checkin = await fetchLatestCheckin(supabase);
     return NextResponse.json(checkin, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/checkins error:", e);

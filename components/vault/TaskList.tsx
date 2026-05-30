@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import { TaskRow } from "./TaskRow";
 import type { SelectionPosition } from "./TaskRow";
 import type { Task } from "@/lib/types";
+import { useTouchDragSort } from "@/lib/useTouchDragSort";
 
 interface TaskListProps {
   tasks: Task[];
@@ -19,6 +20,9 @@ interface TaskListProps {
   section?: string;
   dropIndicatorIndex?: number | null;
   onRowDragOver?: (section: string, index: number) => void;
+  onTouchDragStart?: (taskId: number) => void;
+  onTouchDragEnd?: () => void;
+  onTouchReorder?: (section: string, fromTaskId: number, insertionIndex: number) => void;
 }
 
 function AddTaskButton({ section }: { section?: string }) {
@@ -70,6 +74,9 @@ export function TaskList({
   section,
   dropIndicatorIndex,
   onRowDragOver,
+  onTouchDragStart,
+  onTouchDragEnd,
+  onTouchReorder,
 }: TaskListProps) {
   // Compute selection positions for contiguous block rendering
   const selectionPositions = useMemo(() => {
@@ -107,10 +114,31 @@ export function TaskList({
     [section, onRowDragOver]
   );
 
+  // Touch reordering within this section (HTML5 DnD above is mouse-only).
+  // Cross-section moves stay desktop-only — on mobile the edit modal's
+  // Section selector covers that.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bindDrag = useTouchDragSort({
+    containerRef,
+    onStart: (i) => onTouchDragStart?.(tasks[i].id),
+    onMove: (ins) => {
+      if (section) onRowDragOver?.(section, ins);
+    },
+    onDrop: (from, ins) => {
+      if (section) onTouchReorder?.(section, tasks[from].id, ins);
+    },
+    onEnd: () => onTouchDragEnd?.(),
+  });
+
   return (
-    <div>
+    <div ref={containerRef}>
       {tasks.map((task, i) => (
-        <div key={task.id} onDragOver={(e) => handleRowDragOver(e, i)}>
+        <div
+          key={task.id}
+          data-drag-index={i}
+          onDragOver={(e) => handleRowDragOver(e, i)}
+          {...bindDrag(i)}
+        >
           {dropIndicatorIndex === i && <DropIndicator />}
           <TaskRow
             task={task}

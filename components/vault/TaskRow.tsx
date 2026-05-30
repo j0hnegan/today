@@ -180,7 +180,7 @@ export const TaskRow = memo(function TaskRow({
             e.stopPropagation();
             onDelete(task);
           }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive flex-shrink-0 p-0.5"
+          className="opacity-0 group-hover:opacity-100 coarse:opacity-100 transition-opacity text-muted-foreground hover:text-destructive flex-shrink-0 p-1"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>

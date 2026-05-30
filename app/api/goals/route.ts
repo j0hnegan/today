@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchGoals } from "@/lib/server-fetchers";
 import { validateBody } from "@/lib/validation/helpers";
 import { createGoalSchema } from "@/lib/validation/goal";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -21,13 +22,8 @@ export async function GET() {
   const { supabase } = auth;
 
   try {
-    const { data: rows, error } = await supabase
-      .from("goals")
-      .select("*, categories(id, name, color)")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return NextResponse.json((rows || []).map(rowToGoal), { headers: SWR_HEADERS });
+    const goals = await fetchGoals(supabase);
+    return NextResponse.json(goals, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/goals error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

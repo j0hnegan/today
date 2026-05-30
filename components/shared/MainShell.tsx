@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { mutate } from "@/lib/swr-helpers";
 import { Sidebar } from "@/components/shared/Sidebar";
+import { MobileNav } from "@/components/shared/MobileNav";
 import { RightRail } from "@/components/shared/RightRail";
 import { QuickAddModal } from "@/components/shared/QuickAddModal";
 import { AutomationRunner } from "@/components/shared/AutomationRunner";
@@ -96,13 +97,13 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const railVisible = showRailFor(pathname);
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-[100dvh] bg-background text-foreground">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
       />
-      <div className="flex-1 min-w-0 relative flex">
-        <div className="absolute top-4 right-6 z-10 flex items-center gap-[24px]">
+      <div className="flex-1 min-w-0 relative flex flex-col md:flex-row overflow-y-auto md:overflow-hidden overscroll-contain pt-[env(safe-area-inset-top)] md:pt-0 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="hidden md:flex absolute top-4 right-6 z-10 items-center gap-[24px]">
           {energy && (
             <button
               onClick={() => setEnergyModalOpen(true)}
@@ -145,14 +146,14 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         </div>
         <main
           className={cn(
-            "overflow-auto",
-            railVisible ? "flex-[7]" : "flex-1"
+            "w-full md:overflow-auto",
+            railVisible ? "md:flex-[7]" : "md:flex-1"
           )}
         >
           {children}
         </main>
         {railVisible && (
-          <div className="flex-[5] min-w-[280px] max-w-[460px]">
+          <div className="w-full md:flex-[5] md:min-w-[280px] md:max-w-[460px]">
             <RightRail />
           </div>
         )}
@@ -183,6 +184,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
         </DialogContent>
       </Dialog>
 
+      <MobileNav energy={energy} onEnergyClick={() => setEnergyModalOpen(true)} />
       <QuickAddModal />
       <AutomationRunner />
       <Toaster />

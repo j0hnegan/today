@@ -33,7 +33,8 @@ export async function fetchTasks(
     .order("sort_order", { ascending: true })
     .order("updated_at", { ascending: false });
 
-  const { data: tasks } = await query;
+  const { data: tasks, error } = await query;
+  if (error) throw error;
   if (!tasks || tasks.length === 0) return [];
 
   return tasks.map((t) => {
@@ -46,19 +47,21 @@ export async function fetchTasks(
 }
 
 export async function fetchTags(supabase: SB): Promise<Tag[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("*")
     .order("name", { ascending: true });
+  if (error) throw error;
   return (data ?? []) as Tag[];
 }
 
 export async function fetchGoals(supabase: SB): Promise<Goal[]> {
-  const { data: rows } = await supabase
+  const { data: rows, error } = await supabase
     .from("goals")
     .select("*, categories(id, name, color)")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
+  if (error) throw error;
   return (rows ?? []).map((row) => {
     const { categories, ...goal } = row as Record<string, unknown>;
     return { ...goal, category: (categories as Category | null) ?? null } as Goal;
@@ -66,10 +69,11 @@ export async function fetchGoals(supabase: SB): Promise<Goal[]> {
 }
 
 export async function fetchDocs(supabase: SB): Promise<Document[]> {
-  const { data: docs } = await supabase
+  const { data: docs, error } = await supabase
     .from("documents")
     .select("*")
     .order("updated_at", { ascending: false });
+  if (error) throw error;
   if (!docs || docs.length === 0) return [];
 
   const docIds = docs.map((d) => d.id);
@@ -154,19 +158,20 @@ export async function fetchAttachments(
 }
 
 export async function fetchNotesList(supabase: SB) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("notes")
     .select("id, date, content, updated_at")
     .not("content", "is", null)
     .neq("content", "")
     .order("date", { ascending: false });
+  if (error) throw error;
   return data ?? [];
 }
 
 export async function fetchNote(supabase: SB, date: string): Promise<Note> {
   const { data: note } = await supabase
     .from("notes")
-    .select("*, attachments(*)")
+    .select("*")
     .eq("date", date)
     .single();
 
@@ -183,17 +188,24 @@ export async function fetchNote(supabase: SB, date: string): Promise<Note> {
     }
   }
 
-  const attachments = (note.attachments ?? []).sort(
-    (a: Attachment, b: Attachment) => b.created_at.localeCompare(a.created_at)
-  );
+  // `attachments` is a polymorphic table (entity_type/entity_id) with no
+  // foreign key to `notes`, so PostgREST can't embed it in the select above —
+  // it has to be fetched as a separate query.
+  const { data: attachments } = await supabase
+    .from("attachments")
+    .select("*")
+    .eq("entity_type", "note")
+    .eq("entity_id", note.id)
+    .order("created_at", { ascending: false });
 
-  return { ...note, blocks, attachments } as Note;
+  return { ...note, blocks, attachments: attachments ?? [] } as Note;
 }
 
 export async function fetchSettings(
   supabase: SB
 ): Promise<Record<string, string>> {
-  const { data: rows } = await supabase.from("settings").select("*");
+  const { data: rows, error } = await supabase.from("settings").select("*");
+  if (error) throw error;
   const settings: Record<string, string> = {};
   for (const row of rows || []) settings[row.key] = row.value;
   return settings;
@@ -227,11 +239,12 @@ export async function fetchDatesWithContent(
 }
 
 export async function fetchLatestCheckin(supabase: SB) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("checkins")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) throw error;
   return data ?? null;
 }

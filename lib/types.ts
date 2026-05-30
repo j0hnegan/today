@@ -106,6 +106,25 @@ export interface Attachment {
   created_at: string;
 }
 
+export interface CashFlowRow {
+  id: string;
+  date: string;
+  description: string;
+  amount_in: number;
+  amount_out: number;
+  locked: boolean;
+}
+
+export interface CashFlow {
+  id: string;
+  title: string;
+  starting_balance: number;
+  starting_date: string | null;
+  rows: CashFlowRow[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface CheckIn {
   id: number;
   energy: EnergyLevel;

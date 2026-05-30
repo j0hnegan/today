@@ -1,101 +1,79 @@
 # Hush — Project Knowledge
 
 ## What is this?
-A personal task management / daily planner app. The user (John) uses it to manage daily tasks, notes, goals, and documents. Think of it as a personal Notion-like daily page with a focus on tasks.
+A personal daily planner for one user (John). A Notion-like **Today** page (a
+freeform note plus a task sidebar), a task **vault**, **docs**, **goals**, and a
+**cash-flow** planner. It also exposes a read/write **MCP** server. Personal
+use — not a SaaS.
 
 ## Tech Stack
-- **Framework**: Next.js 14 (App Router)
-- **UI**: Tailwind CSS, Radix UI, shadcn/ui components, Lucide icons
-- **Database**: Migrating from SQLite (better-sqlite3) → Supabase (Postgres)
-- **State**: SWR for data fetching, React state for UI
-- **Theme**: Dark mode by default (next-themes)
+- **Next.js 14** (App Router), React 18
+- **Supabase** — Postgres + Auth (Google OAuth) + Storage
+- **SWR** on the client; Server Components prefetch and hydrate the SWR cache
+- **Tailwind + Radix + shadcn/ui**, Lucide icons; dark mode (next-themes)
+- **Zod** validation at every API boundary (`lib/validation/*`)
+- API routes run on the **edge** runtime, except `/api/cron/*` and `/api/mcp/*` (Node)
 
-## Migration Status: SQLite → Supabase
-**IN PROGRESS** as of April 2026.
+> The SQLite → Supabase migration is **complete**. There is no `lib/db.ts` /
+> `focus.db` anymore; `scripts/*.ts` that reference SQLite are one-off legacy
+> exporters. Supabase clients live in `lib/supabase-browser.ts` and
+> `lib/supabase-server.ts`.
 
-### What's done:
-- `backup-data.json` — full export of SQLite data (81 records)
-- `@supabase/supabase-js` installed
-- `.env.local` has Supabase URL + publishable key
-- `lib/supabase.ts` — Supabase client utility
-- `scripts/supabase-schema.sql` — Postgres schema matching all SQLite tables
-- Supabase MCP server connected for direct DB access
+## Data architecture (read this first)
+`lib/server-fetchers.ts` is the **single source of truth** for every read shape.
+Each `fetchX(supabase, …)`:
+- is called by **Server Components** to prefetch data and hydrate SWR
+  (`components/shared/ServerSWR.tsx`), and
+- is called by the matching **`GET /api/*` route** for client revalidation.
 
-### What's left:
-- Create tables in Supabase (run schema SQL or use MCP)
-- Import data from `backup-data.json` into Supabase
-- Rewrite all API routes (`app/api/`) from `db.prepare(...)` sync calls to `supabase.from(...)` async calls
-- Test locally against Supabase
-- Deploy to Vercel
-- Add SSO/auth (Supabase Auth with Google/GitHub OAuth)
-- Set up as PWA for mobile home screen access
+So each query/shape is defined exactly once. Read routes are thin:
+`requireAuth → validate → fetchX → NextResponse.json(…, SWR_HEADERS)`. They
+re-throw DB errors as 500 so SWR retries; `app/(main)/error.tsx` is the SSR
+fallback. Client hooks (`useTasks`, `useNote`, …) are in `lib/hooks.ts`; the
+localStorage SWR cache is set up in `components/shared/SWRProvider.tsx`.
 
-## Architecture
+When changing a read endpoint, edit the fetcher — the route and SSR both follow.
 
-### Key directories
-- `app/api/` — API routes (tasks, notes, goals, categories, etc.)
-- `components/focus/` — Today page components (BlockEditor, PagePanel)
-- `components/vault/` — Task management views (VaultView, TaskEditModal)
-- `components/views/` — Top-level view components
-- `components/ui/` — shadcn/ui primitives
-- `lib/` — Utilities, types, hooks, DB client
+## Auth
+- `middleware.ts` validates the Supabase session and forwards `x-hush-user-id`
+  so routes can skip a second `getUser()` round-trip.
+- `lib/api-auth.ts` `requireAuth()` also accepts a bot Bearer token
+  (`HUSH_BOT_TOKEN`, uses the service role) and a guarded dev bypass
+  (`HUSH_DEV_AUTH=1`; refuses to run in production / on Vercel).
 
-### Data model
-- **Tasks** have a `destination` field: `on_deck` (today), `someday`, or `in_progress`
-- **Tasks** have a `status`: `active` or `done`
-- Auto-triage: if a task's `due_date` is today or past, it auto-moves to `on_deck`
-- Tasks can have categories (tags), a consequence level, and a size estimate
+## Data model
+- **Task** — `destination`: `on_deck` (Today) | `upcoming` | `someday` |
+  `in_progress`; `status`: `active` | `done`; plus `consequence`, `size`,
+  `due_date`, `sort_order`, and tags (categories).
+- **Auto-triage** (`lib/triage.ts`): a task due today or earlier moves to `on_deck`.
+- **Note** — one row per date (`date` is UNIQUE); freeform HTML `content` plus
+  optional `blocks` JSON. Attachments are polymorphic (`entity_type`/`entity_id`),
+  so they have no FK to notes and must be fetched as a separate query.
+- **Document**, **Goal**, **Category/Tag**, **CheckIn**, **CashFlow**.
 
-### The Block Editor (`components/focus/BlockEditor.tsx`)
-The daily page uses a block-based editor (like Notion). Blocks include:
-- Text, headings, bullet lists, numbered lists, quotes, dividers
-- A special `task-list` block that renders the task list inline
-- Typing `- task name` + Enter creates a new task (dash-to-task pattern)
-- After creating a task, the block auto-fills with `- ` for rapid task entry
-- The dash pattern works with or without a space after the dash
+## Key directories
+- `app/api/*` — route handlers (reads delegate to server-fetchers)
+- `lib/server-fetchers.ts` — all read queries (single source of truth)
+- `lib/validation/*` — zod schemas per entity
+- `components/focus/*` — Today page (`PagePanel`, `NoteEditor`, `TaskListPanel`)
+- `components/vault/*` + `components/views/VaultView.tsx` — task management
+- `components/docs/*`, `components/cashflow/*`
+- `lib/mcp/*` + `app/api/mcp/[token]` — MCP server (read + task tools)
+- `app/login/Backgrounds.tsx` — Three.js WebGL background, lazy-loaded via
+  `next/dynamic` so the login card paints without waiting on the 3D engine
 
-### Task interactions
-- **Click check circle** = mark task done
-- **Long-press check circle (1.5s)** = move to "In Progress" tab
-- **Inline title editing** — click title to edit, blur saves (even empty), Escape cancels
-- **Hover actions**: Date picker, Not Today, Delete
-- **Tabs**: "Today" and "In Progress" tabs in the task list header
-- In Progress tab shows a green count badge when items exist
+## Today page
+Freeform note editor (`NoteEditor`) on the left; task sidebar (`TaskListPanel`)
+on the right with **Today** and **In Progress** tabs.
+- Click the check circle = mark done; long-press (1.5s) = move to In Progress.
+- Click a title to edit inline (blur saves, Escape cancels).
+- Hover actions: date picker, Not Today, delete.
 
-### Important files
-- `lib/db.ts` — SQLite database connection + all migration logic (will be replaced)
-- `lib/supabase.ts` — New Supabase client (replacing db.ts)
-- `lib/hooks.ts` — SWR hooks (`useTasks`, `useNote`, etc.)
-- `lib/types.ts` — TypeScript types for all entities
-- `lib/triage.ts` — Auto-triage logic (due date → destination)
-- `lib/done-toast.ts` — Task completion toast with undo
-- `components/focus/PagePanel.tsx` — Main daily page container
-- `components/focus/BlockEditor.tsx` — Block editor + task list rendering
+## Environment (`.env.local`)
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `HUSH_BOT_TOKEN`,
+`MCP_BEARER_TOKEN`, `HUSH_DEV_AUTH` (dev only). Deployed on Vercel (`vercel.json`).
 
-## Design Decisions
-
-### Why SQLite originally?
-Simple, zero-config, fast for local dev. But can't deploy to serverless (Vercel) since there's no persistent filesystem.
-
-### Why Supabase?
-- Free Postgres hosting
-- Built-in auth (SSO with Google/GitHub)
-- Works perfectly with Vercel
-- The `sb_publishable_` key format is the new Supabase key format (not the legacy `eyJ...` JWT)
-
-### Why not a VPS?
-Considered DigitalOcean Droplet + SQLite (no code changes needed), but Supabase + Vercel gives free hosting, built-in auth, and zero server maintenance.
-
-### In Progress feature
-Added a third task destination (`in_progress`) for tasks that are started but waiting on something. Long-press the check circle to move a task there. The DB schema CHECK constraint was migrated to include this new value.
-
-## Credentials / Environment
-- Supabase URL: stored in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`
-- Supabase key: stored in `.env.local` as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- SQLite DB: `focus.db` in project root (local only, will be deprecated)
-
-## User Preferences
-- John prefers practical, no-BS explanations
-- Explain technical concepts in plain language when asked
-- Don't over-engineer — keep it simple
-- The app is for personal use, not a SaaS product
+## Working preferences
+- Practical, no-BS explanations; plain language for technical concepts.
+- Keep it simple — match complexity to a personal app, don't over-engineer.
