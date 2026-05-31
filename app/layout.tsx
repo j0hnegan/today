@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import NativeAuth from "@/components/native/NativeAuth";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -63,6 +64,7 @@ export default function RootLayout({
           storageKey="focus-theme"
         >
           {children}
+          <NativeAuth />
         </ThemeProvider>
       </body>
     </html>
