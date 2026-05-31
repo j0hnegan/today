@@ -7,13 +7,15 @@ import {
   Check,
   X,
   CalendarPlus,
+  Plus,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { Task, Size } from "@/lib/types";
 import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { patchTask, reorderTasks } from "@/lib/taskMutations";
+import { patchTask, reorderTasks, createTask } from "@/lib/taskMutations";
+import { useTouchDragSort, moveByInsertion } from "@/lib/useTouchDragSort";
 
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
@@ -194,7 +196,7 @@ function TaskRow({
           type="text"
           defaultValue={task.title}
           autoFocus
-          className="flex-1 min-w-0 text-left text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
+          className="flex-1 min-w-0 text-left text-base md:text-sm text-foreground outline-none rounded-md bg-accent/60 border border-border px-2 py-0.5 -my-0.5"
           onBlur={(e) => saveTaskTitle(task.id as number, e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -254,7 +256,7 @@ function TaskRow({
                     await patchTask(task, { due_date: null });
                   } catch { /* */ }
                 }}
-                className="opacity-0 group-hover/date:opacity-100 transition-opacity inline-flex items-center justify-center h-3 w-3 rounded text-muted-foreground hover:text-destructive"
+                className="opacity-0 group-hover/date:opacity-100 coarse:opacity-100 transition-opacity inline-flex items-center justify-center h-4 w-4 rounded text-muted-foreground hover:text-destructive"
                 title="Clear due date"
               >
                 <X className="h-2.5 w-2.5" />
@@ -266,7 +268,7 @@ function TaskRow({
                 <button
                   type="button"
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity inline-flex items-center justify-center h-4 w-4 text-muted-foreground hover:text-foreground"
+                  className="flex-shrink-0 opacity-0 group-hover/task:opacity-100 coarse:opacity-100 transition-opacity inline-flex items-center justify-center h-5 w-5 text-muted-foreground hover:text-foreground"
                   title="Set due date"
                 >
                   <CalendarPlus className="h-3 w-3" />
@@ -289,7 +291,7 @@ function TaskRow({
         </div>
       )}
       {!isEditing && (
-        <div className="absolute right-1 top-0 bottom-0 flex items-center opacity-0 group-hover/task:opacity-100 transition-opacity">
+        <div className="absolute right-1 top-0 bottom-0 flex items-center opacity-0 group-hover/task:opacity-100 coarse:opacity-100 transition-opacity">
           <button
             type="button"
             onClick={(e) => {
@@ -380,6 +382,18 @@ export function TaskListPanel({
   }, [draggingTaskIdx]);
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  const handleAddTask = useCallback(async () => {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    setNewTaskTitle("");
+    try {
+      await createTask({ title, destination: "on_deck" });
+    } catch {
+      /* createTask handles rollback + error toast */
+    }
+  }, [newTaskTitle]);
 
   const toggleSize = (s: Size) => {
     setSizeFilter((prev) => {
@@ -423,6 +437,23 @@ export function TaskListPanel({
       return a.created_at.localeCompare(b.created_at);
     });
   }, [tasks, sortKey, sizeFilter]);
+
+  // Touch reordering — HTML5 DnD below is mouse-only. Drives the same drag
+  // state and reorder call the desktop path uses.
+  const listRef = useRef<HTMLDivElement>(null);
+  const bindTaskDrag = useTouchDragSort({
+    containerRef: listRef,
+    onStart: setDraggingTaskIdx,
+    onMove: setTaskDropIdx,
+    onDrop: (from, ins) => {
+      const ids = sortedTasks.map((t) => t.id as number);
+      reorderTasks(moveByInsertion(ids, from, ins)).catch(() => {});
+    },
+    onEnd: () => {
+      setDraggingTaskIdx(null);
+      setTaskDropIdx(null);
+    },
+  });
 
   if (loading && tasks.length === 0 && inProgressTasks.length === 0) {
     return null;
@@ -545,9 +576,9 @@ export function TaskListPanel({
       </div>
 
       {/* Task list in bordered panel */}
-      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-y-auto">
+      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto">
         {activeTab === "today" && (
-          <div className="space-y-0.5">
+          <div ref={listRef} className="space-y-0.5">
             {tasks.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-1">
                 No tasks today. Press{" "}
@@ -567,9 +598,11 @@ export function TaskListPanel({
                       )}
                     <div
                       className={cn(
-                        "flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task relative",
+                        "flex w-full items-center gap-1 rounded-lg px-2 h-9 md:h-7 text-sm transition-colors hover:bg-accent/50 group/task relative coarse:select-none",
                         draggingTaskIdx === taskIdx && "opacity-30"
                       )}
+                      data-drag-index={taskIdx}
+                      {...(editingTaskId !== (task.id as number) ? bindTaskDrag(taskIdx) : {})}
                       draggable={editingTaskId !== (task.id as number)}
                       onDragStart={(e) => {
                         e.stopPropagation();
@@ -627,6 +660,23 @@ export function TaskListPanel({
                 )}
               </>
             )}
+            <div className="flex w-full items-center gap-1 rounded-lg px-2 h-9 md:h-7 text-sm text-muted-foreground/60 focus-within:text-foreground">
+              <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+              <input
+                type="text"
+                value={newTaskTitle}
+                placeholder="Add task"
+                className="flex-1 min-w-0 bg-transparent text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTask();
+                  }
+                  if (e.key === "Escape") setNewTaskTitle("");
+                }}
+              />
+            </div>
           </div>
         )}
 
@@ -640,7 +690,7 @@ export function TaskListPanel({
               inProgressTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex w-full items-center gap-1 rounded-lg px-2 h-7 text-sm transition-colors hover:bg-accent/50 group/task relative"
+                  className="flex w-full items-center gap-1 rounded-lg px-2 h-9 md:h-7 text-sm transition-colors hover:bg-accent/50 group/task relative"
                 >
                   <TaskRow
                     task={task}

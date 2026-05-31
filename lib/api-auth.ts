@@ -42,9 +42,13 @@ export async function requireAuth() {
   }
 
   if (DEV_AUTH_BYPASS) {
+    // Trusted server credential so dev requests aren't subject to the
+    // 'authenticated'-only RLS policies (the anon key would be rejected since
+    // the bypass has no real Supabase session).
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      serviceKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     return { supabase, user: { id: "dev" } };
   }

@@ -11,6 +11,7 @@ import {
   Quote,
   Minus,
   Paperclip,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { getUploadUrl } from "@/lib/uploads";
@@ -217,6 +218,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     icon: Cloud,
     action: "insert",
     getHTML: (ctx) => taskListHTML(ctx.somedayTasks, "Someday"),
+  },
+  {
+    id: "cash",
+    aliases: ["cashflow", "forecast", "budget"],
+    label: "Cash Flow Forecast",
+    description: "Insert an interactive cash flow forecast",
+    icon: Wallet,
+    action: "insert",
+    getHTML: () =>
+      `<div data-cashflow-id="${crypto.randomUUID()}" contenteditable="false" class="slash-cashflow"></div><br>`,
   },
   {
     id: "attach",

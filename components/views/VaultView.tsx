@@ -27,6 +27,7 @@ import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUp
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
 import { patchTask, reorderTasks } from "@/lib/taskMutations";
+import { moveByInsertion } from "@/lib/useTouchDragSort";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
 import { mutate } from "@/lib/swr-helpers";
@@ -90,6 +91,16 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
     return (a.id as number) - (b.id as number);
   });
 }
+
+// The four task sections, in render order. `key` indexes `filteredGrouped`;
+// `section` is the destination/status string the drag-drop handlers speak.
+// All but Someday are hidden when the "review Someday" filter is on.
+const VAULT_SECTIONS = [
+  { key: "onDeck", section: "on_deck", title: "Today", defaultOpen: true, alwaysShow: false },
+  { key: "upcoming", section: "upcoming", title: "Upcoming", defaultOpen: true, alwaysShow: false },
+  { key: "someday", section: "someday", title: "Someday", defaultOpen: true, alwaysShow: true },
+  { key: "done", section: "done", title: "Done", defaultOpen: false, alwaysShow: false },
+] as const;
 
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
 const SIZE_LABELS: Record<Size, string> = {
@@ -554,6 +565,28 @@ export function VaultView() {
     );
   }
 
+  // Touch within-section reorder (single task). Mirrors the same-section
+  // branch of handleDrop, but driven by the pointer-based hook in TaskList.
+  function reorderSectionByIndex(
+    section: string,
+    fromTaskId: number,
+    insertionIndex: number
+  ) {
+    const key =
+      section === "on_deck"
+        ? "onDeck"
+        : section === "upcoming"
+          ? "upcoming"
+          : section === "done"
+            ? "done"
+            : "someday";
+    const sectionTasks = filteredGrouped[key as keyof typeof filteredGrouped];
+    const ids = sectionTasks.map((t) => t.id);
+    const from = ids.indexOf(fromTaskId);
+    if (from === -1) return;
+    reorderTasks(moveByInsertion(ids, from, insertionIndex), section as Destination);
+  }
+
   // --- Task click handler (with selection support) ---
   function handleTaskClick(task: Task, e: React.MouseEvent) {
     if (e.shiftKey) {
@@ -671,6 +704,9 @@ export function VaultView() {
     showDates,
     showGoals,
     onRowDragOver: handleRowDragOver,
+    onTouchDragStart: setDraggingTaskId,
+    onTouchDragEnd: handleDragEnd,
+    onTouchReorder: reorderSectionByIndex,
   };
 
   function renderSortDropdown(section: string) {
@@ -712,7 +748,7 @@ export function VaultView() {
   }
 
   return (
-    <div className="max-w-3xl px-6 pt-[80px] pb-8" onDragEnd={handleDragEnd}>
+    <div className="max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8" onDragEnd={handleDragEnd}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold tracking-tight">My Tasks</h1>
         <div className="flex items-center gap-4">
@@ -1010,82 +1046,38 @@ export function VaultView() {
       )}
 
       <div className="space-y-2">
-        {!filterSomeday && (
-          <div
-            onDragOver={(e) => handleDragOver(e, "on_deck")}
-            onDragLeave={(e) => handleDragLeave(e)}
-            onDrop={(e) => handleDrop(e, "on_deck")}
-            className={`transition-all ${dragOverSection === "on_deck" ? dropHighlight : ""}`}
-          >
-            <VaultSection
-              title="Today"
-              count={filteredGrouped.onDeck.length}
-              defaultOpen={true}
-              headerExtra={renderSortDropdown("on_deck")}
-            >
-              <TaskList tasks={filteredGrouped.onDeck} {...taskListProps} section="on_deck" dropIndicatorIndex={dropIndicator?.section === "on_deck" ? dropIndicator.index : null} />
-            </VaultSection>
-          </div>
-        )}
-
-        {!filterSomeday && (
-          <div
-            onDragOver={(e) => handleDragOver(e, "upcoming")}
-            onDragLeave={(e) => handleDragLeave(e)}
-            onDrop={(e) => handleDrop(e, "upcoming")}
-            className={`transition-all ${dragOverSection === "upcoming" ? dropHighlight : ""}`}
-          >
-            <VaultSection
-              title="Upcoming"
-              count={filteredGrouped.upcoming.length}
-              defaultOpen={true}
-              headerExtra={renderSortDropdown("upcoming")}
-            >
-              <TaskList tasks={filteredGrouped.upcoming} {...taskListProps} section="upcoming" dropIndicatorIndex={dropIndicator?.section === "upcoming" ? dropIndicator.index : null} />
-            </VaultSection>
-          </div>
-        )}
-
-        <div
-          onDragOver={(e) => handleDragOver(e, "someday")}
-          onDragLeave={(e) => handleDragLeave(e)}
-          onDrop={(e) => handleDrop(e, "someday")}
-          className={`transition-all ${dragOverSection === "someday" ? dropHighlight : ""}`}
-        >
-          <VaultSection
-            title="Someday"
-            count={filteredGrouped.someday.length}
-            defaultOpen={true}
-            headerExtra={renderSortDropdown("someday")}
-          >
-            <TaskList tasks={filteredGrouped.someday} {...taskListProps} section="someday" dropIndicatorIndex={dropIndicator?.section === "someday" ? dropIndicator.index : null} />
-          </VaultSection>
-        </div>
-
-        {!filterSomeday && (
-          <>
+        {VAULT_SECTIONS.map(({ key, section, title, defaultOpen, alwaysShow }) => {
+          if (filterSomeday && !alwaysShow) return null;
+          const tasks = filteredGrouped[key];
+          return (
             <div
-              onDragOver={(e) => handleDragOver(e, "done")}
-              onDragLeave={(e) => handleDragLeave(e)}
-              onDrop={(e) => handleDrop(e, "done")}
-              className={`transition-all ${dragOverSection === "done" ? dropHighlight : ""}`}
+              key={section}
+              onDragOver={(e) => handleDragOver(e, section)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, section)}
+              className={`transition-all ${dragOverSection === section ? dropHighlight : ""}`}
             >
               <VaultSection
-                title="Done"
-                count={filteredGrouped.done.length}
-                defaultOpen={false}
-                headerExtra={renderSortDropdown("done")}
+                title={title}
+                count={tasks.length}
+                defaultOpen={defaultOpen}
+                headerExtra={renderSortDropdown(section)}
               >
-                <TaskList tasks={filteredGrouped.done} {...taskListProps} section="done" dropIndicatorIndex={dropIndicator?.section === "done" ? dropIndicator.index : null} />
+                <TaskList
+                  tasks={tasks}
+                  {...taskListProps}
+                  section={section}
+                  dropIndicatorIndex={dropIndicator?.section === section ? dropIndicator.index : null}
+                />
               </VaultSection>
             </div>
-          </>
-        )}
+          );
+        })}
       </div>
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-background border border-border rounded-full px-4 py-2 shadow-lg flex items-center gap-3">
+        <div className="fixed bottom-20 md:bottom-10 left-1/2 -translate-x-1/2 z-50 bg-background border border-border rounded-full px-4 py-2 shadow-lg flex items-center gap-3">
           <span className="text-sm font-medium">
             {selectedIds.size} selected
           </span>

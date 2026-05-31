@@ -12,7 +12,7 @@ export function DocDetailClient({ docId }: { docId: number }) {
 
   if (!doc) {
     return (
-      <div className="mx-auto max-w-3xl px-6 pt-[80px] pb-8">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
         <div className="skeleton h-5 w-16 mb-6" />
         <div className="skeleton h-8 w-2/3 mb-4" />
         <div className="skeleton h-7 w-48 mb-6" />

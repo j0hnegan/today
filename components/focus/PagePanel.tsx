@@ -132,7 +132,7 @@ export function PagePanel() {
   );
 
   return (
-    <div className="px-6 pt-[80px] pb-6 h-full flex flex-col overflow-y-auto w-full">
+    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:overflow-y-auto w-full">
       {/* Date header row */}
       <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
         <h1 className="text-lg font-semibold tracking-tight">
@@ -205,7 +205,7 @@ export function PagePanel() {
       </div>
 
       {/* Note editor panel */}
-      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-0 overflow-y-auto p-6">
+      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6">
         <NoteEditor
           note={note}
           dateStr={dateStr}

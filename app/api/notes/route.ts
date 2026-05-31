@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchNote } from "@/lib/server-fetchers";
 import { validateBody, validateSearchParams } from "@/lib/validation/helpers";
 import { noteQuerySchema, upsertNoteSchema } from "@/lib/validation/note";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -16,38 +17,8 @@ export async function GET(request: NextRequest) {
   const { date } = params;
 
   try {
-    const { data: note } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("date", date)
-      .single();
-
-    if (!note) {
-      return NextResponse.json({ id: null, date, content: "", blocks: null }, { headers: SWR_HEADERS });
-    }
-
-    // Parse blocks JSON if present
-    let blocks = null;
-    if (note.blocks && typeof note.blocks === "string") {
-      try {
-        blocks = JSON.parse(note.blocks);
-      } catch {
-        blocks = null;
-      }
-    }
-
-    // Include attachments
-    const { data: attachments } = await supabase
-      .from("attachments")
-      .select("*")
-      .eq("entity_type", "note")
-      .eq("entity_id", note.id)
-      .order("created_at", { ascending: false });
-
-    return NextResponse.json(
-      { ...note, blocks, attachments: attachments || [] },
-      { headers: SWR_HEADERS }
-    );
+    const note = await fetchNote(supabase, date);
+    return NextResponse.json(note, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/notes error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -66,24 +37,19 @@ export async function PATCH(request: NextRequest) {
   try {
     const blocksJson = blocks ? JSON.stringify(blocks) : null;
 
-    const { data: existing } = await supabase
+    // `date` is UNIQUE, so a single upsert replaces the prior
+    // select-then-update-or-insert-then-reselect (three round-trips → one).
+    // Only listed columns are written, so created_at is preserved on conflict.
+    const { data: note, error } = await supabase
       .from("notes")
-      .select("id")
-      .eq("date", date)
+      .upsert(
+        { date, content: content ?? "", blocks: blocksJson, updated_at: new Date().toISOString() },
+        { onConflict: "date" }
+      )
+      .select()
       .single();
+    if (error) throw error;
 
-    if (existing) {
-      await supabase
-        .from("notes")
-        .update({ content: content ?? "", blocks: blocksJson, updated_at: new Date().toISOString() })
-        .eq("id", existing.id);
-    } else {
-      await supabase
-        .from("notes")
-        .insert({ date, content: content ?? "", blocks: blocksJson });
-    }
-
-    const { data: note } = await supabase.from("notes").select("*").eq("date", date).single();
     return NextResponse.json(note);
   } catch (e) {
     console.error("PATCH /api/notes error:", e);

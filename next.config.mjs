@@ -37,10 +37,15 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    // On a Preview deploy that lacks NEXT_PUBLIC_SUPABASE_URL the destination
+    // would become "undefined/storage/…", which fails the build with an
+    // "Invalid rewrite" error. Skip the rewrite rather than emit a bad one.
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) return [];
     return [
       {
         source: "/uploads/:path*",
-        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/:path*`,
+        destination: `${supabaseUrl}/storage/v1/object/public/attachments/:path*`,
       },
     ];
   },

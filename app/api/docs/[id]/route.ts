@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/api-auth";
+import { fetchDoc } from "@/lib/server-fetchers";
 import { parseIdParam, validateBody } from "@/lib/validation/helpers";
 import { updateDocSchema } from "@/lib/validation/doc";
 import { SWR_HEADERS } from "@/lib/api-cache";
@@ -18,30 +19,11 @@ export async function GET(
   if (id instanceof NextResponse) return id;
 
   try {
-    const { data: doc } = await supabase.from("documents").select("*").eq("id", id).single();
+    const doc = await fetchDoc(supabase, id);
     if (!doc) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
-
-    const [{ data: categories }, { data: goals }] = await Promise.all([
-      supabase
-        .from("document_categories")
-        .select("categories(id, name, color)")
-        .eq("document_id", id),
-      supabase
-        .from("document_goals")
-        .select("goals(id, title, description, category_id, status)")
-        .eq("document_id", id),
-    ]);
-
-    return NextResponse.json(
-      {
-        ...doc,
-        categories: (categories || []).map((r) => r.categories),
-        goals: (goals || []).map((r) => r.goals),
-      },
-      { headers: SWR_HEADERS }
-    );
+    return NextResponse.json(doc, { headers: SWR_HEADERS });
   } catch (e) {
     console.error("GET /api/docs/[id] error:", e);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
