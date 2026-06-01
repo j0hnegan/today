@@ -69,6 +69,7 @@ function LongPressCheck({
   const DURATION = 750;
 
   const startPress = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
     firedRef.current = false;
     setPressing(true);
     setProgress(0);
@@ -127,6 +128,7 @@ function LongPressCheck({
       }}
       onTouchStart={(e) => {
         e.stopPropagation();
+        e.preventDefault();
         startPress();
       }}
       onTouchEnd={endPress}

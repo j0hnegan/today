@@ -42,11 +42,11 @@ function append(list: Task[] | undefined, task: Task): Task[] {
   return [...(list ?? []), task];
 }
 
-/** Replace a task in a list by id (or append if missing). */
+/** Replace a task in a list by id. No-ops if the task is not found. */
 function replace(list: Task[] | undefined, task: Task): Task[] {
   const current = list ?? [];
   const idx = current.findIndex((t) => t.id === task.id);
-  if (idx === -1) return [...current, task];
+  if (idx === -1) return current;
   const next = [...current];
   next[idx] = task;
   return next;
