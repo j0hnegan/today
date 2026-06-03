@@ -1,24 +1,17 @@
 import { mutate } from "./swr-helpers";
 import { toast } from "sonner";
 import { isDueToday } from "./triage";
+import {
+  TODAY_KEY,
+  ALL_KEY,
+  keyForDestination,
+  without,
+  append,
+  replace,
+  swapTemp,
+  markLocalWrite,
+} from "./taskCache";
 import type { Task, Tag, Destination, Consequence, Size } from "./types";
-
-const TODAY_KEY = "/api/tasks?destination=on_deck&status=active";
-const IN_PROGRESS_KEY = "/api/tasks?destination=in_progress&status=active";
-const UPCOMING_KEY = "/api/tasks?destination=upcoming&status=active";
-const SOMEDAY_KEY = "/api/tasks?destination=someday&status=active";
-// Vault uses the unfiltered /api/tasks endpoint and groups locally by status
-// + destination. Every mutation that touches a per-filter list also has to
-// mirror into this cache, otherwise marking a task done on Today still
-// shows it as active on /vault until the next page refresh.
-const ALL_KEY = "/api/tasks";
-
-function keyForDestination(dest: Destination): string {
-  if (dest === "on_deck") return TODAY_KEY;
-  if (dest === "in_progress") return IN_PROGRESS_KEY;
-  if (dest === "upcoming") return UPCOMING_KEY;
-  return SOMEDAY_KEY;
-}
 
 function rollbackAllTaskLists() {
   mutate((k: unknown) => typeof k === "string" && k.startsWith("/api/tasks"));
@@ -30,26 +23,6 @@ function mirrorAll(updater: (curr: Task[] | undefined) => Task[]) {
 
 function invalidateDatesWithContent() {
   mutate((k: unknown) => typeof k === "string" && k.startsWith("/api/dates-with-content"));
-}
-
-/** Remove a task from a list (by id). */
-function without(list: Task[] | undefined, id: number): Task[] {
-  return (list ?? []).filter((t) => t.id !== id);
-}
-
-/** Append a task to the end of a list. */
-function append(list: Task[] | undefined, task: Task): Task[] {
-  return [...(list ?? []), task];
-}
-
-/** Replace a task in a list by id. No-ops if the task is not found. */
-function replace(list: Task[] | undefined, task: Task): Task[] {
-  const current = list ?? [];
-  const idx = current.findIndex((t) => t.id === task.id);
-  if (idx === -1) return current;
-  const next = [...current];
-  next[idx] = task;
-  return next;
 }
 
 export async function createTask(input: {
@@ -113,12 +86,11 @@ export async function createTask(input: {
     if (!res.ok) throw new Error();
     const real: Task = await res.json();
 
-    mutate(
-      key,
-      (curr: Task[] | undefined) => (curr ?? []).map((t) => (t.id === tempId ? real : t)),
-      { revalidate: false }
-    );
-    mirrorAll((curr) => (curr ?? []).map((t) => (t.id === tempId ? real : t)));
+    // Suppress our own Realtime echo, and collapse any echo that already
+    // appended the real row while the POST was in flight.
+    markLocalWrite(real.id);
+    mutate(key, (curr: Task[] | undefined) => swapTemp(curr, tempId, real), { revalidate: false });
+    mirrorAll((curr) => swapTemp(curr, tempId, real));
     invalidateDatesWithContent();
     return real;
   } catch {
@@ -139,6 +111,7 @@ export async function patchTask(task: Task, patch: Partial<Task>): Promise<Task>
   const nextKey = keyForDestination(nextDest);
 
   const optimistic: Task = { ...task, ...patch, updated_at: new Date().toISOString() };
+  markLocalWrite(task.id);
 
   if (patch.status === "done") {
     // Done means it leaves all active per-destination lists, but stays in
@@ -203,6 +176,7 @@ export async function moveToUpcoming(task: Task): Promise<void> {
 
 export async function deleteTask(task: Task): Promise<void> {
   const key = keyForDestination(task.destination);
+  markLocalWrite(task.id);
   mutate(key, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
   mirrorAll((curr) => without(curr, task.id));
 
@@ -219,6 +193,7 @@ export async function deleteTask(task: Task): Promise<void> {
 
 export async function reorderTasks(orderedIds: number[], destination?: Destination): Promise<void> {
   const cacheKey = destination ? keyForDestination(destination) : TODAY_KEY;
+  orderedIds.forEach(markLocalWrite);
 
   mutate(
     cacheKey,
