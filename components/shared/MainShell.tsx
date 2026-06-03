@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLatestCheckin } from "@/lib/hooks";
+import { useTaskRealtime } from "@/lib/useTaskRealtime";
 import { cn } from "@/lib/utils";
 import type { EnergyLevel } from "@/lib/types";
 
@@ -60,6 +61,7 @@ export function MainShell({ children }: { children: React.ReactNode }) {
   const [energyModalOpen, setEnergyModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { data: latestCheckin } = useLatestCheckin();
+  useTaskRealtime();
 
   useEffect(() => {
     const saved = localStorage.getItem("focus-sidebar-collapsed");
