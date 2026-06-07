@@ -25,12 +25,13 @@ folder is the baton; loop and live session pass it back and forth.
 | 001 | In Progress as a section — vault + today | review | ✅ shipped | [PR #16](https://github.com/j0hnegan/today/pull/16) (merged) |
 | 002 | Agentic task research loop | discuss | ⏸ parked (unpack later) | — |
 | 003 | Today task-list lag + app performance | review | ✅ shipped | [PR #17](https://github.com/j0hnegan/today/pull/17) (merged) |
-| 004 | Carry over notes on a new day | review | building | auto/004 |
+| 004 | Carry over notes on a new day | review | 👀 preview | [PR #18](https://github.com/j0hnegan/today/pull/18) |
 | 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | ready | — |
 | 006 | Highlight → add selection to a document | review | ready | — |
-| 007 | Today ↔ My Tasks date-clear sync bug | review | building | auto/007 |
+| 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
+| 008 | Today screen — swappable panels + task-panel parity | review | ready | — |
 
-_Last run: 2026-06-07 (manual dry run)_
+_Last run: 2026-06-07 (builder run)_
 
 <!-- DASHBOARD:END -->
 
