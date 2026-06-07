@@ -11,6 +11,25 @@ says — even a vague ramble — into a clean spec, **filtered through the accum
 vibe in `backlog/LEARNINGS.md`** so even a one-liner produces something that feels
 like Hush.
 
+## Where to write — always `main`, never switch this session's branch
+
+Backlog files live on `main`. The user may be mid-edit on a feature branch, so do
+**not** run `git checkout main` in their working directory — it can fail or clobber
+their work, and creating the folder on a feature branch is exactly the bug this avoids.
+
+- If `git branch --show-current` is already `main`: work in place, then commit + push.
+- Otherwise, do every backlog write through a throwaway worktree:
+  ```
+  git worktree add /tmp/hush-backlog main
+  # create/edit files under /tmp/hush-backlog/backlog/, then:
+  git -C /tmp/hush-backlog add backlog/
+  git -C /tmp/hush-backlog commit -m "backlog: add NNN-<slug>"
+  git -C /tmp/hush-backlog push origin main
+  git worktree remove /tmp/hush-backlog
+  ```
+  Read existing folders for numbering from the worktree too. This makes `/backlog`
+  land correctly no matter which branch the session is on.
+
 ## Steps
 
 1. **Read `backlog/LEARNINGS.md` first.** It's the lens for everything below.

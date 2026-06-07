@@ -11,7 +11,13 @@ current state, present it as a tight dispatch, then do what he says.
 
 ## 1. Sync & gather
 
-- `git -C` the repo: `git checkout main && git pull --ff-only` (read-only on the loops).
+**Operate on `main`, never switch this session's branch.** John may be mid-edit on a
+feature branch — do NOT run `git checkout main` in his working dir. If
+`git branch --show-current` is `main`, work in place; otherwise use a throwaway
+worktree for all reads/writes: `git worktree add /tmp/hush-standup main`, operate via
+`git -C /tmp/hush-standup …`, push to `main`, then `git worktree remove /tmp/hush-standup`.
+
+- `git -C <main checkout> pull --ff-only` (don't touch the loops' code).
 - Read `backlog/README.md` (the dashboard) and every `backlog/NNN-*/log.md`.
 - Read `backlog/HEALTH.md` if present — the steward's latest daily report.
 - `gh pr list --state open` and, for each `auto/*` PR, note draft/ready state and
