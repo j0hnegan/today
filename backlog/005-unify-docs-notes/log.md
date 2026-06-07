@@ -1,5 +1,5 @@
 Status: ready
-Class: discuss
+Class: review
 Branch: —
 PR: —
 
