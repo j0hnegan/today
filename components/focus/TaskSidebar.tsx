@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTasks, useTags } from "@/lib/hooks";
 import { useTaskActions } from "@/lib/useTaskActions";
 import { TaskListPanel } from "@/components/focus/TaskListPanel";
@@ -8,33 +8,37 @@ import { TaskEditModal } from "@/components/vault/TaskEditModal";
 import type { Task } from "@/lib/types";
 
 export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const { data: tasks, isLoading: tasksLoading } = useTasks({
-    destination: "on_deck",
-    status: "active",
-  });
-  const { data: inProgressTasks, isLoading: inProgressLoading } = useTasks({
-    destination: "in_progress",
-    status: "active",
-  });
+  // One fetch for all tasks (hydrated by the Today page's ServerSWR fallback),
+  // grouped client-side — like VaultView. Avoids two client round-trips and the
+  // mount-gated render, both of which made the rail lag behind the note.
+  const { data: allTasks, isLoading } = useTasks();
   const { data: tags } = useTags();
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const allTasks: Task[] = [...(tasks ?? []), ...(inProgressTasks ?? [])];
-  const actions = useTaskActions(allTasks);
-
-  if (!mounted) return null;
+  const tasks = useMemo(
+    () =>
+      (allTasks ?? []).filter(
+        (t) => t.destination === "on_deck" && t.status === "active"
+      ),
+    [allTasks]
+  );
+  const inProgressTasks = useMemo(
+    () =>
+      (allTasks ?? []).filter(
+        (t) => t.destination === "in_progress" && t.status === "active"
+      ),
+    [allTasks]
+  );
+  const actions = useTaskActions(allTasks ?? []);
 
   return (
     <>
       <TaskListPanel
         headerLeading={headerLeading}
-        tasks={tasks ?? []}
-        inProgressTasks={inProgressTasks ?? []}
-        loading={tasksLoading || inProgressLoading}
+        tasks={tasks}
+        inProgressTasks={inProgressTasks}
+        loading={isLoading}
         onMarkDone={actions.onMarkDone}
         onEditTask={setEditingTask}
         onDeleteTask={actions.onDeleteTask}
