@@ -24,7 +24,7 @@ folder is the baton; loop and live session pass it back and forth.
 |---|---------|-------|--------|-------------|
 | 001 | In Progress as a section — vault + today | review | ✅ shipped | [PR #16](https://github.com/j0hnegan/today/pull/16) (merged) |
 | 002 | Agentic task research loop | discuss | 🤔 proposed (your call) | — |
-| 003 | Today task-list lag + app performance | review | building | auto/003 |
+| 003 | Today task-list lag + app performance | review | 👀 preview | [PR #17](https://github.com/j0hnegan/today/pull/17) |
 | 004 | Carry over notes on a new day | review | ready | — |
 | 005 | Unify Docs and Notes into one type | discuss | 🤔 proposed (your call) | — |
 | 006 | Highlight → add selection to a document | review | ready | — |

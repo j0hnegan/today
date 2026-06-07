@@ -1,14 +1,21 @@
-Status: ready
+Status: preview
 Class: review
-Branch: —
-PR: —
+Branch: auto/003-today-tasklist-perf
+PR: #17 (draft) — https://github.com/j0hnegan/today/pull/17
 
 ## Done
+- [x] Root-caused the rail lag: Today page prefetched only the note; TaskSidebar made
+      two filtered fetches AND had a mount gate that blocked SSR.
+- [x] Prefetch tasks on the Today page; hydrate `/api/tasks` via ServerSWR.
+- [x] TaskSidebar → single `useTasks()` + client grouping (mirrors VaultView); dropped
+      the mount gate.
+- [x] Verified the rail now appears in server-rendered HTML; CI green.
 
 ## Open
-- Investigate first, then fix; report what the cause was.
+- The broader "general app sluggishness / slow nav" is a separate investigation —
+  intentionally left out of this PR to keep it focused. Spin a follow-up if still slow.
 
 ## Decisions / feedback log
-- [2026-06-07 intake] Created via /backlog. My Tasks rail lags since the notes/tasks
-  swap + In Progress split; app generally sluggish. Suspect RightRail's two useTasks
-  calls + missing server hydration. Class: review.
+- [2026-06-07 intake] Created via /backlog. Class: review.
+- [2026-06-07 builder] Fixed the Today rail lag (SSR + single fetch). Scoped out the
+  general-sluggishness investigation. PR #17.
