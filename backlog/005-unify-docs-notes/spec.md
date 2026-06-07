@@ -14,9 +14,22 @@ data model and the presentation so they look and behave identically.
 - Day-notes derive their title from their date; standalone notes have a user title.
 - One consistent rendering everywhere (Docs list, editor, Today).
 
+## Builder proposal (2026-06-07) — for John's go/no-go
+The data merge needs a migration (manual gate), so I'd split this to de-risk:
+- **Step 1 (no migration):** unify the *presentation* — make the Docs list, the editor,
+  and day-notes render identically (shared component + styling), and title day-notes by
+  their date. Documents and notes stay as separate tables underneath, but look/behave as
+  one. Shippable now, fully reversible.
+- **Step 2 (migration, manual):** actually merge `documents` + `notes` into one table.
+  I'll write the plan + migration but **stop for you to apply it** — the loop never runs
+  schema changes.
+
+Recommend doing **Step 1 first** — you get the unified feel immediately without touching
+the database. Reply **"go"** for Step 1, or **"let's talk"** to design the end state.
+
 ## Definition of done
-TBD after discussion. Standalone docs and day-notes are one unified type, look
-identical, and live in one list/editor.
+Step 1: docs and day-notes look and behave identically (one editor, one list style),
+day-notes titled by date. Step 2 (migration) handled separately.
 
 ## Notes
 - **Almost certainly needs a DB migration** to merge documents + notes — the builder

@@ -20,10 +20,24 @@ each task is "ready for me to approve" — without ever contacting anyone.
 - **HARD RULE (matches how the loops already operate):** never send an email, message,
   or place a call autonomously. Research + draft + stage only. I approve and send.
 
+## Builder proposal (2026-06-07) — for John's go/no-go
+This is big; I'd ship it in slices, not all at once. Proposed **first slice**:
+- A new scheduled **"researcher" routine** (separate from the code builder) that reads
+  `today` + `upcoming` tasks via the Hush MCP.
+- For each task, search Gmail (Gmail MCP) for related threads and write a short
+  **"where this stands"** summary into the task's description/notes — no drafting, no
+  sending, nothing leaves the app.
+- You open a task and the context is already there.
+
+Deliberately **deferred to later slices:** drafting emails, phone/contact lookup, and
+multi-step decomposition (e.g. the malpractice example). Those are bigger and worth
+designing once the read-only research slice proves useful.
+
+Reply **"go"** to build this first slice as `review`, or **"let's talk"** to shape it.
+
 ## Definition of done
-TBD after discussion — this is large. Likely a first slice = "email-status research on
-today/upcoming tasks, written back as notes on each task," then expand to drafting and
-multi-step decomposition.
+First slice: the researcher routine annotates today/upcoming tasks with an email-status
+summary on a schedule, touching no one. Later slices TBD.
 
 ## Notes
 - Needs Gmail + web tools available in the run context.

@@ -1,4 +1,4 @@
-Status: ready
+Status: proposed
 Class: discuss
 Branch: —
 PR: —
@@ -13,3 +13,6 @@ PR: —
 - [2026-06-07 intake] Created via /backlog. Merge documents + day-notes into one
   unified "note" type with consistent presentation; day-notes titled by date. Likely
   needs a migration. Class: discuss.
+
+## Decisions / feedback log
+- [2026-06-07 builder] Pre-digested into a proposal (Step 1 presentation-only, no migration). Awaiting John go/no-go.

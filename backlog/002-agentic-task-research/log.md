@@ -1,4 +1,4 @@
-Status: ready
+Status: proposed
 Class: discuss
 Branch: —
 PR: —
@@ -13,3 +13,6 @@ PR: —
 - [2026-06-07 intake] Created via /backlog. Agentic research over today/upcoming tasks:
   email-status lookup, drafting, phone/contact research, multi-step decomposition.
   Never contacts anyone — research + draft + stage for approval only. Class: discuss.
+
+## Decisions / feedback log
+- [2026-06-07 builder] Pre-digested into a proposal (read-only email-research first slice). Awaiting John go/no-go.
