@@ -51,6 +51,7 @@ const ENERGY_OPTIONS: {
 ];
 
 function showRailFor(pathname: string): boolean {
+  if (pathname === "/") return false; // Today renders its own task column
   if (pathname === "/vault" || pathname.startsWith("/vault/")) return false;
   return true;
 }

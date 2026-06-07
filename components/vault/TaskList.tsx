@@ -14,6 +14,7 @@ interface TaskListProps {
   selectedIds?: Set<number>;
   onDelete?: (task: Task) => void;
   onMarkDone?: (task: Task) => void;
+  onLongPress?: (task: Task) => void;
   showSize?: boolean;
   showDates?: boolean;
   showGoals?: boolean;
@@ -68,6 +69,7 @@ export function TaskList({
   selectedIds,
   onDelete,
   onMarkDone,
+  onLongPress,
   showSize,
   showDates,
   showGoals,
@@ -155,6 +157,7 @@ export function TaskList({
             selectionPosition={selectionPositions.get(task.id) ?? null}
             onDelete={onDelete}
             onMarkDone={onMarkDone}
+            onLongPress={onLongPress}
             showSize={showSize}
             showDates={showDates}
             showGoals={showGoals}

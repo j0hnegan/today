@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { TagBadge } from "@/components/shared/TagBadge";
 import { GripVertical, Trash2 } from "lucide-react";
 import { linkifyText } from "@/lib/linkify";
+import { LongPressCheck } from "@/components/shared/LongPressCheck";
 import type { Task } from "@/lib/types";
 
 export type SelectionPosition = "solo" | "first" | "middle" | "last" | null;
@@ -18,6 +19,7 @@ interface TaskRowProps {
   selectionPosition?: SelectionPosition;
   onDelete?: (task: Task) => void;
   onMarkDone?: (task: Task) => void;
+  onLongPress?: (task: Task) => void;
   showSize?: boolean;
   showDates?: boolean;
   showGoals?: boolean;
@@ -42,26 +44,6 @@ const sizeColors: Record<string, { bg: string; text: string }> = {
   large: { bg: "rgba(249,115,22,0.15)", text: "#f97316" },
 };
 
-// Check circle icon matching the user's SVG
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className={className}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-      />
-    </svg>
-  );
-}
-
 export const TaskRow = memo(function TaskRow({
   task,
   onClick,
@@ -71,6 +53,7 @@ export const TaskRow = memo(function TaskRow({
   selectionPosition,
   onDelete,
   onMarkDone,
+  onLongPress,
   showSize = true,
   showDates = true,
   showGoals = true,
@@ -108,20 +91,14 @@ export const TaskRow = memo(function TaskRow({
       } ${isDragging ? "opacity-40" : ""}`}
     >
       <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab flex-shrink-0" />
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (onMarkDone && !isDone) onMarkDone(task);
+      <LongPressCheck
+        task={task}
+        isDone={isDone}
+        onMarkDone={(t) => {
+          if (onMarkDone && !isDone) onMarkDone(t);
         }}
-        className={`inline-flex items-center justify-center w-5 h-5 flex-shrink-0 transition-colors ${
-          isDone
-            ? "text-green-400"
-            : "text-muted-foreground group-hover:text-green-400 hover:!text-green-400"
-        }`}
-      >
-        <CheckCircleIcon className="h-5 w-5" />
-      </button>
+        onLongPress={(t) => onLongPress?.(t)}
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate">{task.title}</span>
