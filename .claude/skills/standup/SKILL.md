@@ -17,6 +17,11 @@ current state, present it as a tight dispatch, then do what he says.
 - `gh pr list --state open` and, for each `auto/*` PR, note draft/ready state and
   whether there are comments/reviews newer than the last bot commit. GitHub is
   authoritative for live PR state — reconcile against the logs.
+- **Self-heal mechanical drift as you read.** If a log/dashboard entry disagrees with
+  GitHub (e.g. status `preview` but the PR is merged, or a branch/PR that no longer
+  exists), fix it now and commit to `main` — don't wait for the steward. This makes
+  every `/standup` current regardless of when the steward last ran. Leave judgment
+  calls (contradictory learnings, stale-item triage) to the steward's report.
 
 ## 2. Present the dispatch
 
