@@ -19,6 +19,14 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -57,6 +65,61 @@ export function PagePanel() {
 
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const { data: note, mutate: mutateNote } = useNote(dateStr);
+
+  // New-day carry-over: if the tab is left open and the day rolls over while the
+  // user is still viewing what was "today", advance to the new day and offer to
+  // bring yesterday's notes forward. Refs avoid re-binding listeners every render.
+  const sessionTodayRef = useRef(toDateStr(new Date()));
+  const selectedDateRef = useRef(selectedDate);
+  selectedDateRef.current = selectedDate;
+  const noteRef = useRef(note);
+  noteRef.current = note;
+  const [carryover, setCarryover] = useState<{ fromDate: string; content: string } | null>(null);
+
+  useEffect(() => {
+    function checkRollover() {
+      const realToday = toDateStr(new Date());
+      if (realToday === sessionTodayRef.current) return;
+      const prevToday = sessionTodayRef.current;
+      sessionTodayRef.current = realToday;
+      // Only act if the user is still looking at the day that just ended.
+      if (toDateStr(selectedDateRef.current) !== prevToday) return;
+      const prevContent = noteRef.current?.content ?? "";
+      setSelectedDate(new Date(realToday + "T00:00:00"));
+      if (prevContent.trim()) setCarryover({ fromDate: prevToday, content: prevContent });
+    }
+    window.addEventListener("focus", checkRollover);
+    document.addEventListener("visibilitychange", checkRollover);
+    const interval = setInterval(checkRollover, 60_000);
+    return () => {
+      window.removeEventListener("focus", checkRollover);
+      document.removeEventListener("visibilitychange", checkRollover);
+      clearInterval(interval);
+    };
+  }, []);
+
+  async function handleCarryOver() {
+    if (!carryover) return;
+    const todayStr = toDateStr(new Date());
+    let existing = "";
+    try {
+      const res = await fetch(`/api/notes?date=${todayStr}`);
+      if (res.ok) existing = (await res.json())?.content ?? "";
+    } catch { /* treat as empty */ }
+    const merged = existing.trim() ? `${existing}<hr>${carryover.content}` : carryover.content;
+    try {
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: todayStr, content: merged, blocks: null }),
+      });
+      mutateNote();
+      toast.success("Carried over yesterday's notes");
+    } catch {
+      toast.error("Couldn't carry over notes");
+    }
+    setCarryover(null);
+  }
 
   // Dates with content for calendar & smart navigation
   const contentDateRange = useMemo(() => {
@@ -238,6 +301,27 @@ export function PagePanel() {
         className="hidden"
         onChange={handleAttachUpload}
       />
+
+      {/* New-day carry-over prompt */}
+      <Dialog open={!!carryover} onOpenChange={(v) => { if (!v) setCarryover(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>New day</DialogTitle>
+            <DialogDescription>
+              It&apos;s {formatDateHeader(new Date())}. Carry over your notes from{" "}
+              {carryover && formatDateHeader(new Date(carryover.fromDate + "T00:00:00"))}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setCarryover(null)}>
+              Start fresh
+            </Button>
+            <Button size="sm" onClick={handleCarryOver}>
+              Carry over
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
