@@ -1,7 +1,7 @@
-Status: preview
+Status: shipped
 Class: review
-Branch: auto/001-in-progress-sections
-PR: #16 (draft) — https://github.com/j0hnegan/today/pull/16
+Branch: auto/001-in-progress-sections (merged)
+PR: #16 (merged) — https://github.com/j0hnegan/today/pull/16
 
 ## Done
 - [x] Extracted shared `components/shared/LongPressCheck.tsx` (reused by both screens).

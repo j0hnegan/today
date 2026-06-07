@@ -22,7 +22,13 @@ folder is the baton; loop and live session pass it back and forth.
 
 | # | Feature | Class | Status | Branch / PR |
 |---|---------|-------|--------|-------------|
-| 001 | In Progress as a section — vault + today | review | preview | [PR #16](https://github.com/j0hnegan/today/pull/16) (draft) |
+| 001 | In Progress as a section — vault + today | review | ✅ shipped | [PR #16](https://github.com/j0hnegan/today/pull/16) (merged) |
+| 002 | Agentic task research loop | discuss | ready | — |
+| 003 | Today task-list lag + app performance | review | ready | — |
+| 004 | Carry over notes on a new day | review | ready | — |
+| 005 | Unify Docs and Notes into one type | discuss | ready | — |
+| 006 | Highlight → add selection to a document | review | ready | — |
+| 007 | Today ↔ My Tasks date-clear sync bug | review | ready | — |
 
 _Last run: 2026-06-07 (manual dry run)_
 
