@@ -4,6 +4,7 @@ import { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useNote, useDatesWithContent } from "@/lib/hooks";
 import { NoteEditor } from "@/components/focus/NoteEditor";
+import { TaskSidebar } from "@/components/focus/TaskSidebar";
 import {
   ChevronLeft,
   ChevronRight,
@@ -131,87 +132,100 @@ export function PagePanel() {
     [note?.id, mutateNote]
   );
 
+  // Date header — sits above the task column, sharing its row with the
+  // task sort/filter controls (rendered by TaskListPanel after this node).
+  const dateHeader = (
+    <div className="flex items-center gap-1 flex-1 min-w-0 mr-2">
+      <h1 className="text-lg font-semibold tracking-tight truncate">
+        {formatDateHeader(selectedDate)}
+      </h1>
+
+      <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => attachInputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors mr-1"
+        >
+          {uploading ? <Upload className="h-3 w-3 animate-pulse" /> : <Paperclip className="h-3 w-3" />}
+          {uploading ? "Uploading..." : "Attach"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigateDate(-1)}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                isToday
+                  ? "text-foreground bg-accent"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                if (datePickerOpen) { goToToday(); setDatePickerOpen(false); }
+                else { setDatePickerOpen(true); }
+              }}
+            >
+              Today
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              modifiers={{
+                hasContent: (date: Date) => contentDateSet.has(toDateStr(date)),
+              }}
+              modifiersClassNames={{
+                hasContent: "has-content-dot",
+              }}
+              onSelect={(day) => {
+                if (day) setSelectedDate(day);
+                setDatePickerOpen(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+
+        <button
+          type="button"
+          onClick={() => navigateDate(1)}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:overflow-y-auto w-full">
-      {/* Date header row */}
-      <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
-        <h1 className="text-lg font-semibold tracking-tight">
-          {formatDateHeader(selectedDate)}
-        </h1>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => attachInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors mr-2"
-          >
-            {uploading ? <Upload className="h-3 w-3 animate-pulse" /> : <Paperclip className="h-3 w-3" />}
-            {uploading ? "Uploading..." : "Attach"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigateDate(-1)}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-
-          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                  isToday
-                    ? "text-foreground bg-accent"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (datePickerOpen) { goToToday(); setDatePickerOpen(false); }
-                  else { setDatePickerOpen(true); }
-                }}
-              >
-                Today
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                modifiers={{
-                  hasContent: (date: Date) => contentDateSet.has(toDateStr(date)),
-                }}
-                modifiersClassNames={{
-                  hasContent: "has-content-dot",
-                }}
-                onSelect={(day) => {
-                  if (day) setSelectedDate(day);
-                  setDatePickerOpen(false);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-
-          <button
-            type="button"
-            onClick={() => navigateDate(1)}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-6 md:overflow-hidden w-full">
+      {/* Tasks (left) — date header + sort/filter share the header row */}
+      <div className="flex flex-col flex-[7] min-w-0 md:min-h-0 mb-6 md:mb-0">
+        <TaskSidebar headerLeading={dateHeader} />
       </div>
 
-      {/* Note editor panel */}
-      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6">
-        <NoteEditor
-          note={note}
-          dateStr={dateStr}
-          noteId={note?.id ?? null}
-          mutateNote={mutateNote}
-        />
+      {/* Notes (right) */}
+      <div className="flex flex-col flex-[5] min-w-0 md:min-h-0">
+        <div className="flex items-center min-h-7" style={{ marginBottom: "1rem" }}>
+          <h1 className="text-lg font-semibold tracking-tight">Notes</h1>
+        </div>
+        <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6">
+          <NoteEditor
+            note={note}
+            dateStr={dateStr}
+            noteId={note?.id ?? null}
+            mutateNote={mutateNote}
+          />
+        </div>
       </div>
 
       {/* Hidden file input */}

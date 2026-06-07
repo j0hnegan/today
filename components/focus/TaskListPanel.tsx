@@ -195,10 +195,12 @@ export function TaskListPanel({
   setEditingTaskId,
   saveTaskTitle,
   onEnterAfterEdit,
+  headerLeading,
 }: {
   tasks: Task[];
   inProgressTasks: Task[];
   loading?: boolean;
+  headerLeading?: React.ReactNode;
   onMarkDone: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
@@ -333,8 +335,15 @@ export function TaskListPanel({
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header row — height matches PagePanel date header (text-lg = 28px) */}
-      <div className="flex items-center justify-end min-h-7" style={{ marginBottom: "1rem" }}>
-        <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          "flex items-center min-h-7",
+          headerLeading ? "justify-between" : "justify-end"
+        )}
+        style={{ marginBottom: "1rem" }}
+      >
+        {headerLeading}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Popover>
             <PopoverTrigger asChild>
               <button
