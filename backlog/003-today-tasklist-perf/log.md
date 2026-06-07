@@ -1,7 +1,7 @@
-Status: preview
+Status: shipped
 Class: review
-Branch: auto/003-today-tasklist-perf
-PR: #17 (draft) — https://github.com/j0hnegan/today/pull/17
+Branch: auto/003-today-tasklist-perf (merged)
+PR: #17 (merged) — https://github.com/j0hnegan/today/pull/17
 
 ## Done
 - [x] Root-caused the rail lag: Today page prefetched only the note; TaskSidebar made

@@ -1,4 +1,4 @@
-Status: proposed
+Status: ready
 Class: discuss
 Branch: —
 PR: —
@@ -16,3 +16,5 @@ PR: —
 
 ## Decisions / feedback log
 - [2026-06-07 builder] Pre-digested into a proposal (Step 1 presentation-only, no migration). Awaiting John go/no-go.
+
+- [2026-06-07 John] Approved **Step 1** (presentation unify, no migration). Build it. Step 2 (the documents+notes table merge / migration) deferred — unpack later.
