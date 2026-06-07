@@ -50,10 +50,14 @@ current state: active discussion, the feature table, and "Last run: <now>".
 
 ## 5. Report (the heartbeat)
 
-Emit a concise daily health report:
+Write a concise daily health report to `backlog/HEALTH.md` (overwrite each run —
+it's the latest snapshot, not a log). `/standup` surfaces this, so it's how John
+sees you. Include:
 - Counts by status (how many waiting on John, in flight, shipped this week).
 - Anything you fixed.
 - Anything that needs John: learnings contradictions to settle, stale items to
   re-triage, blocked features, structure problems you couldn't safely auto-fix.
 
-Commit your doc changes to `main` (docs only).
+Commit your doc changes to `main` (docs only). If the report contains anything that
+needs John's input (a contradiction to settle, a stale item), send one push
+notification; otherwise stay silent.

@@ -92,5 +92,9 @@ For each PR merged since the last run:
 - Rewrite the dashboard block in `backlog/README.md` (between the markers) to reflect
   current reality: the active discussion line, the feature table, "Last run: <now>".
 - Commit doc/state changes to `main` (docs only — never app code on main).
-- Emit a concise run digest: what you drafted, iterated, proposed, blocked, and
-  what's now waiting on John.
+- Append a dated run entry to `backlog/DISPATCHES.md` (create it if missing): one
+  block listing what you drafted, iterated, proposed, blocked, and what's now waiting
+  on John. This is what `/standup` reads, so keep it scannable.
+- **If — and only if — something now needs John** (ready to preview, a proposal to
+  rule on, a blocker), send a push notification with a one-line summary. Quiet runs
+  send nothing.
