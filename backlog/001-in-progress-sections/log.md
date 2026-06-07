@@ -1,7 +1,7 @@
 Status: preview
 Class: review
-Branch: auto/001-in-progress-sections (not yet pushed — dry run)
-PR: — (holding for GitHub-plumbing confirmation)
+Branch: auto/001-in-progress-sections
+PR: #16 (draft) — https://github.com/j0hnegan/today/pull/16
 
 ## Done
 - [x] Extracted shared `components/shared/LongPressCheck.tsx` (reused by both screens).

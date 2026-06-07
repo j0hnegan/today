@@ -22,7 +22,7 @@ folder is the baton; loop and live session pass it back and forth.
 
 | # | Feature | Class | Status | Branch / PR |
 |---|---------|-------|--------|-------------|
-| 001 | In Progress as a section — vault + today | review | preview | auto/001 (local, not pushed) |
+| 001 | In Progress as a section — vault + today | review | preview | [PR #16](https://github.com/j0hnegan/today/pull/16) (draft) |
 
 _Last run: 2026-06-07 (manual dry run)_
 
