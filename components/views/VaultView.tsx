@@ -26,7 +26,7 @@ import {
 import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
-import { patchTask, reorderTasks } from "@/lib/taskMutations";
+import { patchTask, reorderTasks, moveToInProgress, moveToToday } from "@/lib/taskMutations";
 import { moveByInsertion } from "@/lib/useTouchDragSort";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
@@ -97,6 +97,7 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
 // All but Someday are hidden when the "review Someday" filter is on.
 const VAULT_SECTIONS = [
   { key: "onDeck", section: "on_deck", title: "Today", defaultOpen: true, alwaysShow: false },
+  { key: "inProgress", section: "in_progress", title: "In Progress", defaultOpen: true, alwaysShow: false },
   { key: "upcoming", section: "upcoming", title: "Upcoming", defaultOpen: true, alwaysShow: false },
   { key: "someday", section: "someday", title: "Someday", defaultOpen: true, alwaysShow: true },
   { key: "done", section: "done", title: "Done", defaultOpen: false, alwaysShow: false },
@@ -159,6 +160,7 @@ export function VaultView() {
   // Per-section sort keys
   const [sortKeys, setSortKeys] = useState<Record<string, SortKey>>({
     on_deck: "due_date",
+    in_progress: "due_date",
     upcoming: "due_date",
     someday: "due_date",
     done: "due_date",
@@ -213,9 +215,10 @@ export function VaultView() {
   const [dropIndicator, setDropIndicator] = useState<{ section: string; index: number } | null>(null);
 
   const grouped = useMemo(() => {
-    if (!tasks) return { onDeck: [], upcoming: [], someday: [], done: [] };
+    if (!tasks) return { onDeck: [], inProgress: [], upcoming: [], someday: [], done: [] };
 
     const onDeck: Task[] = [];
+    const inProgress: Task[] = [];
     const upcoming: Task[] = [];
     const someday: Task[] = [];
     const done: Task[] = [];
@@ -225,6 +228,8 @@ export function VaultView() {
         done.push(task);
       } else if (task.destination === "on_deck") {
         onDeck.push(task);
+      } else if (task.destination === "in_progress") {
+        inProgress.push(task);
       } else if (task.destination === "upcoming") {
         upcoming.push(task);
       } else {
@@ -232,7 +237,7 @@ export function VaultView() {
       }
     }
 
-    return { onDeck, upcoming, someday, done };
+    return { onDeck, inProgress, upcoming, someday, done };
   }, [tasks]);
 
   // Apply active filters to grouped tasks
@@ -272,6 +277,7 @@ export function VaultView() {
 
     return {
       onDeck: sortTasks(applyFilters(grouped.onDeck), sortKeys.on_deck),
+      inProgress: sortTasks(applyFilters(grouped.inProgress), sortKeys.in_progress),
       upcoming: sortTasks(applyFilters(grouped.upcoming), sortKeys.upcoming),
       someday: sortTasks(applyFilters(grouped.someday), sortKeys.someday),
       done: sortTasks(applyFilters(grouped.done), sortKeys.done),
@@ -282,6 +288,7 @@ export function VaultView() {
   const taskSectionMap = useMemo(() => {
     const map = new Map<number, string>();
     for (const t of filteredGrouped.onDeck) map.set(t.id, "on_deck");
+    for (const t of filteredGrouped.inProgress) map.set(t.id, "in_progress");
     for (const t of filteredGrouped.upcoming) map.set(t.id, "upcoming");
     for (const t of filteredGrouped.someday) map.set(t.id, "someday");
     for (const t of filteredGrouped.done) map.set(t.id, "done");
@@ -290,7 +297,7 @@ export function VaultView() {
 
   // Flat ordered list for shift-range selection (uses filtered data)
   const allTasksOrdered = useMemo(() => {
-    return [...filteredGrouped.onDeck, ...filteredGrouped.upcoming, ...filteredGrouped.someday, ...filteredGrouped.done];
+    return [...filteredGrouped.onDeck, ...filteredGrouped.inProgress, ...filteredGrouped.upcoming, ...filteredGrouped.someday, ...filteredGrouped.done];
   }, [filteredGrouped]);
 
   function handleReviewSomeday() {
@@ -490,7 +497,7 @@ export function VaultView() {
 
     if (isSameSection && savedIndicator) {
       // Same-section reorder
-      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "upcoming" ? "upcoming" : targetSection === "done" ? "done" : "someday";
+      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "in_progress" ? "inProgress" : targetSection === "upcoming" ? "upcoming" : targetSection === "done" ? "done" : "someday";
       const sectionTasks = filteredGrouped[sectionKey as keyof typeof filteredGrouped];
       const draggedSet = new Set(taskIds);
 
@@ -521,6 +528,11 @@ export function VaultView() {
         (task.destination !== "on_deck" || task.status === "done")
       ) {
         return { destination: "on_deck", status: "active" };
+      } else if (
+        targetSection === "in_progress" &&
+        (task.destination !== "in_progress" || task.status === "done")
+      ) {
+        return { destination: "in_progress", status: "active" };
       } else if (
         targetSection === "upcoming" &&
         (task.destination !== "upcoming" || task.status === "done")
@@ -553,6 +565,7 @@ export function VaultView() {
 
     const sectionNames: Record<string, string> = {
       on_deck: "Today",
+      in_progress: "In Progress",
       upcoming: "Upcoming",
       someday: "Someday",
       done: "Done",
@@ -575,11 +588,13 @@ export function VaultView() {
     const key =
       section === "on_deck"
         ? "onDeck"
-        : section === "upcoming"
-          ? "upcoming"
-          : section === "done"
-            ? "done"
-            : "someday";
+        : section === "in_progress"
+          ? "inProgress"
+          : section === "upcoming"
+            ? "upcoming"
+            : section === "done"
+              ? "done"
+              : "someday";
     const sectionTasks = filteredGrouped[key as keyof typeof filteredGrouped];
     const ids = sectionTasks.map((t) => t.id);
     const from = ids.indexOf(fromTaskId);
@@ -693,6 +708,19 @@ export function VaultView() {
     await markTaskDone(task);
   }
 
+  // Hold the check circle to toggle In Progress (mirrors the Today panel).
+  async function handleLongPress(task: Task) {
+    try {
+      if (task.destination === "in_progress") {
+        await moveToToday(task);
+      } else {
+        await moveToInProgress(task);
+      }
+    } catch {
+      /* helper already toasted */
+    }
+  }
+
   const taskListProps = {
     onTaskClick: handleTaskClick,
     onDragStart: handleDragStart,
@@ -700,6 +728,7 @@ export function VaultView() {
     selectedIds,
     onDelete: handleDeleteRequest,
     onMarkDone: handleMarkDone,
+    onLongPress: handleLongPress,
     showSize,
     showDates,
     showGoals,

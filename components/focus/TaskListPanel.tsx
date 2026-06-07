@@ -16,6 +16,8 @@ import { normalizeConsequence } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { patchTask, reorderTasks, createTask } from "@/lib/taskMutations";
 import { useTouchDragSort, moveByInsertion } from "@/lib/useTouchDragSort";
+import { LongPressCheck } from "@/components/shared/LongPressCheck";
+import { VaultSection } from "@/components/vault/VaultSection";
 
 
 type SortKey = "due_date" | "size" | "goal" | "consequence";
@@ -32,138 +34,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "goal", label: "Goal" },
   { value: "consequence", label: "Priority" },
 ];
-
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className={className}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-      />
-    </svg>
-  );
-}
-
-function LongPressCheck({
-  task,
-  onMarkDone,
-  onLongPress,
-}: {
-  task: Task;
-  onMarkDone: (t: Task) => void;
-  onLongPress: (t: Task) => void;
-}) {
-  const [pressing, setPressing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startRef = useRef<number>(0);
-  const firedRef = useRef(false);
-  const DURATION = 750;
-
-  const startPress = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    firedRef.current = false;
-    setPressing(true);
-    setProgress(0);
-    startRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startRef.current;
-      const pct = Math.min(elapsed / DURATION, 1);
-      setProgress(pct);
-      if (pct >= 1) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = null;
-        firedRef.current = true;
-        setPressing(false);
-        setProgress(0);
-        onLongPress(task);
-      }
-    }, 30);
-  }, [task, onLongPress]);
-
-  const endPress = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (!firedRef.current && pressing) {
-      onMarkDone(task);
-    }
-    setPressing(false);
-    setProgress(0);
-  }, [pressing, task, onMarkDone]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        startPress();
-      }}
-      onMouseUp={endPress}
-      onMouseLeave={() => {
-        if (pressing) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          setPressing(false);
-          setProgress(0);
-        }
-      }}
-      onTouchStart={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        startPress();
-      }}
-      onTouchEnd={endPress}
-      className="inline-flex items-center justify-center w-5 h-5 flex-shrink-0 text-muted-foreground group-hover/task:text-green-400 hover:!text-green-400 transition-colors relative"
-    >
-      {pressing ? (
-        <svg viewBox="0 0 24 24" className="h-5 w-5">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            opacity="0.2"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="rgb(74, 222, 128)"
-            strokeWidth="1.5"
-            strokeDasharray={`${progress * 56.55} 56.55`}
-            strokeLinecap="round"
-            transform="rotate(-90 12 12)"
-            style={{ transition: "stroke-dasharray 30ms linear" }}
-          />
-        </svg>
-      ) : (
-        <CheckCircleIcon className="h-5 w-5" />
-      )}
-    </button>
-  );
-}
 
 function TaskRow({
   task,
@@ -339,7 +209,6 @@ export function TaskListPanel({
   saveTaskTitle: (id: number, title: string) => void;
   onEnterAfterEdit?: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"today" | "in_progress">("today");
   const [draggingTaskIdx, setDraggingTaskIdx] = useState<number | null>(null);
   const [taskDropIdx, setTaskDropIdx] = useState<number | null>(null);
   const taskDropRef = useRef<number | null>(null);
@@ -464,122 +333,81 @@ export function TaskListPanel({
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header row — height matches PagePanel date header (text-lg = 28px) */}
-      <div className="flex items-center justify-between min-h-7" style={{ marginBottom: "1rem" }}>
-        <div className="flex items-center gap-0">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab("today");
-            }}
-            className={cn(
-              "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors",
-              activeTab === "today"
-                ? "text-foreground"
-                : "text-muted-foreground/50 hover:text-muted-foreground"
-            )}
-          >
-            Today · {tasks.length}
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveTab("in_progress");
-            }}
-            className={cn(
-              "text-xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-md transition-colors flex items-center gap-1.5",
-              activeTab === "in_progress"
-                ? "text-foreground"
-                : "text-muted-foreground/50 hover:text-muted-foreground"
-            )}
-          >
-            In Progress
-            {inProgressTasks.length > 0 && (
-              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-green-500 text-[10px] font-bold text-white leading-none">
-                {inProgressTasks.length}
-              </span>
-            )}
-          </button>
-        </div>
+      <div className="flex items-center justify-end min-h-7" style={{ marginBottom: "1rem" }}>
         <div className="flex items-center gap-2">
-          {activeTab === "today" && (
-            <>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className={cn(
-                      "inline-flex items-center justify-center h-6 w-6 rounded-md border transition-colors",
-                      hasActiveFilters
-                        ? "border-foreground/20 text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:border-border"
-                    )}
-                  >
-                    <SlidersHorizontal className="h-3 w-3" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-2" align="end">
-                  <span className="text-xs font-medium text-muted-foreground">Size</span>
-                  <div className="mt-1.5 space-y-0.5">
-                    {ALL_SIZES.map((s) => {
-                      const active = sizeFilter.includes(s);
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => toggleSize(s)}
-                          className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent"
-                        >
-                          <span className={active ? "text-foreground" : "text-muted-foreground"}>
-                            {SIZE_LABELS[s]}
-                          </span>
-                          {active && <Check className="h-3 w-3 text-foreground" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {hasActiveFilters && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "inline-flex items-center justify-center h-6 w-6 rounded-md border transition-colors",
+                  hasActiveFilters
+                    ? "border-foreground/20 text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end">
+              <span className="text-xs font-medium text-muted-foreground">Size</span>
+              <div className="mt-1.5 space-y-0.5">
+                {ALL_SIZES.map((s) => {
+                  const active = sizeFilter.includes(s);
+                  return (
                     <button
-                      onClick={() => setSizeFilter([...ALL_SIZES])}
-                      className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1 border-t border-border mt-2 pt-2"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-accent text-[11px] text-muted-foreground hover:text-foreground transition-colors font-mono">
-                    <ArrowUpDown className="h-3 w-3" />
-                    {SORT_OPTIONS.find((o) => o.value === sortKey)?.label ?? "Due date"}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-36 p-1" align="end">
-                  {SORT_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
+                      key={s}
                       type="button"
-                      onClick={() => setSortKey(opt.value)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent",
-                        sortKey === opt.value ? "text-foreground" : "text-muted-foreground"
-                      )}
+                      onClick={() => toggleSize(s)}
+                      className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent"
                     >
-                      {opt.label}
-                      {sortKey === opt.value && <Check className="h-3 w-3" />}
+                      <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                        {SIZE_LABELS[s]}
+                      </span>
+                      {active && <Check className="h-3 w-3 text-foreground" />}
                     </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            </>
-          )}
+                  );
+                })}
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => setSizeFilter([...ALL_SIZES])}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1 border-t border-border mt-2 pt-2"
+                >
+                  Reset
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-accent text-[11px] text-muted-foreground hover:text-foreground transition-colors font-mono">
+                <ArrowUpDown className="h-3 w-3" />
+                {SORT_OPTIONS.find((o) => o.value === sortKey)?.label ?? "Due date"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" align="end">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSortKey(opt.value)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent",
+                    sortKey === opt.value ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {opt.label}
+                  {sortKey === opt.value && <Check className="h-3 w-3" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
-      {/* Task list in bordered panel */}
-      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto">
-        {activeTab === "today" && (
+      {/* Task list in bordered panel — Today + In Progress as stacked sections */}
+      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2">
+        <VaultSection title="Today" count={tasks.length} defaultOpen>
           <div ref={listRef} className="space-y-0.5">
             {tasks.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-1">
@@ -680,9 +508,9 @@ export function TaskListPanel({
               />
             </div>
           </div>
-        )}
+        </VaultSection>
 
-        {activeTab === "in_progress" && (
+        <VaultSection title="In Progress" count={inProgressTasks.length} defaultOpen>
           <div className="space-y-0.5">
             {inProgressTasks.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-1">
@@ -707,7 +535,7 @@ export function TaskListPanel({
               ))
             )}
           </div>
-        )}
+        </VaultSection>
       </div>
     </div>
   );
