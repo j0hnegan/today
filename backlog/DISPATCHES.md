@@ -29,3 +29,9 @@ Append-only run log. `/standup` reads the latest entries.
 - 🔧 Hardened /backlog + /standup to operate on main via worktree (any branch).
 - 👀 Ready to preview: 006 highlight→add-to-document → PR #19.
 - 📋 Queued: 005 Step 1 (presentation unify), 008 (held until 004 merges — shares files with it).
+
+## 2026-06-07 — builder run #4 (manual)
+- ✅ Shipped: 006 (#19, merged), 004 earlier (#18).
+- 👀 Ready to preview: 008 parts 1+3 (swap panels + Not Today/Trash) → PR #20.
+- 🆕 Filed 009 — cross-section drag parity (008 part 2), deferred to its own PR.
+- 📋 Queued: 005 Step 1 (presentation unify), 009.
