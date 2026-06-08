@@ -9,6 +9,7 @@ import {
   List,
   ListOrdered,
   ListTodo,
+  FilePlus,
 } from "lucide-react";
 
 interface EditorContextMenuProps {
@@ -16,6 +17,7 @@ interface EditorContextMenuProps {
   onDismiss: () => void;
   onFormatBlock: (tag: string) => void;
   onConvertToTask: () => void;
+  onAddToDocument: () => void;
 }
 
 const ITEMS = [
@@ -32,6 +34,7 @@ export function EditorContextMenu({
   onDismiss,
   onFormatBlock,
   onConvertToTask,
+  onAddToDocument,
 }: EditorContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +89,17 @@ export function EditorContextMenu({
       >
         <ListTodo className="h-3.5 w-3.5 text-muted-foreground" />
         Convert to task
+      </button>
+      <button
+        type="button"
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-accent transition-colors"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onAddToDocument();
+        }}
+      >
+        <FilePlus className="h-3.5 w-3.5 text-muted-foreground" />
+        Add to document…
       </button>
     </div>
   );

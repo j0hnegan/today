@@ -6,6 +6,7 @@ import { useTasks } from "@/lib/hooks";
 import { SlashCommandMenu } from "@/components/shared/SlashCommandMenu";
 import { ItemPickerModal } from "@/components/shared/ItemPickerModal";
 import { EditorContextMenu } from "@/components/focus/EditorContextMenu";
+import { AddToDocumentModal } from "@/components/focus/AddToDocumentModal";
 import { useSlashCommand } from "@/lib/useSlashCommand";
 import { SLASH_COMMANDS, buildInlineFileHTML } from "@/lib/slashCommands";
 import { useCashflowEmbeds, serializeEditor } from "@/lib/useCashflowEmbeds";
@@ -28,6 +29,8 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
   const slashFileInputRef = useRef<HTMLInputElement>(null);
   const loadedDateRef = useRef<string>("");
   const [contextMenu, setContextMenu] = useState<{ top: number; left: number } | null>(null);
+  const [selectionHtml, setSelectionHtml] = useState("");
+  const [addToDocOpen, setAddToDocOpen] = useState(false);
 
   const { data: onDeckTasks } = useTasks({ destination: "on_deck", status: "active" });
   const { data: somedayTasks } = useTasks({ destination: "someday", status: "active" });
@@ -240,10 +243,21 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed) return;
       e.preventDefault();
+      // Capture the selected HTML now — the menu interaction can lose the selection.
+      const container = document.createElement("div");
+      for (let i = 0; i < sel.rangeCount; i++) {
+        container.appendChild(sel.getRangeAt(i).cloneContents());
+      }
+      setSelectionHtml(container.innerHTML);
       setContextMenu({ top: e.clientY, left: e.clientX });
     },
     []
   );
+
+  const handleAddToDocument = useCallback(() => {
+    setContextMenu(null);
+    setAddToDocOpen(true);
+  }, []);
 
   const handleFormatBlock = useCallback(
     (tag: string) => {
@@ -337,8 +351,15 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
           onDismiss={() => setContextMenu(null)}
           onFormatBlock={handleFormatBlock}
           onConvertToTask={handleConvertToTask}
+          onAddToDocument={handleAddToDocument}
         />
       )}
+
+      <AddToDocumentModal
+        open={addToDocOpen}
+        html={selectionHtml}
+        onClose={() => setAddToDocOpen(false)}
+      />
 
       <input
         ref={slashFileInputRef}
