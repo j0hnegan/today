@@ -31,7 +31,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
 | 009 | Today list — task drag parity (reorder + cross-section) | review | 🔄 iterating | [PR #22](https://github.com/j0hnegan/today/pull/22) |
-| 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | 🤔 proposed (your call) | — |
+| 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | ✅ shipped | kit/ on main |
 | 011 | Search (whole-app or docs-only) | discuss | 🤔 proposed (your call) | — |
 | 012 | Today view — drag panels to swap sides | review | 🔄 iterating | [PR #23](https://github.com/j0hnegan/today/pull/23) |
 | 013 | Fix slow Notes load (decouple page from task query) | review | 👀 preview | [PR #24](https://github.com/j0hnegan/today/pull/24) |

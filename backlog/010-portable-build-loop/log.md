@@ -1,4 +1,4 @@
-Status: proposed
+Status: shipped
 Class: discuss
 Branch: —
 PR: —
@@ -15,3 +15,5 @@ PR: —
   Parameterize the project-specific bits; strip Hush LEARNINGS. Class: discuss.
 
 - [2026-06-07 builder] Pre-digested into a proposal: a Claude Code plugin (its own repo, outside Hush) + a thin setup prompt. Awaiting John go/no-go.
+
+- [2026-06-08 builder] Shipped: kit/ with two recreation prompts (local file-grab + self-contained from-scratch) + README. Docs/tooling, no app code → committed to main directly.
