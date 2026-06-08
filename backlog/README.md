@@ -34,6 +34,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | 🤔 proposed (your call) | — |
 | 011 | Search (whole-app or docs-only) | discuss | 🤔 proposed (your call) | — |
 | 012 | Today view — drag panels to swap sides | review | 🔄 iterating | [PR #23](https://github.com/j0hnegan/today/pull/23) |
+| 013 | Fix slow Notes load (decouple page from task query) | review | 👀 preview | [PR #24](https://github.com/j0hnegan/today/pull/24) |
 
 _Last run: 2026-06-07 (builder run)_
 
