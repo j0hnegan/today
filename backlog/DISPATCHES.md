@@ -35,3 +35,9 @@ Append-only run log. `/standup` reads the latest entries.
 - 👀 Ready to preview: 008 parts 1+3 (swap panels + Not Today/Trash) → PR #20.
 - 🆕 Filed 009 — cross-section drag parity (008 part 2), deferred to its own PR.
 - 📋 Queued: 005 Step 1 (presentation unify), 009.
+
+## 2026-06-07 — builder run #5 (manual)
+- ✅ Shipped: 008 parts 1+3 (#20, merged).
+- 👀 Ready to preview: 005 Step 1 (docs/notes presentation unify) → PR #21.
+- 🤔 Proposed: 010 portable build-loop kit (Claude Code plugin + setup prompt).
+- ⏳ 009 (cross-section drag) left queued — genuinely needs interactive drag-testing; not safe to build fully blind.
