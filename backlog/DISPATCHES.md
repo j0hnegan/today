@@ -41,3 +41,7 @@ Append-only run log. `/standup` reads the latest entries.
 - 👀 Ready to preview: 005 Step 1 (docs/notes presentation unify) → PR #21.
 - 🤔 Proposed: 010 portable build-loop kit (Claude Code plugin + setup prompt).
 - ⏳ 009 (cross-section drag) left queued — genuinely needs interactive drag-testing; not safe to build fully blind.
+
+## 2026-06-07 — builder run #6 (manual)
+- 👀 Ready to preview: 009 task drag (Today↔In Progress) → PR #22; 012 panel drag-to-swap → PR #23. Both interactive — drag-test on preview.
+- 🤔 Awaiting go: 010 (kit-only), 002 (personal-task loop, phased), 011 (search, phased).

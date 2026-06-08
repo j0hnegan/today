@@ -30,10 +30,10 @@ folder is the baton; loop and live session pass it back and forth.
 | 006 | Highlight → add selection to a document | review | ✅ shipped | [PR #19](https://github.com/j0hnegan/today/pull/19) (merged) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
-| 009 | Today list — task drag parity (reorder + cross-section) | review | ready | — |
+| 009 | Today list — task drag parity (reorder + cross-section) | review | 👀 preview | [PR #22](https://github.com/j0hnegan/today/pull/22) |
 | 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | 🤔 proposed (your call) | — |
 | 011 | Search (whole-app or docs-only) | discuss | 🤔 proposed (your call) | — |
-| 012 | Today view — drag panels to swap sides | review | ready | — |
+| 012 | Today view — drag panels to swap sides | review | 👀 preview | [PR #23](https://github.com/j0hnegan/today/pull/23) |
 
 _Last run: 2026-06-07 (builder run)_
 
