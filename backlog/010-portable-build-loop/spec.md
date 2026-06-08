@@ -65,3 +65,11 @@ backlog + standup + builder + steward in a new project, Hush-specific content st
   separately if wanted.
 - Leaning: plugin (portable logic) + thin setup prompt (per-project bootstrap). Awaiting
   John's final go vs. cross-project-included.
+
+## Revised shape (2026-06-07, John) — NO plugin
+John is wary of installing a plugin on a work machine (trust/IT, black-box). Preferred
+shape: a **from-scratch recreation kit** — a thorough setup prompt + the template files
+(skills, loop playbooks, backlog scaffold, blank LEARNINGS seed) — that he runs on a new
+machine to *build* the whole system transparently, installing nothing. The prompt also
+does per-project wiring (CI detection, scaffold backlog/, create routines). This
+supersedes the plugin recommendation.

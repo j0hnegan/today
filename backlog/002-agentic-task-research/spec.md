@@ -52,3 +52,11 @@ drive the browser, search the web, etc. — then stage the results for him.
 **HARD GUARDRAIL:** never send an email/message or otherwise act outward on his behalf
 unless John explicitly approves that specific action. Large, multi-phase (tool access +
 permissioning + the never-send rule); builder to propose a phased plan when unparked.
+
+## Revised shape (2026-06-07, John) — UNPARKED
+This is the same pattern as the build-loop (autonomous work on a schedule + dispatches/
+standup), but pointed at John's REAL tasks instead of dev work ("less meta"). A scheduled
+"personal-task agent" routine reads today/upcoming tasks, advances each as far as it can
+using full computer-use (email, iMessage, browser, web), and gives John a standup-style
+update. Same never-send guardrail. Build = write the agent playbook + create the routine;
+builder to propose a phased plan (start narrow, expand capabilities).
