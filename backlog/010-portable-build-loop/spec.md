@@ -78,3 +78,13 @@ supersedes the plugin recommendation.
 Kit-only — no plugin, even on personal. One artifact for every project + machine.
 Lowest LOE (mostly packaging the existing .claude/skills + .claude/loops + backlog
 templates and writing a strong setup prompt) and no two-system drift. Awaiting John's go.
+
+## FINAL shape (2026-06-07, John) — kit here + recreation PROMPT, zero file transfer
+John will NOT copy any files to his work laptop. So:
+- "Kit" = the files that already live in THIS repo (.claude/skills, .claude/loops, backlog
+  templates) — used for projects on his personal machine.
+- Portable artifact for any OTHER machine/project = a single self-contained **recreation
+  prompt** he pastes into Claude there, which regenerates the entire system from scratch.
+  No files copied, no plugin installed. (A plugin would require bringing something over —
+  exactly what he wants to avoid.)
+Deliverable: write that recreation prompt; keep it in sync with the kit. GO.

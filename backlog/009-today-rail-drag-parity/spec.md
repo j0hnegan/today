@@ -24,3 +24,17 @@ on mouse and touch — same feel as My Tasks. CI green.
   carefully-tested PR. Not blocking — long-press on the check circle already moves a
   task to In Progress.
 - No schema change.
+
+## REBUILD (2026-06-07, John) — first attempt missed; full parity required
+The additive cross-section drag (#22) is NOT acceptable. The Today task panel must match
+the My Tasks (vault) list EXACTLY:
+- **Drag handles** on each row (GripVertical), like the vault TaskRow.
+- **Identical row padding/height/styling** — reuse the vault's TaskRow/TaskList, don't
+  keep the bespoke compact rows.
+- **Drop-position indicator line** while dragging, INCLUDING cross-section (Today ↔ In
+  Progress) — show exactly where it lands (above/below which task), like the vault.
+- Same add-task affordance, same everything.
+- ONLY addition vs the vault row: the **Not Today** button.
+Approach: reuse vault VaultSection + TaskList + TaskRow + VaultView's drag logic on the
+Today page (scoped to on_deck + in_progress). Verify drag on the live preview before
+handing back.

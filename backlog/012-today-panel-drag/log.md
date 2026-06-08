@@ -1,4 +1,4 @@
-Status: preview
+Status: iterating
 Class: review
 Branch: —
 PR: —
@@ -16,3 +16,5 @@ PR: —
 Branch: auto/012-today-panel-drag
 PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
 - [2026-06-07 builder] Built drag-to-swap via grip handles (vs pure edge-grab, for reliability). CI green. PR #23. Verify on preview.
+
+- [2026-06-07 John] REJECTED #23: wrong. Want edge-grab (no handle) + drag visual feedback. Also fix slow Notes load in Today view, in this PR.

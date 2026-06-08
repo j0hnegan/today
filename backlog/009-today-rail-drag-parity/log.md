@@ -1,4 +1,4 @@
-Status: preview
+Status: iterating
 Class: review
 Branch: —
 PR: —
@@ -19,3 +19,5 @@ PR: —
 Branch: auto/009-today-task-drag
 PR: #22 (draft) — https://github.com/j0hnegan/today/pull/22
 - [2026-06-07 builder] Built cross-section task drag (Today↔In Progress), reusing existing mutations. CI green. PR #22. Verify drag on preview.
+
+- [2026-06-07 John] REJECTED #22: not real parity. Rebuild to fully reuse the vault task list (handles, padding, drop indicators incl. cross-section) + Not Today.

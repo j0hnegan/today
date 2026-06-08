@@ -20,3 +20,13 @@ reloads. Works on mouse (and touch if feasible).
 - Interactive DnD — verify on the preview (drag can't be unit-tested).
 - Relates to 008 (swap toggle) — this is the richer drag version.
 - No schema change. Class: review.
+
+## REBUILD (2026-06-07, John) — wrong approach; remove the handle
+- NO top grip handle (remove it entirely).
+- **Edge-grab:** hovering near the EDGES of either panel changes the cursor to grab and
+  lets you drag the whole panel — no handle.
+- **Real drag visual feedback:** show the panel being dragged (a drag ghost/image), like
+  dragging a task. Currently there's none.
+- ALSO in this PR: the **Notes panel takes ~1 min to load** in the Today view —
+  investigate and fix.
+Verify drag + the notes-load fix on the live preview before handing back.
