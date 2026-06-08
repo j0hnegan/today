@@ -42,6 +42,7 @@ export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode
         onMarkDone={actions.onMarkDone}
         onEditTask={setEditingTask}
         onDeleteTask={actions.onDeleteTask}
+        onNotTodayTask={actions.onNotTodayTask}
         onInProgressTask={actions.onInProgressTask}
         onBackToTodayTask={actions.onBackToTodayTask}
         editingTaskId={editingTaskId}
