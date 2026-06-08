@@ -4,6 +4,17 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-08 — builder run (cron, later)
+- 🧹 **Fixed a merge conflict**: PR #23 (012 panel drag) had gone CONFLICTING — a stray
+  steward doc commit on the branch collided with backlog docs on main. Rebased onto main,
+  dropped that commit (only app change left is `PagePanel.tsx`), CI green (tsc+lint+build),
+  force-pushed. **Mergeable again** — your call to merge or send back.
+- ✅ **No new feedback** on 009 (#22) or 013 (#24) since the last builder commit — both still
+  clean/mergeable, waiting on you. Left their previews untouched (no needless rebuild).
+- ⏳ **No new builds**: 3 features in preview (009, 012, 013) = WIP cap hit; 014 stays queued.
+- 🤔 **Still your call**: 002 personal-task agent (phased proposal — "go on 002" for Phase 1),
+  011 search (scope). Both already pre-digested — nothing new to triage.
+
 ## 2026-06-08 — builder run (cron)
 - 👀 **Ready to preview**: 012 Today panel drag → PR #23, **reworked** per your rejection.
   Removed the grip handle; now edge-grab (cursor → grab near a panel's border, the whole
