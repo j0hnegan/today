@@ -60,3 +60,12 @@ standup), but pointed at John's REAL tasks instead of dev work ("less meta"). A 
 using full computer-use (email, iMessage, browser, web), and gives John a standup-style
 update. Same never-send guardrail. Build = write the agent playbook + create the routine;
 builder to propose a phased plan (start narrow, expand capabilities).
+
+## Builder proposal (2026-06-07) — phased, for John's go/no-go
+- **Phase 1:** a scheduled "personal-task agent" routine reads today/upcoming tasks,
+  does read-only research per task (email + web), and writes a "where this stands +
+  suggested next step" summary onto each task; posts a personal-task standup.
+- **Phase 2:** add browser + iMessage reading and email/message *drafting* (drafts only).
+- **Phase 3:** multi-step task decomposition (break big tasks into ordered sub-steps).
+- Never sends/contacts anyone without explicit per-action approval.
+Reply "go on 002" to build Phase 1.

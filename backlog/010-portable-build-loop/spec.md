@@ -73,3 +73,8 @@ shape: a **from-scratch recreation kit** — a thorough setup prompt + the templ
 machine to *build* the whole system transparently, installing nothing. The prompt also
 does per-project wiring (CI detection, scaffold backlog/, create routines). This
 supersedes the plugin recommendation.
+
+## LOE decision (2026-06-07)
+Kit-only — no plugin, even on personal. One artifact for every project + machine.
+Lowest LOE (mostly packaging the existing .claude/skills + .claude/loops + backlog
+templates and writing a strong setup prompt) and no two-system drift. Awaiting John's go.

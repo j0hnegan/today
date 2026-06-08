@@ -24,3 +24,9 @@ filter the list.
   list; a search endpoint if/when it goes global).
 - Builds on 005 (unified Docs list + filter toggle).
 - Class: discuss (scope is the open question).
+
+## Builder proposal (2026-06-07) — phased, for John's go/no-go
+- **Phase 1:** docs/notes search box on the Docs page — client-side filter by title +
+  content, sitting next to the All / Date docs / Subject docs toggle. Cheap, fits 005.
+- **Phase 2:** global ⌘K omnisearch across tasks, notes, docs (and maybe goals).
+Reply "go on 011" to build Phase 1.
