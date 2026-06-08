@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, CalendarDays } from "lucide-react";
+import { Plus, CalendarDays, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDocs, useNotesList, fetcher } from "@/lib/hooks";
 import { preload } from "swr";
@@ -55,6 +55,51 @@ function contentPreview(html: string): string {
 type ListItem =
   | { kind: "doc"; doc: Document }
   | { kind: "note"; id: number; date: string; content: string; updated_at: string };
+
+// One shared row so docs and day-notes present identically (title + preview + meta),
+// differing only by leading icon and the doc-only chips. (005 Step 1.)
+function DocRow({
+  href,
+  icon: Icon,
+  title,
+  preview,
+  updatedAt,
+  right,
+  prefetch,
+  onMouseEnter,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  preview: string;
+  updatedAt: string;
+  right?: React.ReactNode;
+  prefetch?: boolean;
+  onMouseEnter?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      prefetch={prefetch}
+      onMouseEnter={onMouseEnter}
+      className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
+    >
+      <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <span className="text-sm font-medium block truncate">{title}</span>
+        {preview && (
+          <span className="text-xs text-muted-foreground block truncate">{preview}</span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
+        {right}
+        <span className="text-[10px] text-muted-foreground font-mono">
+          {formatRelativeDate(updatedAt)}
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 function DocsSkeleton() {
   return (
@@ -172,73 +217,50 @@ export function DocsView() {
           if (item.kind === "doc") {
             const doc = item.doc;
             return (
-              <Link
+              <DocRow
                 key={`doc-${doc.id}`}
                 href={`/docs/${doc.id}`}
                 prefetch
                 onMouseEnter={() => preload(`/api/docs/${doc.id}`, fetcher)}
-                className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
-              >
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium block truncate">
-                    {doc.title || "Untitled"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatRelativeDate(doc.updated_at)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
-                  {doc.categories?.slice(0, 2).map((cat) => (
-                    <span
-                      key={cat.id}
-                      className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium"
-                      style={{
-                        backgroundColor: cat.color + "26",
-                        color: cat.color,
-                      }}
-                    >
-                      {cat.name}
-                    </span>
-                  ))}
-                  {doc.goals?.slice(0, 2).map((goal) => (
-                    <span
-                      key={goal.id}
-                      className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium bg-accent text-muted-foreground"
-                    >
-                      {goal.title}
-                    </span>
-                  ))}
-                  {((doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) > 4) && (
-                    <span className="text-[10px] text-muted-foreground">
-                      +{(doc.categories?.length ?? 0) + (doc.goals?.length ?? 0) - 4}
-                    </span>
-                  )}
-                </div>
-              </Link>
+                icon={FileText}
+                title={doc.title || "Untitled"}
+                preview={contentPreview(doc.content)}
+                updatedAt={doc.updated_at}
+                right={
+                  <>
+                    {doc.categories?.slice(0, 2).map((cat) => (
+                      <span
+                        key={cat.id}
+                        className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium"
+                        style={{ backgroundColor: cat.color + "26", color: cat.color }}
+                      >
+                        {cat.name}
+                      </span>
+                    ))}
+                    {doc.goals?.slice(0, 2).map((goal) => (
+                      <span
+                        key={goal.id}
+                        className="inline-flex items-center rounded-[6px] px-1.5 py-0.5 text-[10px] font-medium bg-accent text-muted-foreground"
+                      >
+                        {goal.title}
+                      </span>
+                    ))}
+                  </>
+                }
+              />
             );
           }
 
-          // Note entry — links to Today page with that date
+          // Day-note — same row, titled by its date; links to the Today page.
           return (
-            <Link
+            <DocRow
               key={`note-${item.date}`}
               href={`/?date=${item.date}`}
-              className="flex w-full items-start gap-3 rounded-[10px] px-3 py-3 hover:bg-accent/30 transition-colors text-left group"
-            >
-              <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium block truncate">
-                  {formatNoteDate(item.date)}
-                </span>
-                <span className="text-xs text-muted-foreground block truncate">
-                  {contentPreview(item.content)}
-                </span>
-              </div>
-              <span className="text-[10px] text-muted-foreground flex-shrink-0 pt-0.5 font-mono">
-                {formatRelativeDate(item.updated_at)}
-              </span>
-            </Link>
+              icon={CalendarDays}
+              title={formatNoteDate(item.date)}
+              preview={contentPreview(item.content)}
+              updatedAt={item.updated_at}
+            />
           );
         })}
       </div>
