@@ -232,6 +232,8 @@ export function TaskListPanel({
 }) {
   const [draggingTaskIdx, setDraggingTaskIdx] = useState<number | null>(null);
   const [taskDropIdx, setTaskDropIdx] = useState<number | null>(null);
+  // Cross-section drag (Today ↔ In Progress). `text/x-task-move` = "<id>|<section>".
+  const [crossTarget, setCrossTarget] = useState<"today" | "inprogress" | null>(null);
   const taskDropRef = useRef<number | null>(null);
   useEffect(() => {
     taskDropRef.current = taskDropIdx;
@@ -436,7 +438,39 @@ export function TaskListPanel({
       {/* Task list in bordered panel — Today + In Progress as stacked sections */}
       <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2">
         <VaultSection title="Today" count={tasks.length} defaultOpen>
-          <div ref={listRef} className="space-y-0.5">
+          <div
+            ref={listRef}
+            className={cn(
+              "space-y-0.5 rounded-lg",
+              crossTarget === "today" && "ring-2 ring-ring/50"
+            )}
+            onDragOver={(e) => {
+              // Cross-section drop from In Progress (within-Today reorder is handled per-row).
+              if (
+                e.dataTransfer.types.includes("text/x-task-move") &&
+                !e.dataTransfer.types.includes("text/task-reorder")
+              ) {
+                e.preventDefault();
+                setCrossTarget("today");
+              }
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) setCrossTarget(null);
+            }}
+            onDrop={(e) => {
+              if (
+                !e.dataTransfer.types.includes("text/x-task-move") ||
+                e.dataTransfer.types.includes("text/task-reorder")
+              )
+                return;
+              e.preventDefault();
+              setCrossTarget(null);
+              const [idStr, src] = e.dataTransfer.getData("text/x-task-move").split("|");
+              if (src !== "inprogress") return;
+              const t = inProgressTasks.find((x) => x.id === Number(idStr));
+              if (t) onBackToTodayTask(t);
+            }}
+          >
             {tasks.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-1">
                 No tasks today. Press{" "}
@@ -465,12 +499,14 @@ export function TaskListPanel({
                       onDragStart={(e) => {
                         e.stopPropagation();
                         e.dataTransfer.setData("text/task-reorder", String(taskIdx));
+                        e.dataTransfer.setData("text/x-task-move", `${task.id}|today`);
                         e.dataTransfer.effectAllowed = "move";
                         setDraggingTaskIdx(taskIdx);
                       }}
                       onDragEnd={() => {
                         setDraggingTaskIdx(null);
                         setTaskDropIdx(null);
+                        setCrossTarget(null);
                       }}
                       onDragOver={(e) => {
                         if (!e.dataTransfer.types.includes("text/task-reorder")) return;
@@ -540,7 +576,30 @@ export function TaskListPanel({
         </VaultSection>
 
         <VaultSection title="In Progress" count={inProgressTasks.length} defaultOpen>
-          <div className="space-y-0.5">
+          <div
+            className={cn(
+              "space-y-0.5 rounded-lg min-h-[2rem]",
+              crossTarget === "inprogress" && "ring-2 ring-ring/50"
+            )}
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("text/x-task-move")) {
+                e.preventDefault();
+                setCrossTarget("inprogress");
+              }
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) setCrossTarget(null);
+            }}
+            onDrop={(e) => {
+              if (!e.dataTransfer.types.includes("text/x-task-move")) return;
+              e.preventDefault();
+              setCrossTarget(null);
+              const [idStr, src] = e.dataTransfer.getData("text/x-task-move").split("|");
+              if (src !== "today") return;
+              const t = tasks.find((x) => x.id === Number(idStr));
+              if (t) onInProgressTask(t);
+            }}
+          >
             {inProgressTasks.length === 0 ? (
               <div className="text-xs text-muted-foreground italic py-1">
                 No tasks in progress. Hold the check circle on a task to move it here.
@@ -549,7 +608,14 @@ export function TaskListPanel({
               inProgressTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex w-full items-center gap-1 rounded-lg px-2 h-9 md:h-7 text-sm transition-colors hover:bg-accent/50 group/task relative"
+                  draggable={editingTaskId !== (task.id as number)}
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.setData("text/x-task-move", `${task.id}|inprogress`);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragEnd={() => setCrossTarget(null)}
+                  className="flex w-full items-center gap-1 rounded-lg px-2 h-9 md:h-7 text-sm transition-colors hover:bg-accent/50 group/task relative coarse:select-none"
                 >
                   <TaskRow
                     task={task}
