@@ -1,23 +1,65 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { SlidersHorizontal, ArrowUpDown, Check } from "lucide-react";
 import { useTasks, useTags } from "@/lib/hooks";
 import { useTaskActions } from "@/lib/useTaskActions";
 import { VaultSection } from "@/components/vault/VaultSection";
 import { TaskList } from "@/components/vault/TaskList";
 import { TaskEditModal } from "@/components/vault/TaskEditModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { patchTask, reorderTasks, moveToInProgress, moveToToday } from "@/lib/taskMutations";
 import { moveByInsertion } from "@/lib/useTouchDragSort";
+import { normalizeConsequence } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Task, Destination } from "@/lib/types";
+import type { Task, Size, Destination } from "@/lib/types";
 
-// The Today task column. Same components + drag behavior as the My Tasks (vault)
-// list — handles, padding, drop-indicator lines, reorder, and cross-section drag
-// (Today ↔ In Progress) — scoped to two sections, plus a per-row "Not Today" action.
+// The Today task column. Same rows + drag behavior as the My Tasks (vault) list —
+// handles, padding, drop-indicator lines, reorder, cross-section drag (Today ↔ In
+// Progress) — inside the bordered panel, with the date-row filter/sort controls,
+// plus a per-row "Not Today" action.
 const SECTIONS = [
   { key: "onDeck", section: "on_deck", title: "Today" },
   { key: "inProgress", section: "in_progress", title: "In Progress" },
 ] as const;
+
+type SortKey = "manual" | "due_date" | "size" | "consequence";
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "manual", label: "Manual" },
+  { value: "due_date", label: "Due date" },
+  { value: "size", label: "Size" },
+  { value: "consequence", label: "Priority" },
+];
+const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
+const SIZE_LABELS: Record<Size, string> = {
+  xs: "1-15 min",
+  small: "15-30 min",
+  medium: "30-60 min",
+  large: "60+ min",
+};
+
+function sortTasks(tasks: Task[], key: SortKey): Task[] {
+  if (key === "manual") return tasks; // sort_order (drag order) as fetched
+  return [...tasks].sort((a, b) => {
+    const aPri = normalizeConsequence(a.consequence) === "hard" ? 0 : 1;
+    const bPri = normalizeConsequence(b.consequence) === "hard" ? 0 : 1;
+    let primary = 0;
+    if (key === "due_date") {
+      if (a.due_date && b.due_date) primary = a.due_date.localeCompare(b.due_date);
+      else if (a.due_date) primary = -1;
+      else if (b.due_date) primary = 1;
+    } else if (key === "size") {
+      const order: Record<string, number> = { xs: 0, small: 1, medium: 2, large: 3 };
+      primary = (order[a.size] ?? 99) - (order[b.size] ?? 99);
+    } else if (key === "consequence") {
+      primary = aPri - bPri;
+    }
+    if (primary !== 0) return primary;
+    if (key !== "consequence" && aPri !== bPri) return aPri - bPri;
+    return (a.id as number) - (b.id as number);
+  });
+}
 
 export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode }) {
   const { data: allTasks } = useTasks();
@@ -28,6 +70,9 @@ export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode
   const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
   const [dragOverSection, setDragOverSection] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<{ section: string; index: number } | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("manual");
+  const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
+  const hasActiveFilters = sizeFilter.length < ALL_SIZES.length;
 
   const grouped = useMemo(() => {
     const onDeck: Task[] = [];
@@ -37,8 +82,10 @@ export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode
       if (t.destination === "on_deck") onDeck.push(t);
       else if (t.destination === "in_progress") inProgress.push(t);
     }
-    return { onDeck, inProgress };
-  }, [allTasks]);
+    const apply = (list: Task[]) =>
+      sortTasks(hasActiveFilters ? list.filter((t) => sizeFilter.includes(t.size)) : list, sortKey);
+    return { onDeck: apply(onDeck), inProgress: apply(inProgress) };
+  }, [allTasks, sortKey, sizeFilter, hasActiveFilters]);
 
   const taskSectionMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -147,17 +194,97 @@ export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode
     else moveToInProgress(task).catch(() => {});
   }
 
+  function toggleSize(s: Size) {
+    setSizeFilter((prev) => {
+      if (prev.length === ALL_SIZES.length) return [s];
+      if (prev.includes(s)) {
+        const next = prev.filter((x) => x !== s);
+        return next.length === 0 ? [...ALL_SIZES] : next;
+      }
+      return [...prev, s];
+    });
+  }
+
   const dropHighlight = "ring-2 ring-accent ring-offset-2 ring-offset-background rounded-[10px]";
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {headerLeading && (
-        <div className="flex items-center min-h-7" style={{ marginBottom: "1rem" }}>
-          {headerLeading}
+      {/* Date row + filter/sort controls */}
+      <div className="flex items-center justify-between min-h-7" style={{ marginBottom: "1rem" }}>
+        <div className="flex items-center min-w-0 flex-1">{headerLeading}</div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "inline-flex items-center justify-center h-6 w-6 rounded-md border transition-colors",
+                  hasActiveFilters
+                    ? "border-foreground/20 text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end">
+              <span className="text-xs font-medium text-muted-foreground">Size</span>
+              <div className="mt-1.5 space-y-0.5">
+                {ALL_SIZES.map((s) => {
+                  const active = sizeFilter.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSize(s)}
+                      className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent"
+                    >
+                      <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                        {SIZE_LABELS[s]}
+                      </span>
+                      {active && <Check className="h-3 w-3 text-foreground" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => setSizeFilter([...ALL_SIZES])}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1 border-t border-border mt-2 pt-2"
+                >
+                  Reset
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-accent text-[11px] text-muted-foreground hover:text-foreground transition-colors font-mono">
+                <ArrowUpDown className="h-3 w-3" />
+                {SORT_OPTIONS.find((o) => o.value === sortKey)?.label ?? "Manual"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" align="end">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSortKey(opt.value)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent",
+                    sortKey === opt.value ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {opt.label}
+                  {sortKey === opt.value && <Check className="h-3 w-3" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
-      )}
+      </div>
 
-      <div className="space-y-2 flex-1 min-h-0 md:overflow-y-auto">
+      {/* Bordered panel (mirrors the Notes panel) holding the two sections */}
+      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2">
         {SECTIONS.map(({ key, section, title }) => {
           const sectionTasks = grouped[key as keyof typeof grouped];
           return (
