@@ -101,7 +101,7 @@ function DocRow({
 
 function DocsSkeleton() {
   return (
-    <div className="mx-auto max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
+    <div className="max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
       <div className="flex items-center justify-between mb-6">
         <div className="skeleton h-5 w-16" />
         <div className="skeleton h-8 w-32 rounded-[10px]" />
@@ -199,7 +199,7 @@ export function DocsView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
+    <div className="max-w-3xl px-4 md:px-6 pt-5 md:pt-[80px] pb-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold tracking-tight">Docs</h1>
         <div className="flex items-center gap-2">
