@@ -53,6 +53,7 @@ const ENERGY_OPTIONS: {
 function showRailFor(pathname: string): boolean {
   if (pathname === "/") return false; // Today renders its own task column
   if (pathname === "/vault" || pathname.startsWith("/vault/")) return false;
+  if (pathname === "/docs" || pathname.startsWith("/docs/")) return false; // Docs is a reading surface, no task rail
   return true;
 }
 
