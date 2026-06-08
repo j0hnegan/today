@@ -23,3 +23,5 @@ Branch: auto/005-unify-docs-notes-presentation
 PR: #21 (draft, Step 1) — https://github.com/j0hnegan/today/pull/21
 
 - [2026-06-07 builder] Built Step 1: one shared DocRow unifies docs + day-note presentation. No migration. Step 2 (table merge) still deferred. CI green. PR #21.
+
+- [2026-06-07 John→builder] Preview feedback applied: "Last updated" label, removed row icons, removed task rail from Docs page, added All/Date docs/Subject docs filter.
