@@ -53,3 +53,15 @@ backlog + standup + builder + steward in a new project, Hush-specific content st
 - Likely the cleanest home is a Claude Code plugin or a template repo *outside* this
   project; the builder should weigh that in its proposal.
 - Class: discuss (the shape is the open question).
+
+## John's direction (2026-06-07)
+- Must also recreate at WORK (separate Claude instance, separate computer).
+- A Claude Code plugin = an installable bundle of skills/commands/loops, NOT a standalone
+  app. Install it on any machine → /backlog + /standup + loops available there. That is
+  the "recreate elsewhere" mechanism; no stale copy-paste prompt needed for the logic.
+- State is per-project (each repo has its own backlog/; /standup reads the current repo).
+  Out of the box it is NOT a unified cross-project standup.
+- A cross-project "standup across all my projects" is a separate, bigger feature — track
+  separately if wanted.
+- Leaning: plugin (portable logic) + thin setup prompt (per-project bootstrap). Awaiting
+  John's final go vs. cross-project-included.

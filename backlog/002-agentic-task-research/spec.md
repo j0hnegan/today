@@ -44,3 +44,11 @@ summary on a schedule, touching no one. Later slices TBD.
 - Builds on the loop infrastructure already in `.claude/loops/`.
 - A first slice writes into existing task fields (no schema migration expected); deeper
   versions (real subtasks) may need a data change — flag if so.
+
+## Refined direction (2026-06-07, John)
+Go well beyond read-only. The agent should do whatever John could do at his own computer
+to advance each task as far as possible with minimal input — read email, read iMessages,
+drive the browser, search the web, etc. — then stage the results for him.
+**HARD GUARDRAIL:** never send an email/message or otherwise act outward on his behalf
+unless John explicitly approves that specific action. Large, multi-phase (tool access +
+permissioning + the never-send rule); builder to propose a phased plan when unparked.
