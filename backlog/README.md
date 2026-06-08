@@ -27,7 +27,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 003 | Today task-list lag + app performance | review | ✅ shipped | [PR #17](https://github.com/j0hnegan/today/pull/17) (merged) |
 | 004 | Carry over notes on a new day | review | 👀 preview | [PR #18](https://github.com/j0hnegan/today/pull/18) |
 | 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | ready | — |
-| 006 | Highlight → add selection to a document | review | ready | — |
+| 006 | Highlight → add selection to a document | review | 👀 preview | [PR #19](https://github.com/j0hnegan/today/pull/19) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + task-panel parity | review | ready | — |
 

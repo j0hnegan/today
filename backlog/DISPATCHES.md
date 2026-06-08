@@ -24,3 +24,8 @@ Append-only run log. `/standup` reads the latest entries.
 - 🆕 **008 filed** (Today screen: swappable panels + drag parity + fix row X) — queued,
   relocated to main after it was created on a feature branch by mistake.
 - 📋 **Queued**: 005 (Step 1), 006 highlight→doc, 008.
+
+## 2026-06-07 — builder run #3 (manual)
+- 🔧 Hardened /backlog + /standup to operate on main via worktree (any branch).
+- 👀 Ready to preview: 006 highlight→add-to-document → PR #19.
+- 📋 Queued: 005 Step 1 (presentation unify), 008 (held until 004 merges — shares files with it).
