@@ -30,3 +30,12 @@ reloads. Works on mouse (and touch if feasible).
 - ALSO in this PR: the **Notes panel takes ~1 min to load** in the Today view —
   investigate and fix.
 Verify drag + the notes-load fix on the live preview before handing back.
+
+## Header behavior (2026-06-07, John)
+- The DATE header always stays put (top-left) — it must NOT move when panels swap.
+- Each panel's OWN header (its title "My Tasks" / "Notes" + that panel's controls) travels
+  WITH the panel: if Tasks is dragged to the right, the right header becomes "My Tasks"
+  (+ task controls) and the left becomes "Notes" (+ note controls). Titles/controls are
+  fixed to their panels; only the date is globally fixed.
+- Implies: pull the date out of the tasks-panel header into a stable position, and give the
+  tasks panel its own swappable "My Tasks" header (like the vault).

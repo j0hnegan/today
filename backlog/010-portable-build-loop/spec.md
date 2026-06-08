@@ -88,3 +88,11 @@ John will NOT copy any files to his work laptop. So:
   No files copied, no plugin installed. (A plugin would require bringing something over —
   exactly what he wants to avoid.)
 Deliverable: write that recreation prompt; keep it in sync with the kit. GO.
+
+## TWO prompts (2026-06-07, John)
+1. **Local recreation prompt** — run inside this or other projects ON John's machine;
+   it reads the kit files from THIS repo and recreates them in the target project
+   (has local file access — copy/regenerate the skills, loops, backlog scaffold).
+2. **Work / describe prompt** — for the work machine with NO access to this repo:
+   describes the intention, structure, and logic of the kit and how to set it up exactly
+   as it is here, so Claude rebuilds it from the description. No files transferred.
