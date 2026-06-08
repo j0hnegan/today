@@ -8,6 +8,8 @@ import {
   X,
   CalendarPlus,
   Plus,
+  Trash2,
+  CalendarX2,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,7 @@ function TaskRow({
   onMarkDone,
   onLongPress,
   onDeleteTask,
+  onNotToday,
   onEnterAfterEdit,
   isLastRow,
 }: {
@@ -53,6 +56,7 @@ function TaskRow({
   onMarkDone: (task: Task) => void;
   onLongPress: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
+  onNotToday?: (task: Task) => void;
   onEnterAfterEdit?: () => void;
   isLastRow?: boolean;
 }) {
@@ -163,17 +167,30 @@ function TaskRow({
         </div>
       )}
       {!isEditing && (
-        <div className="absolute right-1 top-0 bottom-0 flex items-center opacity-0 group-hover/task:opacity-100 coarse:opacity-100 transition-opacity">
+        <div className="absolute right-1 top-0 bottom-0 flex items-center gap-1 opacity-0 group-hover/task:opacity-100 coarse:opacity-100 transition-opacity">
+          {onNotToday && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNotToday(task);
+              }}
+              className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title="Not today"
+            >
+              <CalendarX2 className="h-3 w-3" />
+            </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteTask(task);
             }}
-            className="inline-flex items-center justify-center h-5 w-5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive transition-colors"
             title="Delete task"
           >
-            <X className="h-3 w-3" />
+            <Trash2 className="h-3 w-3" />
           </button>
         </div>
       )}
@@ -189,6 +206,7 @@ export function TaskListPanel({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onEditTask,
   onDeleteTask,
+  onNotTodayTask,
   onInProgressTask,
   onBackToTodayTask,
   editingTaskId,
@@ -204,6 +222,7 @@ export function TaskListPanel({
   onMarkDone: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (task: Task) => void;
+  onNotTodayTask: (task: Task) => void;
   onInProgressTask: (task: Task) => void;
   onBackToTodayTask: (task: Task) => void;
   editingTaskId: number | null;
@@ -488,6 +507,7 @@ export function TaskListPanel({
                         onMarkDone={onMarkDone}
                         onLongPress={onInProgressTask}
                         onDeleteTask={onDeleteTask}
+                        onNotToday={onNotTodayTask}
                         onEnterAfterEdit={onEnterAfterEdit}
                         isLastRow={taskIdx === sortedTasks.length - 1}
                       />

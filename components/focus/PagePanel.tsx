@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Paperclip,
   Upload,
+  ArrowLeftRight,
 } from "lucide-react";
 import {
   Popover,
@@ -203,9 +204,29 @@ export function PagePanel() {
     </h1>
   );
 
+  // Panel side swap (Notes ↔ Tasks), persisted locally. md+ only; mobile stacks.
+  const [swapped, setSwapped] = useState(false);
+  useEffect(() => {
+    setSwapped(localStorage.getItem("focus-today-swapped") === "true");
+  }, []);
+  function toggleSwap() {
+    setSwapped((prev) => {
+      localStorage.setItem("focus-today-swapped", String(!prev));
+      return !prev;
+    });
+  }
+
   // Note controls — attach + date navigation, shown on the right above Notes.
   const noteControls = (
     <div className="flex items-center gap-1 flex-shrink-0">
+      <button
+        type="button"
+        onClick={toggleSwap}
+        title="Swap panel sides"
+        className="hidden md:inline-flex p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors mr-1"
+      >
+        <ArrowLeftRight className="h-4 w-4" />
+      </button>
       <button
         type="button"
         onClick={() => attachInputRef.current?.click()}
@@ -271,8 +292,11 @@ export function PagePanel() {
   );
 
   return (
-    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-6 md:overflow-hidden w-full">
-      {/* Tasks (left) — date title + sort/filter share the header row */}
+    <div className={cn(
+      "px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-6 md:overflow-hidden w-full",
+      swapped && "md:flex-row-reverse"
+    )}>
+      {/* Tasks panel (defaults to left; sides swappable at md+) */}
       <div className="flex flex-col flex-[7] min-w-0 md:min-h-0 mb-6 md:mb-0">
         <TaskSidebar headerLeading={dateHeader} />
       </div>
