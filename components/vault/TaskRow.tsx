@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { TagBadge } from "@/components/shared/TagBadge";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, CalendarX2 } from "lucide-react";
 import { linkifyText } from "@/lib/linkify";
 import { LongPressCheck } from "@/components/shared/LongPressCheck";
 import type { Task } from "@/lib/types";
@@ -20,6 +20,7 @@ interface TaskRowProps {
   onDelete?: (task: Task) => void;
   onMarkDone?: (task: Task) => void;
   onLongPress?: (task: Task) => void;
+  onNotToday?: (task: Task) => void;
   showSize?: boolean;
   showDates?: boolean;
   showGoals?: boolean;
@@ -54,6 +55,7 @@ export const TaskRow = memo(function TaskRow({
   onDelete,
   onMarkDone,
   onLongPress,
+  onNotToday,
   showSize = true,
   showDates = true,
   showGoals = true,
@@ -149,6 +151,19 @@ export const TaskRow = memo(function TaskRow({
             </span>
           )}
         </>
+      )}
+      {onNotToday && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNotToday(task);
+          }}
+          className="opacity-0 group-hover:opacity-100 coarse:opacity-100 transition-opacity text-muted-foreground hover:text-foreground flex-shrink-0 p-1"
+          title="Not today"
+        >
+          <CalendarX2 className="h-3.5 w-3.5" />
+        </button>
       )}
       {onDelete && (
         <button
