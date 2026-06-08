@@ -4,6 +4,18 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-08 — builder run (cron)
+- 👀 **Ready to preview**: 012 Today panel drag → PR #23, **reworked** per your rejection.
+  Removed the grip handle; now edge-grab (cursor → grab near a panel's border, the whole
+  panel drags) with a real drag image + drop-target ring. ⇄ toggle stays as fallback. CI green.
+- ↪️ Deferred 012's date-header-stays-put refinement until 009 (#22) lands — 009 rewrites the
+  Today task panel wholesale, so doing it now would be built twice.
+- 🧹 Rebased open branches on main: 012, 009 (#22), 013 (#24) — all clean, previews refreshed.
+- ⏳ **No new builds**: 3 features already await you in preview (009, 012, 013) — WIP cap hit.
+- 🤔 **Still waiting on your call**: 002 personal-task agent (phased proposal — reply "go on 002"
+  for Phase 1), 011 search (scope: whole-app vs docs-only).
+- 📋 Queued: 014 carry-over empty-note guard (auto) — builds next run once preview queue clears.
+
 ## 2026-06-07 — builder run (manual)
 - 🤔 **Proposed** (need John's go/no-go): 002 agentic research (read-only email slice
   first), 005 unify docs+notes (Step 1 presentation-only, no migration).
