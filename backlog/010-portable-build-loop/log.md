@@ -1,4 +1,4 @@
-Status: ready
+Status: proposed
 Class: discuss
 Branch: —
 PR: —
@@ -13,3 +13,5 @@ PR: —
 - [2026-06-07 intake] Created via /backlog. Make the backlog+standup+builder+steward
   system portable/reusable across projects — possibly extracted out of Hush entirely.
   Parameterize the project-specific bits; strip Hush LEARNINGS. Class: discuss.
+
+- [2026-06-07 builder] Pre-digested into a proposal: a Claude Code plugin (its own repo, outside Hush) + a thin setup prompt. Awaiting John go/no-go.

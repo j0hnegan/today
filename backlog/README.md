@@ -29,9 +29,9 @@ folder is the baton; loop and live session pass it back and forth.
 | 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | ready | — |
 | 006 | Highlight → add selection to a document | review | ✅ shipped | [PR #19](https://github.com/j0hnegan/today/pull/19) (merged) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
-| 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | 👀 preview | [PR #20](https://github.com/j0hnegan/today/pull/20) |
+| 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
 | 009 | Today rail — cross-section drag parity (008 part 2) | review | ready | — |
-| 010 | Portable build-loop kit (reuse system in other projects) | discuss | ready | — |
+| 010 | Portable build-loop kit (reuse system in other projects) | discuss | 🤔 proposed (your call) | — |
 
 _Last run: 2026-06-07 (builder run)_
 

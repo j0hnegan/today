@@ -26,10 +26,27 @@ Also capture the **hard-won operational lessons** so a new setup doesn't re-lear
 worktree-based skills (operate on main from any branch), the WIP/pull model, the
 review-class throttle, "log is truth," migration-stop, preview env-var scoping, etc.
 
+## Builder proposal (2026-06-07) — for John's go/no-go
+Recommended shape: **a Claude Code plugin in its own repo** (outside Hush), with a thin
+setup prompt for the parts a plugin can't do.
+- **The plugin** ships the reusable system: `/backlog` + `/standup` skills, the builder
+  + steward loop playbooks, and `backlog/` templates (README/dashboard, blank LEARNINGS
+  seed, spec/log templates, DISPATCHES/HEALTH). Installs into any repo via Claude Code's
+  plugin mechanism — no copy-paste.
+- **A short setup prompt** (shipped with the plugin) handles the per-project wiring a
+  plugin can't infer: detect the stack's CI commands, confirm the deploy/preview
+  provider, scaffold `backlog/`, and create the two scheduled routines.
+- **Lives outside Hush** as its own repo so every project (not just this one) pulls from
+  one source of truth; updates propagate instead of drifting per-copy.
+- First slice = extract the current skills/playbooks/templates into the plugin repo,
+  parameterized + Hush-LEARNINGS stripped; the setup prompt second.
+
+Reply **"go"** to build it this way, or **"let's talk"** to weigh plugin vs. template-repo
+vs. paste-prompt.
+
 ## Definition of done
-TBD after the builder proposes a shape. Minimally: a documented, parameterized way to
-recreate backlog + standup + builder + steward in a new project, with the Hush-specific
-content stripped out.
+TBD after John picks the shape. Minimally: a documented, parameterized way to recreate
+backlog + standup + builder + steward in a new project, Hush-specific content stripped.
 
 ## Notes
 - No app code / no DB migration — this is meta/tooling about the loop system itself.
