@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
-import { fetchNote, fetchTasks } from "@/lib/server-fetchers";
+import { fetchNote } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
 import { PagePanel } from "@/components/focus/PagePanel";
 
@@ -10,17 +10,14 @@ function toDateStr(d: Date): string {
 export default async function TodayPage() {
   const supabase = createClient();
   const todayStr = toDateStr(new Date());
-  // Prefetch both the note AND the tasks so the task sidebar paints on first
-  // load instead of fetching client-side (the cause of the rail lag).
-  const [note, tasks] = await Promise.all([
-    fetchNote(supabase, todayStr),
-    fetchTasks(supabase),
-  ]);
+  // Render on the note alone so the page never blocks on the task query. Awaiting
+  // tasks here (as we did) coupled the whole page — incl. notes — to the task
+  // fetch, so a slow task query stalled notes. The task rail hydrates client-side
+  // via useTasks() (single fetch, no mount gate), which is quick and non-blocking.
+  const note = await fetchNote(supabase, todayStr);
 
   return (
-    <ServerSWR
-      fallback={{ [`/api/notes?date=${todayStr}`]: note, "/api/tasks": tasks }}
-    >
+    <ServerSWR fallback={{ [`/api/notes?date=${todayStr}`]: note }}>
       <PagePanel />
     </ServerSWR>
   );
