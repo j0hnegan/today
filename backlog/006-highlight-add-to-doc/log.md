@@ -1,4 +1,4 @@
-Status: preview
+Status: shipped
 Class: review
 Branch: —
 PR: —
