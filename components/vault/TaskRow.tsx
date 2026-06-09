@@ -4,8 +4,8 @@ import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { TagBadge } from "@/components/shared/TagBadge";
 import { GripVertical, Trash2, CalendarX2 } from "lucide-react";
-import { linkifyText } from "@/lib/linkify";
 import { LongPressCheck } from "@/components/shared/LongPressCheck";
+import { hashDesc, useDescSeen } from "@/lib/descSeen";
 import type { Task } from "@/lib/types";
 
 export type SelectionPosition = "solo" | "first" | "middle" | "last" | null;
@@ -44,6 +44,24 @@ const sizeColors: Record<string, { bg: string; text: string }> = {
   medium: { bg: "rgba(234,179,8,0.15)", text: "#eab308" },
   large: { bg: "rgba(249,115,22,0.15)", text: "#f97316" },
 };
+
+// Description indicator: amber = updated since you last opened it, blue = read.
+function DescDot({ task }: { task: Task }) {
+  const seen = useDescSeen(task.id as number);
+  const desc = task.description ?? "";
+  if (!desc.trim()) return null;
+  const unseen = seen !== hashDesc(desc);
+  return (
+    <span
+      className={
+        unseen
+          ? "h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400"
+          : "h-1.5 w-1.5 rounded-full flex-shrink-0 bg-blue-400/80"
+      }
+      title={unseen ? "Description updated" : "Has description"}
+    />
+  );
+}
 
 export const TaskRow = memo(function TaskRow({
   task,
@@ -104,6 +122,7 @@ export const TaskRow = memo(function TaskRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate">{task.title}</span>
+          <DescDot task={task} />
           {showDates && task.due_date && (
             <span
               className="text-sm font-mono flex-shrink-0 text-muted-foreground"
@@ -115,11 +134,6 @@ export const TaskRow = memo(function TaskRow({
             </span>
           )}
         </div>
-        {task.description && (
-          <span className="block truncate text-xs text-muted-foreground mt-0.5">
-            {linkifyText(task.description)}
-          </span>
-        )}
       </div>
       {showSize && (
         <Badge
