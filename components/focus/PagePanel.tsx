@@ -33,6 +33,18 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// True when HTML has actual text content (placeholder markup like <p></p>,
+// <br>, &nbsp; or whitespace-only does not count).
+function htmlHasText(html: string): boolean {
+  return (
+    html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&[a-z]+;/gi, " ")
+      .trim().length > 0
+  );
+}
+
 function formatDateHeader(d: Date): string {
   return d.toLocaleDateString("en-US", {
     weekday: "long",
@@ -87,7 +99,7 @@ export function PagePanel() {
       if (toDateStr(selectedDateRef.current) !== prevToday) return;
       const prevContent = noteRef.current?.content ?? "";
       setSelectedDate(new Date(realToday + "T00:00:00"));
-      if (prevContent.trim()) setCarryover({ fromDate: prevToday, content: prevContent });
+      if (htmlHasText(prevContent)) setCarryover({ fromDate: prevToday, content: prevContent });
     }
     window.addEventListener("focus", checkRollover);
     document.addEventListener("visibilitychange", checkRollover);
