@@ -1,7 +1,7 @@
 Status: shipped
 Class: review
-Branch: —
-PR: —
+Branch: auto/006-highlight-add-to-doc (merged)
+PR: #19 (merged) — https://github.com/j0hnegan/today/pull/19
 
 ## Done
 

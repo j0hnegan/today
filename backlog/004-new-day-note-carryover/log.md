@@ -1,7 +1,7 @@
-Status: ready
+Status: shipped
 Class: review
-Branch: —
-PR: —
+Branch: auto/004-new-day-note-carryover (merged)
+PR: #18 (merged) — https://github.com/j0hnegan/today/pull/18
 
 ## Done
 
