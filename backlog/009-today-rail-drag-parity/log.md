@@ -1,4 +1,4 @@
-Status: preview
+Status: shipped
 Class: review
 Branch: —
 PR: —
@@ -27,3 +27,5 @@ PR: #22 (draft) — https://github.com/j0hnegan/today/pull/22
 - [2026-06-08 John→builder] Rows + drag were right; restored the bordered panel (mirrors Notes) + the date-row size filter + sort dropdown (Manual default). PR #22 updated.
 
 - [2026-06-09 John→builder] Controls must match My Tasks: sort in section header bars + vault Filters popover. Applied; PR #22 updated.
+
+- [2026-06-09 John] Merged #22 (vault-parity controls confirmed).

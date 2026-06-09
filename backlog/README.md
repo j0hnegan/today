@@ -30,11 +30,11 @@ folder is the baton; loop and live session pass it back and forth.
 | 006 | Highlight → add selection to a document | review | ✅ shipped | [PR #19](https://github.com/j0hnegan/today/pull/19) (merged) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
-| 009 | Today list — task drag parity (reorder + cross-section) | review | 👀 preview | [PR #22](https://github.com/j0hnegan/today/pull/22) |
+| 009 | Today list — task drag parity (reorder + cross-section) | review | ✅ shipped | [PR #22](https://github.com/j0hnegan/today/pull/22) (merged) |
 | 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | ✅ shipped | kit/ on main |
 | 011 | Search (whole-app or docs-only) | discuss | 🤔 proposed (your call) | — |
 | 012 | Today view — drag panels to swap sides | review | 👀 preview | [PR #23](https://github.com/j0hnegan/today/pull/23) |
-| 013 | Fix slow Notes load (decouple page from task query) | review | 👀 preview | [PR #24](https://github.com/j0hnegan/today/pull/24) |
+| 013 | Fix slow Notes load (decouple page from task query) | review | ✅ shipped | [PR #24](https://github.com/j0hnegan/today/pull/24) (merged) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ready | — |
 
 _Last run: 2026-06-09 (builder — quiet: 3 previews (#22/#23/#24) still clean/mergeable, no new John feedback, preview cap (≥3) hit so nothing new built; 3 in preview, 2 proposals, 1 queued)_
