@@ -144,7 +144,7 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
       for (let i = 0; i < files.length; i++) {
         const formData = new FormData();
         formData.append("file", files[i]);
-        formData.append("entity_type", "note");
+        formData.append("entity_type", "document");
         formData.append("entity_id", String(noteId));
         try {
           const res = await fetch("/api/uploads", { method: "POST", body: formData });
@@ -183,7 +183,7 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
       for (let i = 0; i < files.length; i++) {
         const formData = new FormData();
         formData.append("file", files[i]);
-        formData.append("entity_type", "note");
+        formData.append("entity_type", "document");
         formData.append("entity_id", String(noteId));
         try {
           const res = await fetch("/api/uploads", { method: "POST", body: formData });

@@ -64,7 +64,7 @@ export function registerReadTools(server: McpServer, supabase: SupabaseClient) {
     },
     async ({ date }) => {
       const { data, error } = await supabase
-        .from("notes")
+        .from("documents")
         .select("id, date, content, blocks, created_at, updated_at")
         .eq("date", date)
         .maybeSingle();
@@ -92,7 +92,7 @@ export function registerReadTools(server: McpServer, supabase: SupabaseClient) {
     },
     async ({ from, to }) => {
       const [{ data: notes }, { data: tasks }] = await Promise.all([
-        supabase.from("notes").select("date").gte("date", from).lte("date", to),
+        supabase.from("documents").select("date").not("date", "is", null).gte("date", from).lte("date", to),
         supabase
           .from("tasks")
           .select("due_date")

@@ -35,15 +35,13 @@ export async function PATCH(request: NextRequest) {
   const { date, content, blocks } = parsed;
 
   try {
-    const blocksJson = blocks ? JSON.stringify(blocks) : null;
-
-    // `date` is UNIQUE, so a single upsert replaces the prior
-    // select-then-update-or-insert-then-reselect (three round-trips → one).
-    // Only listed columns are written, so created_at is preserved on conflict.
+    // Day-notes live in `documents` now (005 Step 2). `date` is UNIQUE; title
+    // stays empty (display title derives from the date) and sort_order is
+    // unused for day-notes.
     const { data: note, error } = await supabase
-      .from("notes")
+      .from("documents")
       .upsert(
-        { date, content: content ?? "", blocks: blocksJson, updated_at: new Date().toISOString() },
+        { date, title: "", sort_order: 0, content: content ?? "", blocks: blocks ?? null, updated_at: new Date().toISOString() },
         { onConflict: "date" }
       )
       .select()
