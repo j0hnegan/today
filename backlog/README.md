@@ -37,7 +37,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 013 | Fix slow Notes load (decouple page from task query) | review | 👀 preview | [PR #24](https://github.com/j0hnegan/today/pull/24) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ready | — |
 
-_Last run: 2026-06-08 (steward — aligned 006 log header to merged #19; learnings + structure clean; 3 in preview, 2 proposals, 1 queued)_
+_Last run: 2026-06-08 (builder — quiet: no new PR feedback, 3 previews clean/mergeable, WIP cap hit; 3 in preview, 2 proposals, 1 queued)_
 
 <!-- DASHBOARD:END -->
 

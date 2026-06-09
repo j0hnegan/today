@@ -4,6 +4,17 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-08 — builder run (cron, quiet)
+- ✅ **Nothing needed me, nothing broke.** No new feedback on 009 (#22), 012 (#23), or
+  013 (#24) since the last builder commit — latest PR comments are my own status notes +
+  Vercel. All three still **MERGEABLE/CLEAN**, waiting on you.
+- 🧹 **No rebase churn**: the three branches are a few *docs-only* commits behind main
+  (steward dashboard/health refreshes), but GitHub confirms clean merges — so I left the
+  previews untouched rather than force-push and rebuild them mid-review.
+- ⏳ **No new builds**: 3 features in preview (009, 012, 013) = WIP cap hit; 014 stays queued.
+- 🤔 **Still your call** (unchanged): 002 personal-task agent (phased — "go on 002" for
+  Phase 1), 011 search (scope). Both already pre-digested.
+
 ## 2026-06-08 — builder run (cron, later)
 - 🧹 **Fixed a merge conflict**: PR #23 (012 panel drag) had gone CONFLICTING — a stray
   steward doc commit on the branch collided with backlog docs on main. Rebased onto main,
