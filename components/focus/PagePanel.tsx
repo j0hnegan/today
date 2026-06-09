@@ -215,6 +215,103 @@ export function PagePanel() {
     });
   }
 
+  // 012: edge-grab panel drag. Near a panel's border the cursor turns to grab
+  // and the whole panel can be dragged onto the other to swap sides. Handlers
+  // live ONLY on the bordered panel divs (not the header rows above them); the
+  // drag image is the panel itself. Inner drags (task rows, text selection)
+  // are untouched because the container is only draggable near its edges.
+  const EDGE_PX = 16;
+  // Swap when the dragged panel has traveled ≥60% of the way to the other
+  // panel's position at release — no need to land directly on the target.
+  const SWAP_THRESHOLD = 0.6;
+  const [edgePanel, setEdgePanel] = useState<"tasks" | "notes" | null>(null);
+  const [draggingPanel, setDraggingPanel] = useState<"tasks" | "notes" | null>(null);
+  const [dropTargetPanel, setDropTargetPanel] = useState<"tasks" | "notes" | null>(null);
+  const dragStartXRef = useRef(0);
+  const didSwapRef = useRef(false);
+
+  function panelDragProps(panel: "tasks" | "notes") {
+    return {
+      "data-panel": panel,
+      onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+        if (window.innerWidth < 1026 || draggingPanel) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        const near =
+          e.clientX - r.left < EDGE_PX ||
+          r.right - e.clientX < EDGE_PX ||
+          e.clientY - r.top < EDGE_PX ||
+          r.bottom - e.clientY < EDGE_PX;
+        setEdgePanel((p) => (near ? panel : p === panel ? null : p));
+      },
+      onMouseLeave: () =>
+        setEdgePanel((p) => (p === panel ? null : p)),
+      draggable: edgePanel === panel,
+      onDragStart: (e: React.DragEvent<HTMLDivElement>) => {
+        // Bubbled drags from inner draggables (task rows) have a different
+        // target — leave them alone.
+        if (e.target !== e.currentTarget || edgePanel !== panel) return;
+        e.dataTransfer.setData("text/x-panel", panel);
+        e.dataTransfer.effectAllowed = "move";
+        const r = e.currentTarget.getBoundingClientRect();
+        e.dataTransfer.setDragImage(e.currentTarget, e.clientX - r.left, e.clientY - r.top);
+        dragStartXRef.current = e.clientX;
+        didSwapRef.current = false;
+        setDraggingPanel(panel);
+      },
+      onDragEnd: (e: React.DragEvent<HTMLDivElement>) => {
+        // 60% rule: if released anywhere after traveling most of the way to
+        // the other panel (ghost displacement vs. center-to-center distance),
+        // swap — unless the drop handler already did.
+        if (!didSwapRef.current) {
+          const other = panel === "tasks" ? "notes" : "tasks";
+          const selfEl = document.querySelector(`[data-panel="${panel}"]`);
+          const otherEl = document.querySelector(`[data-panel="${other}"]`);
+          if (selfEl && otherEl) {
+            const selfRect = selfEl.getBoundingClientRect();
+            const otherRect = otherEl.getBoundingClientRect();
+            const total =
+              otherRect.left + otherRect.width / 2 - (selfRect.left + selfRect.width / 2);
+            const traveled = e.clientX - dragStartXRef.current;
+            if (total !== 0 && traveled / total >= SWAP_THRESHOLD) toggleSwap();
+          }
+        }
+        setDraggingPanel(null);
+        setDropTargetPanel(null);
+        setEdgePanel(null);
+      },
+      onDragOver: (e: React.DragEvent<HTMLDivElement>) => {
+        if (!e.dataTransfer.types.includes("text/x-panel") || draggingPanel === panel) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDropTargetPanel(panel);
+      },
+      onDragLeave: (e: React.DragEvent<HTMLDivElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setDropTargetPanel((p) => (p === panel ? null : p));
+        }
+      },
+      onDrop: (e: React.DragEvent<HTMLDivElement>) => {
+        if (!e.dataTransfer.types.includes("text/x-panel")) return;
+        e.preventDefault();
+        if (e.dataTransfer.getData("text/x-panel") !== panel) {
+          didSwapRef.current = true; // dragend's 60% rule must not double-swap
+          toggleSwap();
+        }
+        setDraggingPanel(null);
+        setDropTargetPanel(null);
+        setEdgePanel(null);
+      },
+    };
+  }
+
+  function panelDragClass(panel: "tasks" | "notes") {
+    return cn(
+      edgePanel === panel && !draggingPanel && "cursor-grab",
+      draggingPanel === panel && "opacity-40",
+      dropTargetPanel === panel && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+    );
+  }
+
   // Note controls — attach + date navigation, shown on the right above Notes.
   const noteControls = (
     <div className="flex items-center gap-1 flex-shrink-0">
@@ -295,9 +392,13 @@ export function PagePanel() {
       "px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-6 md:overflow-hidden w-full",
       swapped && "md:flex-row-reverse"
     )}>
-      {/* Tasks panel (defaults to left; sides swappable at md+) */}
+      {/* Tasks panel (defaults to left; sides swappable at md+ via toggle or edge-drag) */}
       <div className="flex flex-col flex-[7] min-w-0 md:min-h-0 mb-6 md:mb-0">
-        <TaskSidebar headerLeading={dateHeader} />
+        <TaskSidebar
+          headerLeading={dateHeader}
+          panelProps={panelDragProps("tasks")}
+          panelClassName={panelDragClass("tasks")}
+        />
       </div>
 
       {/* Notes (right) */}
@@ -306,7 +407,13 @@ export function PagePanel() {
           <h1 className="text-lg font-semibold tracking-tight">Notes</h1>
           {noteControls}
         </div>
-        <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6">
+        <div
+          {...panelDragProps("notes")}
+          className={cn(
+            "rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6",
+            panelDragClass("notes")
+          )}
+        >
           <NoteEditor
             note={note}
             dateStr={dateStr}
