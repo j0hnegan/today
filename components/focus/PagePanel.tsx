@@ -191,7 +191,7 @@ export function PagePanel() {
         for (let i = 0; i < files.length; i++) {
           const formData = new FormData();
           formData.append("file", files[i]);
-          formData.append("entity_type", "note");
+          formData.append("entity_type", "document");
           formData.append("entity_id", String(note.id));
           const res = await fetch("/api/uploads", { method: "POST", body: formData });
           if (!res.ok) throw new Error();

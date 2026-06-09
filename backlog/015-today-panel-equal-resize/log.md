@@ -1,4 +1,4 @@
-Status: ready
+Status: preview
 Class: review
 Branch: —
 PR: —
@@ -13,3 +13,6 @@ PR: —
 ## Decisions / feedback log
 - [2026-06-09 john] Intake via /backlog. Equal panels by default + resizable,
   min 460px either side. Relates to 012 (panel drag, in preview).
+
+Branch: auto/015-today-panel-resize
+PR: #26 (draft) — builder built same-day per John. Drag-test divider + swap interplay.

@@ -37,3 +37,23 @@ day-notes titled by date. Step 2 (migration) handled separately.
   do the migration manually.
 - 006 (highlight → add to document) gets cleaner once this lands.
 - Class: discuss (architectural).
+
+## Step 2 plan (2026-06-09, builder) — staged, blocked on migration apply
+**John approved doing Step 2.** The loop never runs DDL, and Supabase DDL needs the SQL
+editor anyway, so it's staged in two halves:
+
+**2a — the migration (John, ~2 min):** `step2-migration.sql` in this folder. Adds
+`date` (unique, nullable) + `blocks` to `documents`, copies every note row in,
+repoints attachments, and RENAMES `notes` → `notes_legacy` (kept as rollback; script
+includes the reverse). ⚠️ Review column names against the live schema first — inferred
+from app code. Paste into the Supabase SQL editor and run.
+
+**2b — the code phase (builder, after 2a):** point everything at the one table:
+- `fetchNote`/`fetchNotesList` → query `documents` by `date`; note upsert (`POST
+  /api/notes`) → upsert into `documents` on date.
+- Docs page drops the two-source merge (one query, one type).
+- MCP `get_note`/`list_dates_with_content` follow the fetchers automatically (they
+  already go through server-fetchers).
+- Keep the `/api/notes` route paths (thin wrappers over the documents queries) so the
+  client/editor code barely changes.
+Say "migration applied" and the builder takes 2b as a normal review-class build.

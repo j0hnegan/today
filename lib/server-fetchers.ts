@@ -72,6 +72,7 @@ export async function fetchDocs(supabase: SB): Promise<Document[]> {
   const { data: docs, error } = await supabase
     .from("documents")
     .select("*")
+    .is("date", null) // subject docs only; day-notes come via fetchNotesList
     .order("updated_at", { ascending: false });
   if (error) throw error;
   if (!docs || docs.length === 0) return [];
@@ -159,8 +160,9 @@ export async function fetchAttachments(
 
 export async function fetchNotesList(supabase: SB) {
   const { data, error } = await supabase
-    .from("notes")
+    .from("documents")
     .select("id, date, content, updated_at")
+    .not("date", "is", null)
     .not("content", "is", null)
     .neq("content", "")
     .order("date", { ascending: false });
@@ -170,7 +172,7 @@ export async function fetchNotesList(supabase: SB) {
 
 export async function fetchNote(supabase: SB, date: string): Promise<Note> {
   const { data: note } = await supabase
-    .from("notes")
+    .from("documents")
     .select("*")
     .eq("date", date)
     .single();
@@ -179,10 +181,10 @@ export async function fetchNote(supabase: SB, date: string): Promise<Note> {
     return { id: null, date, content: "", blocks: null } as unknown as Note;
   }
 
-  let blocks = null;
-  if (note.blocks && typeof note.blocks === "string") {
+  let blocks = note.blocks ?? null;
+  if (blocks && typeof blocks === "string") {
     try {
-      blocks = JSON.parse(note.blocks);
+      blocks = JSON.parse(blocks);
     } catch {
       blocks = null;
     }
@@ -194,7 +196,7 @@ export async function fetchNote(supabase: SB, date: string): Promise<Note> {
   const { data: attachments } = await supabase
     .from("attachments")
     .select("*")
-    .eq("entity_type", "note")
+    .eq("entity_type", "document")
     .eq("entity_id", note.id)
     .order("created_at", { ascending: false });
 
@@ -218,8 +220,9 @@ export async function fetchDatesWithContent(
 ): Promise<string[]> {
   const [{ data: noteDates }, { data: taskDates }] = await Promise.all([
     supabase
-      .from("notes")
+      .from("documents")
       .select("date")
+      .not("date", "is", null)
       .gte("date", from)
       .lte("date", to)
       .not("content", "is", null)
