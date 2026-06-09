@@ -37,9 +37,9 @@ folder is the baton; loop and live session pass it back and forth.
 | 013 | Fix slow Notes load (decouple page from task query) | review | ✅ shipped | [PR #24](https://github.com/j0hnegan/today/pull/24) (merged) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ✅ shipped | [PR #25](https://github.com/j0hnegan/today/pull/25) (merged) |
 | 015 | Today panels — equal width + resizable divider (460px min) | review | 👀 preview | [PR #26](https://github.com/j0hnegan/today/pull/26) |
-| 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | 👀 preview | [PR #27](https://github.com/j0hnegan/today/pull/27) |
+| 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | ✅ shipped | [PR #27](https://github.com/j0hnegan/today/pull/27) (merged) |
 
-_Last run: 2026-06-09 (builder — quiet: 3 previews (#22/#23/#24) still clean/mergeable, no new John feedback, preview cap (≥3) hit so nothing new built; 3 in preview, 2 proposals, 1 queued)_
+_Last run: 2026-06-09 (steward — fixed 016 drift: PR #27 merged but log/dashboard still said preview, synced → shipped. 14 shipped, 015 in preview, 011 proposed. Learnings + structure clean.)_
 
 <!-- DASHBOARD:END -->
 
