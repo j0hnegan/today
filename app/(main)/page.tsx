@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
-import { fetchNote } from "@/lib/server-fetchers";
+import { fetchNote, fetchTasks } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
 import { PagePanel } from "@/components/focus/PagePanel";
 
@@ -10,14 +10,19 @@ function toDateStr(d: Date): string {
 export default async function TodayPage() {
   const supabase = createClient();
   const todayStr = toDateStr(new Date());
-  // Render on the note alone so the page never blocks on the task query. Awaiting
-  // tasks here (as we did) coupled the whole page — incl. notes — to the task
-  // fetch, so a slow task query stalled notes. The task rail hydrates client-side
-  // via useTasks() (single fetch, no mount gate), which is quick and non-blocking.
-  const note = await fetchNote(supabase, todayStr);
+  // Fetch the note and the tasks IN PARALLEL so both panels hydrate into the
+  // same server render and paint together. Concurrent fetches mean the page
+  // waits for the slower of two fast queries — not their sum — so neither
+  // panel lags behind the other.
+  const [note, tasks] = await Promise.all([
+    fetchNote(supabase, todayStr),
+    fetchTasks(supabase),
+  ]);
 
   return (
-    <ServerSWR fallback={{ [`/api/notes?date=${todayStr}`]: note }}>
+    <ServerSWR
+      fallback={{ [`/api/notes?date=${todayStr}`]: note, "/api/tasks": tasks }}
+    >
       <PagePanel />
     </ServerSWR>
   );
