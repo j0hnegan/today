@@ -25,3 +25,5 @@ PR: #22 (draft) — https://github.com/j0hnegan/today/pull/22
 - [2026-06-08 builder] REBUILT for full parity: Today list now uses the actual vault VaultSection/TaskList/TaskRow + ported vault drag + Not Today. Deleted bespoke TaskListPanel. CI green. PR #22 — drag-test.
 
 - [2026-06-08 John→builder] Rows + drag were right; restored the bordered panel (mirrors Notes) + the date-row size filter + sort dropdown (Manual default). PR #22 updated.
+
+- [2026-06-09 John→builder] Controls must match My Tasks: sort in section header bars + vault Filters popover. Applied; PR #22 updated.
