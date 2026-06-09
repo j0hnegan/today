@@ -36,6 +36,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 012 | Today view — drag panels to swap sides | review | ✅ shipped | [PR #23](https://github.com/j0hnegan/today/pull/23) (merged) |
 | 013 | Fix slow Notes load (decouple page from task query) | review | ✅ shipped | [PR #24](https://github.com/j0hnegan/today/pull/24) (merged) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ✅ shipped | [PR #25](https://github.com/j0hnegan/today/pull/25) (merged) |
+| 015 | Today panels — equal width + resizable divider (460px min) | review | 👀 preview | [PR #26](https://github.com/j0hnegan/today/pull/26) |
 | 015 | Today panels — equal width default, resizable, 460px min | review | ready | — |
 
 _Last run: 2026-06-09 (builder — quiet: 3 previews (#22/#23/#24) still clean/mergeable, no new John feedback, preview cap (≥3) hit so nothing new built; 3 in preview, 2 proposals, 1 queued)_
