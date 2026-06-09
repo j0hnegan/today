@@ -1,0 +1,15 @@
+Status: ready
+Class: review
+Branch: —
+PR: —
+
+## Done
+<checklist the builder ticks off>
+
+## Open
+- Equal-width default (was 7/5), draggable divider, persist split, 460px min per
+  panel, coexist with the existing side-swap.
+
+## Decisions / feedback log
+- [2026-06-09 john] Intake via /backlog. Equal panels by default + resizable,
+  min 460px either side. Relates to 012 (panel drag, in preview).
