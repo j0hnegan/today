@@ -1,4 +1,4 @@
-Status: preview
+Status: shipped
 Class: review
 Branch: auto/012-today-panel-drag
 PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
@@ -28,3 +28,5 @@ PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
 - [2026-06-09 builder] REBUILT on post-009 main: edge-grab on the bordered divs only (16px zones, cursor-grab), drag image = the panel itself, ring on drop target, headers excluded from grab but travel on swap. CI green, render verified. PR #23 force-pushed — drag-test.
 
 - [2026-06-09 John→builder] Loved it; one change: swap should fire at ~60% travel on release, not only on a direct drop. Added (SWAP_THRESHOLD=0.6, drop-guarded). PR #23 updated.
+
+- [2026-06-09 John] Merged #23 (60% rule confirmed great).

@@ -33,7 +33,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 009 | Today list — task drag parity (reorder + cross-section) | review | ✅ shipped | [PR #22](https://github.com/j0hnegan/today/pull/22) (merged) |
 | 010 | Portable build-loop kit — from-scratch recreation (no plugin) | discuss | ✅ shipped | kit/ on main |
 | 011 | Search (whole-app or docs-only) | discuss | 🤔 proposed (your call) | — |
-| 012 | Today view — drag panels to swap sides | review | 👀 preview | [PR #23](https://github.com/j0hnegan/today/pull/23) |
+| 012 | Today view — drag panels to swap sides | review | ✅ shipped | [PR #23](https://github.com/j0hnegan/today/pull/23) (merged) |
 | 013 | Fix slow Notes load (decouple page from task query) | review | ✅ shipped | [PR #24](https://github.com/j0hnegan/today/pull/24) (merged) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ready | — |
 | 015 | Today panels — equal width default, resizable, 460px min | review | ready | — |
