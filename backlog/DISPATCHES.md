@@ -79,3 +79,10 @@ Append-only run log. `/standup` reads the latest entries.
 ## 2026-06-07 — builder run #6 (manual)
 - 👀 Ready to preview: 009 task drag (Today↔In Progress) → PR #22; 012 panel drag-to-swap → PR #23. Both interactive — drag-test on preview.
 - 🤔 Awaiting go: 010 (kit-only), 002 (personal-task loop, phased), 011 (search, phased).
+
+## 2026-06-09 — builder run (cron)
+- 🟢 Quiet run — nothing needed building or fixing.
+- ✅ Verified all 3 preview PRs are CLEAN/MERGEABLE on GitHub: #22 (009 task drag), #23 (012 panel drag), #24 (013 Notes-load perf). No rebase needed; no new John feedback newer than each branch's last commit.
+- ⛔ Preview cap hit (≥3 features awaiting your review) → built nothing new. 014 (carry-over empty-note guard, auto) stays queued.
+- 🤔 Still awaiting your go/no-go: 002 (personal-task agent loop, phased), 011 (search, scope). No `discuss` items sit in `ready`, so nothing to pre-digest.
+- No merges since last run; LEARNINGS unchanged.
