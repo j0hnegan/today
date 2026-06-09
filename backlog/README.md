@@ -26,7 +26,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 002 | Personal-task agent loop (autonomous + standup, less meta) | discuss | ✅ shipped (routine live — first "Run now" needed) | playbook + hush-personal-agent routine |
 | 003 | Today task-list lag + app performance | review | ✅ shipped | [PR #17](https://github.com/j0hnegan/today/pull/17) (merged) |
 | 004 | Carry over notes on a new day | review | ✅ shipped | [PR #18](https://github.com/j0hnegan/today/pull/18) (merged) |
-| 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | 🚫 blocked (Step 2: apply migration) | [PR #21](https://github.com/j0hnegan/today/pull/21) (merged) |
+| 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | ✅ shipped (Steps 1+2) | #21 + #28 (merged) |
 | 006 | Highlight → add selection to a document | review | ✅ shipped | [PR #19](https://github.com/j0hnegan/today/pull/19) (merged) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
