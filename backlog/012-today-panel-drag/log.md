@@ -26,3 +26,5 @@ PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
 - [2026-06-09 John→builder] Edge-grab must be on the bordered panel DIVs only, NOT the header rows (headers still travel with panels on swap). Held until #22 merges — same code region; will rebase #23 onto main and apply both the div-only edges and the headers-travel/date-fixed behavior in one pass.
 
 - [2026-06-09 builder] REBUILT on post-009 main: edge-grab on the bordered divs only (16px zones, cursor-grab), drag image = the panel itself, ring on drop target, headers excluded from grab but travel on swap. CI green, render verified. PR #23 force-pushed — drag-test.
+
+- [2026-06-09 John→builder] Loved it; one change: swap should fire at ~60% travel on release, not only on a direct drop. Added (SWAP_THRESHOLD=0.6, drop-guarded). PR #23 updated.
