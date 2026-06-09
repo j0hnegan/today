@@ -86,3 +86,11 @@ Append-only run log. `/standup` reads the latest entries.
 - ⛔ Preview cap hit (≥3 features awaiting your review) → built nothing new. 014 (carry-over empty-note guard, auto) stays queued.
 - 🤔 Still awaiting your go/no-go: 002 (personal-task agent loop, phased), 011 (search, scope). No `discuss` items sit in `ready`, so nothing to pre-digest.
 - No merges since last run; LEARNINGS unchanged.
+
+## 2026-06-09 — builder run (cron, #2)
+- 🟢 Quiet run — nothing needed building or fixing.
+- ✅ Re-verified the 3 preview PRs CLEAN/MERGEABLE: #22 (009 task drag), #23 (012 panel drag), #24 (013 Notes-load perf). All ahead of main only by their own app commits; behind only by backlog doc commits (no file overlap) → no rebase needed.
+- 🔎 PR comments on #22/#23/#24 are all the builder's own update posts, not new John feedback; no change-requesting reviews → nothing to iterate.
+- ⛔ Preview cap hit (≥3 awaiting your review) → built nothing new. 014 (carry-over empty-note guard, auto) stays queued.
+- 🤔 Still awaiting your go/no-go: 002 (personal-task agent loop, phased), 011 (search, scope). No `discuss` items sit in `ready`, so nothing to pre-digest.
+- No merges since last run; LEARNINGS unchanged. No push sent (nothing newly needs you).
