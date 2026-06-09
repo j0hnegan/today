@@ -221,12 +221,18 @@ export function PagePanel() {
   // drag image is the panel itself. Inner drags (task rows, text selection)
   // are untouched because the container is only draggable near its edges.
   const EDGE_PX = 16;
+  // Swap when the dragged panel has traveled ≥60% of the way to the other
+  // panel's position at release — no need to land directly on the target.
+  const SWAP_THRESHOLD = 0.6;
   const [edgePanel, setEdgePanel] = useState<"tasks" | "notes" | null>(null);
   const [draggingPanel, setDraggingPanel] = useState<"tasks" | "notes" | null>(null);
   const [dropTargetPanel, setDropTargetPanel] = useState<"tasks" | "notes" | null>(null);
+  const dragStartXRef = useRef(0);
+  const didSwapRef = useRef(false);
 
   function panelDragProps(panel: "tasks" | "notes") {
     return {
+      "data-panel": panel,
       onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
         if (window.innerWidth < 1026 || draggingPanel) return;
         const r = e.currentTarget.getBoundingClientRect();
@@ -248,9 +254,27 @@ export function PagePanel() {
         e.dataTransfer.effectAllowed = "move";
         const r = e.currentTarget.getBoundingClientRect();
         e.dataTransfer.setDragImage(e.currentTarget, e.clientX - r.left, e.clientY - r.top);
+        dragStartXRef.current = e.clientX;
+        didSwapRef.current = false;
         setDraggingPanel(panel);
       },
-      onDragEnd: () => {
+      onDragEnd: (e: React.DragEvent<HTMLDivElement>) => {
+        // 60% rule: if released anywhere after traveling most of the way to
+        // the other panel (ghost displacement vs. center-to-center distance),
+        // swap — unless the drop handler already did.
+        if (!didSwapRef.current) {
+          const other = panel === "tasks" ? "notes" : "tasks";
+          const selfEl = document.querySelector(`[data-panel="${panel}"]`);
+          const otherEl = document.querySelector(`[data-panel="${other}"]`);
+          if (selfEl && otherEl) {
+            const selfRect = selfEl.getBoundingClientRect();
+            const otherRect = otherEl.getBoundingClientRect();
+            const total =
+              otherRect.left + otherRect.width / 2 - (selfRect.left + selfRect.width / 2);
+            const traveled = e.clientX - dragStartXRef.current;
+            if (total !== 0 && traveled / total >= SWAP_THRESHOLD) toggleSwap();
+          }
+        }
         setDraggingPanel(null);
         setDropTargetPanel(null);
         setEdgePanel(null);
@@ -269,7 +293,10 @@ export function PagePanel() {
       onDrop: (e: React.DragEvent<HTMLDivElement>) => {
         if (!e.dataTransfer.types.includes("text/x-panel")) return;
         e.preventDefault();
-        if (e.dataTransfer.getData("text/x-panel") !== panel) toggleSwap();
+        if (e.dataTransfer.getData("text/x-panel") !== panel) {
+          didSwapRef.current = true; // dragend's 60% rule must not double-swap
+          toggleSwap();
+        }
         setDraggingPanel(null);
         setDropTargetPanel(null);
         setEdgePanel(null);
