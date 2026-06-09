@@ -197,7 +197,6 @@ export function PagePanel() {
   );
 
   // Date title — sits above the task column, sharing its row with the
-  // task sort/filter controls (rendered by TaskListPanel after this node).
   const dateHeader = (
     <h1 className="text-lg font-semibold tracking-tight truncate flex-1 min-w-0 mr-2">
       {formatDateHeader(selectedDate)}
