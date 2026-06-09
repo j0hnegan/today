@@ -38,6 +38,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 014 | Carry-over modal — only show when prev day has notes | auto | ✅ shipped | [PR #25](https://github.com/j0hnegan/today/pull/25) (merged) |
 | 015 | Today panels — equal width + resizable divider (460px min) | review | 👀 preview | [PR #26](https://github.com/j0hnegan/today/pull/26) |
 | 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | ✅ shipped | [PR #27](https://github.com/j0hnegan/today/pull/27) (merged) |
+| 017 | Task rows — description dot (amber new / blue read) | review | 👀 preview | [PR #29](https://github.com/j0hnegan/today/pull/29) |
 
 _Last run: 2026-06-09 (steward — fixed 016 drift: PR #27 merged but log/dashboard still said preview, synced → shipped. 14 shipped, 015 in preview, 011 proposed. Learnings + structure clean.)_
 
