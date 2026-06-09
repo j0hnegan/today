@@ -10,8 +10,10 @@ function toDateStr(d: Date): string {
 export default async function TodayPage() {
   const supabase = createClient();
   const todayStr = toDateStr(new Date());
-  // Prefetch both the note AND the tasks so the task sidebar paints on first
-  // load instead of fetching client-side (the cause of the rail lag).
+  // Fetch the note and the tasks IN PARALLEL so both panels hydrate into the
+  // same server render and paint together. Concurrent fetches mean the page
+  // waits for the slower of two fast queries — not their sum — so neither
+  // panel lags behind the other.
   const [note, tasks] = await Promise.all([
     fetchNote(supabase, todayStr),
     fetchTasks(supabase),
