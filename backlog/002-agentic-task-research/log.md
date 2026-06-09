@@ -1,4 +1,4 @@
-Status: proposed
+Status: shipped
 Class: discuss
 Branch: —
 PR: —
@@ -20,3 +20,5 @@ PR: —
 - [2026-06-07 John] Parked — needs more unpacking before building. Revisit later.
 
 - [2026-06-07 John] UNPARKED + reshaped: a scheduled personal-task agent loop (same system, aimed at real tasks, less meta). Builder to propose a phased plan.
+
+- [2026-06-09 builder] John said GO on all phases. Shipped: .claude/loops/personal-agent.md (full playbook: research → drafts → decomposition, hard never-send rule) + scheduled routine hush-personal-agent (daily ~8:45am). NEEDS: one manual "Run now" to pre-approve Hush MCP + Gmail tools.

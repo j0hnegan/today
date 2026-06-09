@@ -94,3 +94,10 @@ Append-only run log. `/standup` reads the latest entries.
 - ⛔ Preview cap hit (≥3 awaiting your review) → built nothing new. 014 (carry-over empty-note guard, auto) stays queued.
 - 🤔 Still awaiting your go/no-go: 002 (personal-task agent loop, phased), 011 (search, scope). No `discuss` items sit in `ready`, so nothing to pre-digest.
 - No merges since last run; LEARNINGS unchanged. No push sent (nothing newly needs you).
+
+## 2026-06-09 — mega-run (manual, John's batch)
+- ✅ Shipped: 012 (#23 panel drag + 60% rule), 014 (#25 carry-over guard, auto-merged).
+- 👀 Preview: 015 (#26 equal/resizable panels), 016 (#27 middleware auth cache — eyeball the security note).
+- 🤖 002 LIVE: personal-agent playbook + daily routine (8:45am). Needs one manual "Run now" to pre-approve tools.
+- 🚫 005 Step 2 staged: migration SQL + plan ready; blocked on John pasting SQL in Supabase, then builder does the code phase.
+- 🤔 Still open: 011 search (go/no-go).

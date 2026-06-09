@@ -23,10 +23,10 @@ folder is the baton; loop and live session pass it back and forth.
 | # | Feature | Class | Status | Branch / PR |
 |---|---------|-------|--------|-------------|
 | 001 | In Progress as a section — vault + today | review | ✅ shipped | [PR #16](https://github.com/j0hnegan/today/pull/16) (merged) |
-| 002 | Personal-task agent loop (autonomous + standup, less meta) | discuss | 🤔 proposed (your call) | — |
+| 002 | Personal-task agent loop (autonomous + standup, less meta) | discuss | ✅ shipped (routine live — first "Run now" needed) | playbook + hush-personal-agent routine |
 | 003 | Today task-list lag + app performance | review | ✅ shipped | [PR #17](https://github.com/j0hnegan/today/pull/17) (merged) |
 | 004 | Carry over notes on a new day | review | ✅ shipped | [PR #18](https://github.com/j0hnegan/today/pull/18) (merged) |
-| 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | ✅ shipped | [PR #21](https://github.com/j0hnegan/today/pull/21) (merged) |
+| 005 | Unify Docs + Notes — Step 1 (presentation, no migration) | review | 🚫 blocked (Step 2: apply migration) | [PR #21](https://github.com/j0hnegan/today/pull/21) (merged) |
 | 006 | Highlight → add selection to a document | review | ✅ shipped | [PR #19](https://github.com/j0hnegan/today/pull/19) (merged) |
 | 007 | Today ↔ My Tasks date-clear sync bug | review | ✅ shipped | resolved by #17 |
 | 008 | Today screen — swappable panels + Not Today (parts 1+3) | review | ✅ shipped | [PR #20](https://github.com/j0hnegan/today/pull/20) (merged) |
@@ -37,6 +37,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 013 | Fix slow Notes load (decouple page from task query) | review | ✅ shipped | [PR #24](https://github.com/j0hnegan/today/pull/24) (merged) |
 | 014 | Carry-over modal — only show when prev day has notes | auto | ✅ shipped | [PR #25](https://github.com/j0hnegan/today/pull/25) (merged) |
 | 015 | Today panels — equal width + resizable divider (460px min) | review | 👀 preview | [PR #26](https://github.com/j0hnegan/today/pull/26) |
+| 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | 👀 preview | [PR #27](https://github.com/j0hnegan/today/pull/27) |
 
 _Last run: 2026-06-09 (builder — quiet: 3 previews (#22/#23/#24) still clean/mergeable, no new John feedback, preview cap (≥3) hit so nothing new built; 3 in preview, 2 proposals, 1 queued)_
 

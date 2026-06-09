@@ -1,4 +1,4 @@
-Status: shipped
+Status: blocked
 Class: review
 Branch: —
 PR: —
@@ -25,3 +25,5 @@ PR: #21 (draft, Step 1) — https://github.com/j0hnegan/today/pull/21
 - [2026-06-07 builder] Built Step 1: one shared DocRow unifies docs + day-note presentation. No migration. Step 2 (table merge) still deferred. CI green. PR #21.
 
 - [2026-06-07 John→builder] Preview feedback applied: "Last updated" label, removed row icons, removed task rail from Docs page, added All/Date docs/Subject docs filter.
+
+- [2026-06-09 builder] Step 2 staged: migration SQL written (step2-migration.sql) + code-phase plan in spec. BLOCKED on John applying the SQL (loop never runs DDL; needs Supabase SQL editor). Step 1 remains live. Say "migration applied" to trigger 2b.
