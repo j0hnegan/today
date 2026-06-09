@@ -89,7 +89,16 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
   });
 }
 
-export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode }) {
+export function TaskSidebar({
+  headerLeading,
+  panelProps,
+  panelClassName,
+}: {
+  headerLeading?: React.ReactNode;
+  // 012: spread by PagePanel onto the bordered panel div for edge-grab drag.
+  panelProps?: React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean };
+  panelClassName?: string;
+}) {
   const { data: allTasks } = useTasks();
   const { data: tags } = useTags();
   const actions = useTaskActions(allTasks ?? []);
@@ -587,7 +596,13 @@ export function TaskSidebar({ headerLeading }: { headerLeading?: React.ReactNode
       </div>
 
       {/* Bordered panel (mirrors the Notes panel) holding the two sections */}
-      <div className="rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2">
+      <div
+        {...panelProps}
+        className={cn(
+          "rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2",
+          panelClassName
+        )}
+      >
         {SECTIONS.map(({ key, section, title }) => {
           const sectionTasks = grouped[key as keyof typeof grouped];
           return (
