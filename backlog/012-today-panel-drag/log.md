@@ -24,3 +24,5 @@ PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
 - [2026-06-08 builder] PR #23 went CONFLICTING — a stray steward doc commit on this branch collided with backlog docs on main. Rebased onto main and dropped that commit; only app change remains `PagePanel.tsx`. CI green (tsc+lint+build), force-pushed. Mergeable again. Still preview/your call.
 
 - [2026-06-09 John→builder] Edge-grab must be on the bordered panel DIVs only, NOT the header rows (headers still travel with panels on swap). Held until #22 merges — same code region; will rebase #23 onto main and apply both the div-only edges and the headers-travel/date-fixed behavior in one pass.
+
+- [2026-06-09 builder] REBUILT on post-009 main: edge-grab on the bordered divs only (16px zones, cursor-grab), drag image = the panel itself, ring on drop target, headers excluded from grab but travel on swap. CI green, render verified. PR #23 force-pushed — drag-test.
