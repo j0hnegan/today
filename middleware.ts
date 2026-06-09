@@ -5,6 +5,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * Dev-only auth bypass — see lib/api-auth.ts for the full rationale.
  * Requires `HUSH_DEV_AUTH=1`, refuses to engage in production, hard-fails on Vercel.
  */
+// 60s cache of getUser-validated access tokens (module scope survives warm
+// edge invocations; cold starts just re-validate).
+const tokenCache = new Map<string, { id: string; ts: number }>();
+const TOKEN_CACHE_TTL_MS = 60_000;
+
 const DEV_AUTH_BYPASS =
   process.env.HUSH_DEV_AUTH === "1" &&
   process.env.NODE_ENV !== "production" &&
@@ -52,14 +57,43 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Perf: getUser() is a network round-trip to Supabase Auth on EVERY request
+  // (every nav + every SWR revalidation) — the single biggest source of app-wide
+  // latency. Cache VALIDATED tokens briefly so repeat requests skip the trip.
+  // Safe because only tokens that getUser() has already validated server-side
+  // enter the cache (a forged cookie can never get in), keyed by the exact
+  // token string; revocation worst-case is the TTL. Expired tokens bypass the
+  // cache so the refresh path still runs through getUser().
+  let userId: string | null = null;
+
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession(); // local cookie read, no network
+  const token = session?.access_token;
+  const expMs = (session?.expires_at ?? 0) * 1000;
+
+  if (token && expMs - Date.now() > 60_000) {
+    const hit = tokenCache.get(token);
+    if (hit && Date.now() - hit.ts < TOKEN_CACHE_TTL_MS) {
+      userId = hit.id;
+    }
+  }
+
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user && token) {
+      if (tokenCache.size > 100) tokenCache.clear();
+      tokenCache.set(token, { id: user.id, ts: Date.now() });
+    }
+    userId = user?.id ?? null;
+  }
 
   // Pass user ID to API routes so requireAuth() can skip the second getUser() call
-  if (user) {
+  if (userId) {
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-hush-user-id", user.id);
+    requestHeaders.set("x-hush-user-id", userId);
     const newResponse = NextResponse.next({ request: { headers: requestHeaders } });
     // Carry over any cookies Supabase set during token refresh
     supabaseResponse.cookies.getAll().forEach((cookie) => {
@@ -69,7 +103,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Not logged in and not on login page → redirect to login (or 401 for API)
-  if (!user && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
+  if (!userId && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -79,7 +113,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Logged in and on login page → redirect to app
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  if (userId && request.nextUrl.pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
