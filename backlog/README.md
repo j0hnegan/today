@@ -41,7 +41,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 017 | Task rows — description dot (amber new / blue read) | review | ✅ shipped | [PR #29](https://github.com/j0hnegan/today/pull/29) (merged) |
 | 018 | Finance tab — upcoming costs, balance & projections (view over cash-flow) | discuss | 🤔 proposed (your call) | — |
 
-_Last run: 2026-06-10 (builder — pre-digested 018 Finance tab into a proposed pitch: list+select forecasts, no migration, SVG sparkline. Captured 015/017 learnings. 16 shipped, 011 + 018 proposed (both await your call). Nothing to build: no ready auto/review items.)_
+_Last run: 2026-06-10 (builder — quiet. Nothing buildable: no ready auto/review items, no open builder PRs, no iterating/preview features, no new merges since #29. 16 shipped; 011 search + 018 finance still proposed and awaiting your call.)_
 
 <!-- DASHBOARD:END -->
 

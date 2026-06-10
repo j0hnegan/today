@@ -4,6 +4,16 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-10 — builder run (cron, quiet)
+- ✅ **Nothing needed me, nothing broke.** Clean main, no open builder PRs to rebase
+  (only #13 iOS Capacitor is open — your WIP, not loop work), nothing `iterating`, no
+  new feedback on any `preview` feature, no new merges since #29.
+- ⏳ **No new builds**: backlog has no `ready` auto/review items. The only two open
+  items are both `proposed` and need your verdict before they're buildable.
+- 🤔 **Still your call** (unchanged from last run): **011 search** (scope) and **018
+  finance tab** (list+select forecasts pitch). Both already pre-digested into proposals —
+  one-tap "go" on either flips it to `review` and I build it next run.
+
 ## 2026-06-10 — builder run (cron)
 - 🤔 **New proposal to rule on**: 018 Finance tab pre-digested into a `proposed` pitch
   (spec → Builder proposal). Picked the fuzzy open question: **(b) list + select forecasts,
