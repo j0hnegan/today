@@ -1,4 +1,4 @@
-Status: ready
+Status: proposed
 Class: discuss
 Branch: —
 PR: —
@@ -18,3 +18,9 @@ PR: —
   item as a view over that data. Tagged `discuss` (fuzzy scope) → builder should
   pre-digest into a `proposed` pitch. No-migration aggregate/list approach
   preferred; a "primary forecast" flag would need a migration → flag if chosen.
+- [2026-06-10 builder] Pre-digested into a `proposed` pitch (see spec → Builder
+  proposal). Picked open #1 = (b) list + select, no migration — aggregating is
+  mathematically wrong (each forecast has its own starting balance/date), and a
+  "primary" flag would need a column. Selected forecast id → localStorage.
+  Concrete layout + horizon/read-only decisions in spec. No code written; waits
+  on John's one-tap verdict.

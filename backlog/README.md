@@ -39,9 +39,9 @@ folder is the baton; loop and live session pass it back and forth.
 | 015 | Today panels — equal width + resizable divider (460px min) | review | ✅ shipped | [PR #26](https://github.com/j0hnegan/today/pull/26) (merged) |
 | 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | ✅ shipped | [PR #27](https://github.com/j0hnegan/today/pull/27) (merged) |
 | 017 | Task rows — description dot (amber new / blue read) | review | ✅ shipped | [PR #29](https://github.com/j0hnegan/today/pull/29) (merged) |
-| 018 | Finance tab — upcoming costs, balance & projections (view over cash-flow) | discuss | 📥 ready | — |
+| 018 | Finance tab — upcoming costs, balance & projections (view over cash-flow) | discuss | 🤔 proposed (your call) | — |
 
-_Last run: 2026-06-09 (steward — fixed 016 drift: PR #27 merged but log/dashboard still said preview, synced → shipped. 14 shipped, 015 in preview, 011 proposed. Learnings + structure clean.)_
+_Last run: 2026-06-10 (builder — pre-digested 018 Finance tab into a proposed pitch: list+select forecasts, no migration, SVG sparkline. Captured 015/017 learnings. 16 shipped, 011 + 018 proposed (both await your call). Nothing to build: no ready auto/review items.)_
 
 <!-- DASHBOARD:END -->
 

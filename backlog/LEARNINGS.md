@@ -20,8 +20,16 @@ Format:
 - [2026-06-07] Use design tokens for color/spacing/font — never raw values or magic
   numbers. Follow existing Tailwind + Radix + shadcn/ui patterns already in the codebase. (source: CLAUDE.md)
 - [2026-06-07] Dark mode is first-class (next-themes). Anything new must look right in both themes. (source: CLAUDE.md)
+- [2026-06-10] In dense list rows John prefers a compact status **dot** over inline
+  preview text — encode state with color (blue = has description, amber = new/unseen
+  update). Pull weight out of rows; don't bloat them with previews. (source: PR #29 / 017)
 
 ## Code patterns
+
+- [2026-06-10] Persisted layout/UI state that affects first paint (e.g. a resizable
+  panel split) must be applied via a **pre-paint inline script writing a CSS var**,
+  and drag handlers should write that var directly rather than going through React
+  state — otherwise you get a flash on reload. No FOUC for restored layout. (source: PR #26 / 015)
 
 - [2026-06-07] Reads go through `lib/server-fetchers.ts` — the single source of
   truth for every read shape. A new read endpoint means editing the fetcher; the

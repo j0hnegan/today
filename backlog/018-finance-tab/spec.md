@@ -57,6 +57,67 @@ this gives it a home of its own.
    edit here too? v1 = read-only dashboard is fine; deep-link to the note/doc
    that owns a forecast if cheap.
 
+## Builder proposal — pitch (2026-06-10)
+
+_Pre-digested per §3. No code written. John: one-tap "go" → demote to `review`
+and I build it; or "let's talk" if you want to steer scope first._
+
+**Pick on open question #1 → (b) list + select, no migration.** Each row in
+`cash_flows` is a *self-contained* forecast (`starting_balance`, `starting_date`,
+its own `rows[]`). Aggregating (option a) is mathematically wrong — summing
+balances across forecasts with different starting points yields a meaningless
+number. A persisted "primary" (option c) needs a column → migration → out.
+So: **show all forecasts, John views one at a time.** Selected forecast id lives
+in **localStorage** (client pref, same as our other UI state — no DB, no migration).
+Default selection = most-recently-updated forecast (`updated_at` desc).
+
+**Concrete layout** (single `app/(main)/finance/page.tsx`, server-prefetched):
+
+```
+┌ Finance ───────────────────────────────────────────────┐
+│  [ Forecast ▾ ]  ← dropdown, only if >1 forecast exists  │
+│                                                          │
+│  Projected ending balance        Lowest point            │
+│  $4,820.13                       ⚠ -$310.00 on Jun 24    │  ← red when <0
+│  (starting $6,100.00 · Jun 10)                           │
+│                                                          │
+│  ┌ Balance projection ──────────────────────────────┐   │
+│  │   inline SVG area+line of runningBalances()        │   │  ← zero baseline,
+│  │   over time, red fill under any sub-zero stretch   │   │     red below 0
+│  └────────────────────────────────────────────────────┘   │
+│                                                          │
+│  Upcoming costs                                          │
+│  Jun 14   Rent            -$1,800.00     bal $4,300.00   │  ← next N dated
+│  Jun 20   Card payment      -$540.00     bal $3,760.00   │     amount_out rows
+│  …        (deep-link each → the note/doc owning it, if cheap)│  ahead of today
+└──────────────────────────────────────────────────────────┘
+```
+
+**Decisions baked in** (questions #2/#3):
+- **#2 horizon:** projection spans the forecast's full row range (no arbitrary
+  cutoff — these are hand-curated, bounded). Upcoming costs = **all** dated
+  `amount_out > 0` rows with `date >= today`, newest forecasts rarely exceed a
+  dozen rows. If it ever feels long, cap later.
+- **#3 read-only v1:** dashboard only. Forecasts are still edited in their note's
+  `CashFlowTable`. Deep-link if the owning entity is cheap to resolve; if not,
+  skip the link for v1 (don't block on it).
+
+**Build plan (the Hush way, all reuse):**
+- `fetchCashFlows(supabase)` in `lib/server-fetchers.ts` → `select("*")` ordered
+  `updated_at` desc. Thin `GET /api/cashflow` list route + `useCashFlows()` hook.
+  Server Component prefetch + `ServerSWR` hydrate (Docs/Vault pattern).
+- All numbers from `lib/cashflow.ts` (`sortRows`, `runningBalances`,
+  `lowestPoint`, `endingBalance`, `formatMoney`, `formatDate`) — zero new math.
+- SVG sparkline: hand-rolled `<svg>`, points mapped from `runningBalances`, zero
+  baseline, red stroke/fill for sub-zero segments. No chart dep.
+- `Finance` nav entry (`Wallet` icon) in `Sidebar.tsx` + `MobileNav.tsx`,
+  `preloadKeys: ["/api/cashflow"]`. Design tokens, light + dark, empty state
+  pointing John to add a forecast in a note.
+
+**Scope I'd skip for v1:** editing, multi-forecast aggregation, a date-range
+picker, any new column/migration. ~1 fetcher + 1 route + 1 hook + 1 page + 1 nav
+entry. Estimate: clean `review`-class build.
+
 ## Definition of done
 - A **Finance** item appears in the sidebar (and mobile nav) and routes to a new
   page that loads via the server-fetcher → ServerSWR → hook pattern.

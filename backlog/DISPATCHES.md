@@ -4,6 +4,22 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-10 — builder run (cron)
+- 🤔 **New proposal to rule on**: 018 Finance tab pre-digested into a `proposed` pitch
+  (spec → Builder proposal). Picked the fuzzy open question: **(b) list + select forecasts,
+  no migration** — aggregating balances across forecasts is mathematically wrong (each has its
+  own starting balance/date), and a "primary" flag would need a column. Selected forecast →
+  localStorage. Concrete layout (ending-balance + lowest-point summary, SVG balance sparkline,
+  upcoming-costs list), read-only v1, all reuse of `lib/cashflow.ts`. **One-tap "go" → I build
+  it as `review`.**
+- 🧠 **Captured learnings** from the two PRs that merged since last run: 015 (#26) → restored
+  layout must be applied via a pre-paint inline script writing a CSS var to avoid reload flash;
+  017 (#29) → John prefers a compact status dot over inline preview text in dense rows.
+- ⏳ **No new builds**: no `ready` auto/review items exist. Both open items (011 search, 018
+  finance) are `proposed` and await your call — nothing buildable without your verdict.
+- 🧹 **Nothing to rebase/iterate**: no open builder PRs, no `iterating`/`preview` features, no
+  new feedback. 16 features shipped.
+
 ## 2026-06-08 — builder run (cron, quiet)
 - ✅ **Nothing needed me, nothing broke.** No new feedback on 009 (#22), 012 (#23), or
   013 (#24) since the last builder commit — latest PR comments are my own status notes +
