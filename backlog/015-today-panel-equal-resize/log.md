@@ -1,4 +1,4 @@
-Status: preview
+Status: shipped
 Class: review
 Branch: —
 PR: —
@@ -18,3 +18,5 @@ Branch: auto/015-today-panel-resize
 PR: #26 (draft) — builder built same-day per John. Drag-test divider + swap interplay.
 
 - [2026-06-09 John→builder] Flash on reload after resize. Fixed: pre-paint inline script sets --task-basis; drag writes the var directly (no state). PR #26 updated.
+
+- [2026-06-09 John] Merged (#26).

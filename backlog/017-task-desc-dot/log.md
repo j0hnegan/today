@@ -1,4 +1,4 @@
-Status: preview
+Status: shipped
 Class: review
 Branch: auto/017-desc-dot
 PR: #29 (draft)
@@ -9,3 +9,5 @@ PR: #29 (draft)
 - [2026-06-09 builder] Built: DescDot in vault TaskRow (shared by Today list), seen
   tracking via lib/descSeen.ts (useSyncExternalStore + localStorage), markDescSeen on
   modal open. CI green. PR #29.
+
+- [2026-06-09 John] Merged (#29).

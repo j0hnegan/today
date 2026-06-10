@@ -101,3 +101,8 @@ Append-only run log. `/standup` reads the latest entries.
 - 🤖 002 LIVE: personal-agent playbook + daily routine (8:45am). Needs one manual "Run now" to pre-approve tools.
 - 🚫 005 Step 2 staged: migration SQL + plan ready; blocked on John pasting SQL in Supabase, then builder does the code phase.
 - 🤔 Still open: 011 search (go/no-go).
+
+## 2026-06-09 (late) — John merged everything
+- ✅ Shipped: 015 (#26 equal/resizable panels + pre-paint split), 016 (#27 middleware auth cache), 017 (#29 description dot), 005 Step 2 complete (#28), 014 (#25), 012 (#23).
+- 🤖 Personal agent: hourly (8:41a–9:41p) with quick-exit precheck; first run done inline (11 tasks annotated, 2 drafts staged).
+- Open: 011 (search) go/no-go — the only item left on the board.
