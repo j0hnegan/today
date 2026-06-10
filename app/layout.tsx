@@ -52,6 +52,15 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={supabaseUrl} />
           </>
         )}
+        {/* Apply the persisted Today panel split BEFORE first paint so a
+            resized layout doesn't flash 50/50 then jump (same trick as the
+            theme script). The divider drag writes this var directly. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var s=parseFloat(localStorage.getItem('focus-today-split'));if(!isNaN(s)&&s>0&&s<1)document.documentElement.style.setProperty('--task-basis',(s*100).toFixed(2)+'%')}catch(e){}",
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}

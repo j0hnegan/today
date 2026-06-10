@@ -316,6 +316,38 @@ export function PagePanel() {
     };
   }
 
+  // 015: equal-width panels by default, resizable via a divider (md+ only).
+  // The split lives in the --task-basis CSS var on <html>: a blocking inline
+  // script in the root layout applies the persisted value BEFORE first paint
+  // (no 50/50 flash), and the drag writes the var directly — no React state,
+  // no re-render. Clamped so neither panel goes below 460px.
+  const PANEL_MIN_PX = 460;
+  const layoutRef = useRef<HTMLDivElement>(null);
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault();
+    const el = layoutRef.current;
+    if (!el) return;
+    const isSwapped = swapped;
+    let lastFrac: number | null = null;
+    function onMove(ev: MouseEvent) {
+      const r = el!.getBoundingClientRect();
+      let frac = isSwapped ? (r.right - ev.clientX) / r.width : (ev.clientX - r.left) / r.width;
+      const minFrac = PANEL_MIN_PX / r.width;
+      const maxFrac = 1 - minFrac;
+      frac = minFrac > maxFrac ? 0.5 : Math.min(maxFrac, Math.max(minFrac, frac));
+      lastFrac = frac;
+      document.documentElement.style.setProperty("--task-basis", `${(frac * 100).toFixed(2)}%`);
+    }
+    function onUp() {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      if (lastFrac !== null) localStorage.setItem("focus-today-split", String(lastFrac));
+    }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
   function panelDragClass(panel: "tasks" | "notes") {
     return cn(
       edgePanel === panel && !draggingPanel && "cursor-grab",
@@ -400,12 +432,15 @@ export function PagePanel() {
   );
 
   return (
-    <div className={cn(
-      "px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-6 md:overflow-hidden w-full",
-      swapped && "md:flex-row-reverse"
-    )}>
-      {/* Tasks panel (defaults to left; sides swappable at md+ via toggle or edge-drag) */}
-      <div className="flex flex-col flex-[7] min-w-0 md:min-h-0 mb-6 md:mb-0">
+    <div
+      ref={layoutRef}
+      className={cn(
+        "px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col md:flex-row md:gap-3 md:overflow-hidden w-full",
+        swapped && "md:flex-row-reverse"
+      )}
+    >
+      {/* Tasks panel (equal split by default; resizable via the divider; sides swappable) */}
+      <div className="flex flex-col min-w-0 md:min-h-0 mb-6 md:mb-0 md:flex-[0_1_var(--task-basis,50%)]">
         <TaskSidebar
           headerLeading={dateHeader}
           panelProps={panelDragProps("tasks")}
@@ -413,8 +448,15 @@ export function PagePanel() {
         />
       </div>
 
+      {/* Resize divider (md+ only) */}
+      <div
+        onMouseDown={startResize}
+        title="Drag to resize"
+        className="hidden md:block w-1 self-stretch flex-shrink-0 cursor-col-resize rounded-full bg-transparent hover:bg-accent active:bg-accent transition-colors"
+      />
+
       {/* Notes (right) */}
-      <div className="flex flex-col flex-[5] min-w-0 md:min-h-0">
+      <div className="flex flex-col flex-1 min-w-0 md:min-h-0">
         <div className="flex items-center justify-between min-h-7" style={{ marginBottom: "1rem" }}>
           <h1 className="text-lg font-semibold tracking-tight">Notes</h1>
           {noteControls}
