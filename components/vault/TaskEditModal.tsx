@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { markDescSeen } from "@/lib/descSeen";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,11 @@ export function TaskEditModal({
   open,
   onClose,
 }: TaskEditModalProps) {
+  // Opening the modal = reading the description (drives the row dot color).
+  useEffect(() => {
+    if (open) markDescSeen(task.id as number, task.description ?? "");
+  }, [open, task.id, task.description]);
+
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [consequence, setConsequence] = useState<Consequence>(
