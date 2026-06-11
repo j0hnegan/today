@@ -4,6 +4,17 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-11 — builder run (cron, #2, quiet)
+- 😴 **Quiet run — board unchanged since the last one.** Clean main, no open builder
+  PRs to rebase (only #13 iOS is open — your WIP), nothing `iterating`/`preview`, no
+  new feedback, no merges since #29.
+- 🚧 **019 (Plaid → Chase sync) still blocked** — unchanged. Needs the 4-table
+  migration + Plaid account + env vars before I can build/verify anything; already
+  pinged you last run, so no new push this time. **018 stays gated** behind it.
+- ⏳ **No new builds**: 018 is `ready` but gated on 019; no other `ready` auto/review
+  items; no `discuss` item sits in `ready` to pre-digest.
+- 🤔 **Still your call**: **011 search** remains `proposed`.
+
 ## 2026-06-11 — builder run (cron)
 - 🚧 **Blocked 019 (Plaid → Chase sync) — needs you.** It's first in the queue, but
   the spec requires a net-new 4-table DB migration (`plaid_items`, `bank_accounts`,

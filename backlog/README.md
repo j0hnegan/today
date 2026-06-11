@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-06-11 (builder — blocked 019. It's first in line but needs a 4-table DB migration + a Plaid account + env vars; the builder never writes/runs migrations and the feature has no testable surface without them, so it parked at `blocked` for John. 018 stays gated behind it. Nothing else buildable: no other ready items, no open builder PRs, no iterating/preview, no merges since #29. 16 shipped; 011 search still proposed.)_
+_Last run: 2026-06-11 (builder — quiet re-run, board unchanged. 019 still `blocked` (4-table migration + Plaid account/env vars — builder never writes/runs migrations, no testable surface without them); 018 stays gated behind it. No eligible `ready` work, no open builder PRs, nothing iterating/preview, no `discuss` item in `ready` to pre-digest, no merges since #29. 16 shipped; 011 search still `proposed`. No push sent — nothing newly needs John since the last run already pinged 019.)_
 
 <!-- DASHBOARD:END -->
 
