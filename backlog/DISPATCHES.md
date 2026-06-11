@@ -4,6 +4,22 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-11 — builder run (cron)
+- 🚧 **Blocked 019 (Plaid → Chase sync) — needs you.** It's first in the queue, but
+  the spec requires a net-new 4-table DB migration (`plaid_items`, `bank_accounts`,
+  `bank_transactions`, `recurring_streams`) plus a Plaid account + env vars. Every
+  route in the feature reads/writes those tables, so there's no slice I can build and
+  verify without them — and the loop never writes or runs migrations. Parked at
+  `blocked`, no branch opened. **To unblock:** (1) create a Plaid account + grab
+  client_id/sandbox secret, (2) add `PLAID_CLIENT_ID`/`PLAID_SECRET`/`PLAID_ENV` to
+  `.env.local` + Vercel, (3) author + run the migration (or green-light a live session
+  to do the schema work), then flip 019 back to `ready` and I'll wire up the routes.
+- ⛓️ **018 (Finance tab) stays gated** behind 019 — it consumes 019's balance +
+  recurring-stream reads, so it can't start until 019 lands.
+- 😴 **Nothing else to do**: clean main, no open builder PRs (only #13 iOS — your WIP),
+  nothing `iterating`/`preview`, no new feedback, no merges since #29.
+- 🤔 **Still your call**: **011 search** remains `proposed`.
+
 ## 2026-06-10 — builder run (cron, quiet)
 - ✅ **Nothing needed me, nothing broke.** Clean main, no open builder PRs to rebase
   (only #13 iOS Capacitor is open — your WIP, not loop work), nothing `iterating`, no
