@@ -1,5 +1,5 @@
-Status: proposed
-Class: discuss
+Status: ready
+Class: review
 Branch: —
 PR: —
 
@@ -7,9 +7,8 @@ PR: —
 <checklist the builder ticks off>
 
 ## Open
-- Pitch a concrete page layout + resolve open question #1 (one forecast vs many)
-  into a `proposed` pitch before building.
-
+- Blocked by 019 — build starts when the Plaid sync (balance + recurring
+  streams) has shipped.
 ## Decisions / feedback log
 - [2026-06-09 /backlog] Intake. John: "integrate with finances to show new
   finance tab — upcoming costs, bank balance, projections etc." Existing
@@ -31,3 +30,16 @@ PR: —
   layout for what 019 adds: a "Balance now" card (live Chase balance +
   synced-at) that becomes the projection's anchor, and an optional recent-
   activity list. Don't build any Plaid code here — 019 owns that.
+- [2026-06-11 /backlog] **Redesign in live session — supersedes the 2026-06-10
+  builder pitch.** John's design: two swappable/resizable panels like the Today
+  screen (reuse `PagePanel.tsx` mechanics). Left = "Upcoming": live bank
+  balance + chronological, month-grouped predicted charges *and* paydays from
+  Plaid recurring streams, running balance per event. Right = "Monthly costs":
+  active recurring outflows (subscriptions/bills) sorted by amount with a
+  monthly-burn total. Plus a "Forecast" button → modal embedding the existing
+  `CashFlowTable`, seeded from reality (live balance + upcoming events),
+  editable/draggable, persisted as a normal `cash_flows` row, "Reset to
+  reality" action. Spec rewritten accordingly. Dependency flipped: 018 is now
+  **blocked by 019** (panels need balance + recurring streams). The discussion
+  happened here, so the design is settled → reclassified `discuss` → `review`,
+  status `proposed` → `ready`. SVG sparkline from the old pitch dropped.
