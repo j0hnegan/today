@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-06-11 (builder — quiet re-run, board unchanged. 019 still `blocked` (4-table migration + Plaid account/env vars — builder never writes/runs migrations, no testable surface without them); 018 stays gated behind it. No eligible `ready` work, no open builder PRs, nothing iterating/preview, no `discuss` item in `ready` to pre-digest, no merges since #29. 16 shipped; 011 search still `proposed`. No push sent — nothing newly needs John since the last run already pinged 019.)_
+_Last run: 2026-06-11 (steward — daily health run. No drift: 19 folders ↔ dashboard 1:1, all have spec+log, all statuses agree with GitHub, LEARNINGS clean. Board unchanged since the builder's quiet re-run: 019 `blocked` (migration + Plaid setup), 018 `ready` gated behind it, 011 `proposed`, 16 shipped. Nothing building/discussing, nothing stale >30 days. No fixes needed; no push — nothing newly needs John.)_
 
 <!-- DASHBOARD:END -->
 
