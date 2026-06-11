@@ -40,6 +40,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 016 | App-wide nav speedup — middleware auth-token cache (003 follow-up) | review | ✅ shipped | [PR #27](https://github.com/j0hnegan/today/pull/27) (merged) |
 | 017 | Task rows — description dot (amber new / blue read) | review | ✅ shipped | [PR #29](https://github.com/j0hnegan/today/pull/29) (merged) |
 | 018 | Finance tab — upcoming costs, balance & projections (view over cash-flow) | discuss | 🤔 proposed (your call) | — |
+| 019 | Plaid → Chase bank sync (live balance for Finance, blocked by 018) | review | 📥 ready | — |
 
 _Last run: 2026-06-10 (builder — quiet. Nothing buildable: no ready auto/review items, no open builder PRs, no iterating/preview features, no new merges since #29. 16 shipped; 011 search + 018 finance still proposed and awaiting your call.)_
 
