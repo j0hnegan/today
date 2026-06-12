@@ -4,6 +4,19 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-12 — builder run (cron, #2, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase
+  (only #13 iOS is open — your WIP), nothing `iterating`/`preview`, no new feedback,
+  no merges since #29 (already reflected).
+- 🚧 **019 (Plaid → Chase sync) still blocked** — unchanged. Needs the 4-table
+  migration + Plaid account + env vars before I can build/verify; already pinged you,
+  so no new push. **018 stays gated** behind it.
+- ⏳ **No new builds**: 018 is `ready` but gated on 019; no other `ready` auto/review
+  items; no `discuss` item sits in `ready` to pre-digest (011 is already `proposed`).
+- 🧹 Noted two stale `auto/*` branches (005, 014) left over after their squash-merges —
+  harmless, nothing to rebase; left in place.
+- 🤔 **Still your call**: **011 search** remains `proposed`.
+
 ## 2026-06-11 — builder run (cron, #2, quiet)
 - 😴 **Quiet run — board unchanged since the last one.** Clean main, no open builder
   PRs to rebase (only #13 iOS is open — your WIP), nothing `iterating`/`preview`, no
