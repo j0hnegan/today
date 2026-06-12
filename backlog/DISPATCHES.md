@@ -159,3 +159,10 @@ Append-only run log. `/standup` reads the latest entries.
 - ✅ Shipped: 015 (#26 equal/resizable panels + pre-paint split), 016 (#27 middleware auth cache), 017 (#29 description dot), 005 Step 2 complete (#28), 014 (#25), 012 (#23).
 - 🤖 Personal agent: hourly (8:41a–9:41p) with quick-exit precheck; first run done inline (11 tasks annotated, 2 drafts staged).
 - Open: 011 (search) go/no-go — the only item left on the board.
+
+## 2026-06-12 — builder run (cron)
+- 🟢 Quiet run — nothing built, iterated, proposed, or shipped.
+- 🛑 Nothing eligible to build: 018 (Finance tab) is `ready` but gated on 019; 019 (Plaid→Chase sync) is `blocked` (needs a DB migration + Plaid setup — a hard-rule stop the builder won't cross). 011 (search) already `proposed`, awaiting John's go/no-go.
+- 🔎 No `iterating` or `preview` features; no `discuss` items sit in `ready`, so nothing to pre-digest. No merges since 2026-06-10 → LEARNINGS unchanged.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell) — not a backlog `auto/*` item, left untouched. Two stale remote `auto/*` branches (005, 014) map to already-merged PRs; harmless, left as-is.
+- No push sent (nothing newly needs John). Board unchanged.
