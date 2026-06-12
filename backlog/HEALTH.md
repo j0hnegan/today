@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-11 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-12 (steward). Overwritten each run; latest state only._
 
 Healthy run — no drift, no fixes needed. LEARNINGS, structure, and dashboard all
 consistent. Nothing forces John's hand from the steward.
@@ -42,3 +42,5 @@ consistent. Nothing forces John's hand from the steward.
   (`auto/005-step2b-code` → #28, `auto/014-carryover-empty-guard` → #25). Local-only
   branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app`,
   `feat/responsive-mobile` are also cleanup candidates. Not the steward's to delete.
+</content>
+</invoke>

@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-06-12 (builder — quiet run #2. Clean main, no PAUSED. Nothing to build: 018 `ready` but gated on 019, 019 `blocked` (needs migration + Plaid setup — a hard-rule stop), 011 already `proposed`. No `iterating`/`preview` features; no `discuss` items in `ready` to pre-digest; no merges since 2026-06-10 (already reflected). Open PRs: only #13 (iOS Capacitor shell — not a backlog item). Two stale `auto/*` branches (005, 014) are leftover post-merge — harmless, nothing to rebase. Board unchanged; no push — nothing newly needs John.)_
+_Last run: 2026-06-12 (steward — daily health. Clean main, no race (nothing `building`/`discussing`). No drift: all 19 folders have spec+log, statuses valid and agree with GitHub (#16–#29 merged → shipped; 011/018/019 no PR → proposed/ready/blocked). Dashboard ↔ folders 1:1, no orphans. LEARNINGS clean — no contradictions/dupes, cited paths exist. Nothing stale (>30d). No mechanical fixes; board unchanged. Open PR #13 (iOS shell) still folderless — John's manual work, not a loop artifact. No push — nothing newly needs John.)_
 
 <!-- DASHBOARD:END -->
 
