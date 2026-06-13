@@ -179,3 +179,10 @@ Append-only run log. `/standup` reads the latest entries.
 - 🔎 No `iterating` or `preview` features; no `discuss` items sit in `ready`, so nothing to pre-digest. No merges since 2026-06-10 → LEARNINGS unchanged.
 - ℹ️ Only open PR is #13 (iOS Capacitor shell) — not a backlog `auto/*` item, left untouched. Two stale remote `auto/*` branches (005, 014) map to already-merged PRs; harmless, left as-is.
 - No push sent (nothing newly needs John). Board unchanged.
+
+## 2026-06-13 — builder run (cron)
+- 🟢 Quiet run — nothing built, iterated, proposed, or shipped. Board unchanged from 2026-06-12.
+- 🛑 Nothing eligible to build: 018 (Finance tab) `ready` but gated on 019; 019 (Plaid→Chase sync) `blocked` — needs a DB migration (4 tables) + John's Plaid account/env setup, a hard-rule stop the builder won't cross. 011 (search) already `proposed`, awaiting John's go/no-go.
+- 🔎 No `iterating`/`preview` features; no `discuss` items sit in `ready`, so nothing to iterate or pre-digest. No merges since 2026-06-10 → LEARNINGS unchanged.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual work, not a backlog `auto/*` item, left untouched. Untracked `ios/` dir on main left alone. Two stale remote `auto/*` branches (005, 014) map to already-merged PRs; harmless, left as-is.
+- No push sent (nothing newly needs John).
