@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-13 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-14 (steward). Overwritten each run; latest state only._
 
 Healthy run — no drift, no fixes needed. LEARNINGS, structure, and dashboard all
 consistent. Nothing forces John's hand from the steward.
@@ -16,7 +16,7 @@ consistent. Nothing forces John's hand from the steward.
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing mechanical to fix. Refreshed the dashboard "Last run" line only.
+- Nothing mechanical to fix. Refreshed dashboard "Last run" line only.
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
@@ -24,8 +24,9 @@ consistent. Nothing forces John's hand from the steward.
   011/018/019 have no branch/PR yet → consistent with proposed/ready/blocked.
 - Dashboard ↔ folders are 1:1 (001–019). No orphans either direction.
 - LEARNINGS.md clean — no contradictions, no dupes, all cited paths exist
-  (CLAUDE.md, `lib/server-fetchers.ts`, `lib/validation/*`). Unchanged this run.
-- Nothing `building`/`discussing` → no builder race (builder also ran today, quiet).
+  (`lib/server-fetchers.ts`, `lib/validation/*`, `lib/cashflow.ts`,
+  `components/focus/PagePanel.tsx`). Unchanged this run.
+- Nothing `building`/`discussing` → no builder race.
 - No features untouched >30 days (whole backlog is 2026-06-07 … 06-11; newest log
   activity 06-11).
 
@@ -34,12 +35,10 @@ consistent. Nothing forces John's hand from the steward.
   migration + a Plaid account/env vars before there's a testable surface. 018 is
   queued right behind it. No new ping sent this run (nothing newly needs you).
 - **Open PR [#13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
-  (Capacitor) [WIP]"** (branch `feat/ios-capacitor`, last updated 2026-05-31) has
-  no backlog folder; an untracked `ios/` still sits in the working tree. Your
-  manual iOS work, not a loop artifact. Give it a folder if you want loop tracking.
-- **Stale branches with no folder/PR** (deletion candidates whenever you clean up):
+  (Capacitor) [WIP]"** (branch `feat/ios-capacitor`) has no backlog folder; an
+  untracked `ios/` still sits in the working tree. Your manual iOS work, not a loop
+  artifact. Give it a folder if you want loop tracking.
+- **Cleanup candidates (not the steward's to delete):** remote branches
   `claude/fix-task-categorization-j8nuy`, `claude/task-duplication-bug-Mrona`
-  (predate the backlog); plus merged `auto/*` leftovers still on the remote
-  (`auto/005-step2b-code` → #28, `auto/014-carryover-empty-guard` → #25). Local-only
-  branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app`,
-  `feat/responsive-mobile` are also cleanup candidates. Not the steward's to delete.
+  (pre-backlog, no PRs); merged `auto/*` leftovers still on remote
+  (`auto/005-step2b-code` → #28, `auto/014-carryover-empty-guard` → #25).
