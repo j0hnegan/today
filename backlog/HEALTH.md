@@ -30,7 +30,7 @@ consistent. Nothing forces John's hand from the steward.
 - No features untouched >30 days (whole backlog is 2026-06-07 … 06-11; newest log
   activity 06-11).
 
-## For John (no action forced — informational, unchanged from last run)
+## For John (no action forced — informational, unchanged from prior runs)
 - **019 stays blocked by design** — the builder already pinged it; it needs a DB
   migration + a Plaid account/env vars before there's a testable surface. 018 is
   queued right behind it. No new ping sent this run (nothing newly needs you).
