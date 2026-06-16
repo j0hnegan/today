@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-15 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-16 (steward). Overwritten each run; latest state only._
 
 Healthy run — no drift, no fixes needed. LEARNINGS, structure, and dashboard all
 consistent. Nothing forces John's hand from the steward.
@@ -27,17 +27,18 @@ consistent. Nothing forces John's hand from the steward.
   (`lib/server-fetchers.ts`, `lib/validation/*`, `lib/cashflow.ts`,
   `components/focus/PagePanel.tsx`). Unchanged this run.
 - Nothing `building`/`discussing` → no builder race.
-- No features untouched >30 days (whole backlog is 2026-06-07 … 06-11; newest log
-  activity 06-11, now 4 days ago).
+- No features untouched >30 days (whole backlog is 2026-06-07 … 06-11; oldest
+  log activity 06-07, now 9 days ago — well within the 30-day window).
 
 ## For John (no action forced — informational, unchanged from prior runs)
 - **019 stays blocked by design** — the builder already pinged it; it needs a DB
   migration + a Plaid account/env vars before there's a testable surface. 018 is
   queued right behind it. No new ping sent this run (nothing newly needs you).
 - **Open PR [#13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
-  (Capacitor) [WIP]"** (branch `feat/ios-capacitor`) has no backlog folder; an
-  untracked `ios/` still sits in the working tree. Your manual iOS work, not a loop
-  artifact. Give it a folder if you want loop tracking.
+  (Capacitor) [WIP]"** (branch `feat/ios-capacitor`, last updated 2026-05-31)
+  has no backlog folder; an untracked `ios/` still sits in the working tree.
+  Your manual iOS work, not a loop artifact. Give it a folder if you want loop
+  tracking. Not yet 30 days stale.
 - **Cleanup candidates (not the steward's to delete):** remote branches
   `claude/fix-task-categorization-j8nuy`, `claude/task-duplication-bug-Mrona`
   (pre-backlog, no PRs); merged `auto/*` leftovers still on remote
