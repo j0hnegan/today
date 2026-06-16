@@ -4,6 +4,12 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-16 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase, nothing `iterating`/`preview`, no new feedback, no merges since #29.
+- 🚧 **019 (Plaid → Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- ⏳ **No new builds**: only `ready` item is 018 (gated); 019 blocked; no other eligible items.
+- 🤔 **Still your call**: **011 search** remains `proposed`.
+
 ## 2026-06-12 — builder run (cron, #2, quiet)
 - 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase
   (only #13 iOS is open — your WIP), nothing `iterating`/`preview`, no new feedback,
