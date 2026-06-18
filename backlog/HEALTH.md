@@ -1,9 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-17 (steward). Overwritten each run; latest state only._
-
-Healthy run — no drift, no fixes needed. LEARNINGS, structure, and dashboard all
-consistent. Nothing forces John's hand from the steward.
+_Last run: 2026-06-18 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -18,25 +15,36 @@ consistent. Nothing forces John's hand from the steward.
 ## Fixed this run
 - Nothing mechanical to fix. Refreshed dashboard "Last run" line only.
 
+## Needs John — escalating today
+
+**[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
+(Capacitor) [WIP]"** (`feat/ios-capacitor`) has been open 18 days (since 2026-05-31)
+with no backlog folder. Flagged informational in prior runs; escalating today since
+it's a real structural gap and the `ios/` directory is still untracked on `main`.
+
+Your options:
+1. **Track it** — I create `020-ios-app-shell/` seeded from the PR description; the
+   loop manages it like any other feature.
+2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing validation
+   the builder can't do).
+3. **Close it** — if this is on hold indefinitely, close the PR and remove the draft.
+
+Call it and I'll act on it in the next session.
+
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
-- Every `Status:` agrees with GitHub (`gh pr list`): #16–#29 merged → shipped;
-  011/018/019 have no branch/PR yet → consistent with proposed/ready/blocked.
-- Dashboard ↔ folders are 1:1 (001–019). No orphans either direction.
+- Every `Status:` agrees with GitHub: #16–#29 merged → shipped; 011/018/019 have no
+  branch/PR → consistent with proposed/ready/blocked.
+- Dashboard ↔ folders are 1:1 (001–019). No orphans except the manual iOS PR above.
 - LEARNINGS.md clean — no contradictions, no dupes, all cited paths exist. Unchanged.
 - Nothing `building`/`discussing` → no builder race.
-- No features untouched >30 days (oldest log activity 06-07, now 10 days ago —
-  well within the 30-day window).
+- No features untouched >30 days (oldest log activity 06-07 — 11 days ago).
 
-## For John (informational, unchanged from prior runs — no new action needed)
-- **019 stays blocked by design** — needs a DB migration + a Plaid account/env
-  vars before there's a testable surface. 018 is queued right behind it.
-- **Open PR [#13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
-  (Capacitor) [WIP]"** (branch `feat/ios-capacitor`, last updated 2026-05-31)
-  has no backlog folder; an untracked `ios/` still sits in the working tree.
-  Your manual iOS work, not a loop artifact. Give it a folder if you want loop
-  tracking. 17 days open; not yet stale.
+## Standing items (no change from prior runs)
+- **019 stays blocked** — needs a DB migration + Plaid account/env vars before
+  there's a testable surface. 018 is queued right behind it.
+- **011 proposed** — one-tap "go" moves it to the build queue; the builder has
+  already pre-digested it.
 - **Cleanup candidates (not the steward's to delete):** remote branches
   `claude/fix-task-categorization-j8nuy`, `claude/task-duplication-bug-Mrona`
-  (pre-backlog, no PRs); merged `auto/*` leftovers still on remote
-  (`auto/005-step2b-code` → #28, `auto/014-carryover-empty-guard` → #25).
+  (pre-backlog, no PRs); merged `auto/*` leftovers still on remote.
