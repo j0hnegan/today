@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-06-18 (steward — orphan flag: draft PR #13 feat/ios-capacitor has no backlog folder; 019 blocked, 018 gated, 011 proposed. Needs John.)_
+_Last run: 2026-06-18 (builder — quiet run; 019 blocked, 018 gated, 011 proposed. Nothing new to build.)_
 
 <!-- DASHBOARD:END -->
 
