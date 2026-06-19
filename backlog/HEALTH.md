@@ -15,36 +15,31 @@ _Last run: 2026-06-18 (steward). Overwritten each run; latest state only._
 ## Fixed this run
 - Nothing mechanical to fix. Refreshed dashboard "Last run" line only.
 
-## Needs John — escalating today
+## Needs John
 
-**[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
-(Capacitor) [WIP]"** (`feat/ios-capacitor`) has been open 18 days (since 2026-05-31)
-with no backlog folder. Flagged informational in prior runs; escalating today since
-it's a real structural gap and the `ios/` directory is still untracked on `main`.
+### Standing (no change from prior runs)
 
-Your options:
-1. **Track it** — I create `020-ios-app-shell/` seeded from the PR description; the
-   loop manages it like any other feature.
-2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing validation
-   the builder can't do).
-3. **Close it** — if this is on hold indefinitely, close the PR and remove the draft.
+- **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell
+  (Capacitor) [WIP]"** (`feat/ios-capacitor`) — 18 days open (since 2026-05-31), no
+  backlog folder. Escalated in yesterday's run. Your options remain:
+  1. **Track it** — create `020-ios-app-shell/` seeded from the PR description.
+  2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing).
+  3. **Close it** — close the PR if this is on indefinite hold.
 
-Call it and I'll act on it in the next session.
+- **019 Plaid→Chase sync stays blocked** — needs the 4-table migration + Plaid account
+  + env vars. 018 Finance tab queued right behind it.
+
+- **011 search** — `proposed`, awaiting your one-tap go/no-go.
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
 - Every `Status:` agrees with GitHub: #16–#29 merged → shipped; 011/018/019 have no
   branch/PR → consistent with proposed/ready/blocked.
 - Dashboard ↔ folders are 1:1 (001–019). No orphans except the manual iOS PR above.
-- LEARNINGS.md clean — no contradictions, no dupes, all cited paths exist. Unchanged.
+- LEARNINGS.md clean — no contradictions, no dupes, all cited paths exist (`lib/server-fetchers.ts`, `lib/validation/*` verified). Unchanged.
 - Nothing `building`/`discussing` → no builder race.
-- No features untouched >30 days (oldest log activity 06-07 — 11 days ago).
+- No features untouched >30 days (oldest log activity 06-07, 011 — 11 days ago).
 
-## Standing items (no change from prior runs)
-- **019 stays blocked** — needs a DB migration + Plaid account/env vars before
-  there's a testable surface. 018 is queued right behind it.
-- **011 proposed** — one-tap "go" moves it to the build queue; the builder has
-  already pre-digested it.
-- **Cleanup candidates (not the steward's to delete):** remote branches
-  `claude/fix-task-categorization-j8nuy`, `claude/task-duplication-bug-Mrona`
-  (pre-backlog, no PRs); merged `auto/*` leftovers still on remote.
+## Cleanup candidates (not the steward's to delete)
+- Remote branches `claude/fix-task-categorization-j8nuy`, `claude/task-duplication-bug-Mrona` — pre-backlog, no PRs.
+- Stale `origin/auto/005-step2b-code`, `origin/auto/014-carryover-empty-guard` — their PRs merged, harmless leftovers.
