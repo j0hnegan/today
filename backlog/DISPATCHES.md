@@ -4,6 +4,14 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-22 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase, nothing `iterating`/`preview`, no merges since #29.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go ("go on 011" to build Phase 1: docs/notes search).
+- 🔍 **feature/task-triage-v2 (local branch, John's)** — examined; the commit includes a schema migration (adds `pinned`, `source`, `needs_review`, `revert_at` columns). Not a builder item; builder cannot iterate without the migration running. No PR opened for it. Flagged here for completeness.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual WIP, last updated May 31.
+- No push sent (standing blockers; nothing newly needs John).
+
 ## 2026-06-20 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Clean main, 19 features, all structure valid.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.

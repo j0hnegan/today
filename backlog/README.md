@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-06-22 (steward — standing: feature/task-triage-v2 branch day 2 (no PR/folder); fix-task-categorization branch 52 days unmerged; iOS PR #13 day 22. 019 blocked, 018 gated, 011 proposed.)_
+_Last run: 2026-06-22 (builder — quiet: nothing built/iterated/shipped. 019 blocked, 018 gated, 011 proposed. feature/task-triage-v2 local branch (John's, day 2, includes schema migration — not a builder item). iOS PR #13 day 22.)_
 
 <!-- DASHBOARD:END -->
 
