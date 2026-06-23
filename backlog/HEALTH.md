@@ -18,15 +18,15 @@ _Last run: 2026-06-22 (steward). Overwritten each run; latest state only._
 
 ### Standing (unchanged — day counts updated)
 
-- **`feature/task-triage-v2`** — branch with 1 commit (2026-06-21, 929+/481- lines), no PR, no backlog folder. Day 2. Options:
+- **`feature/task-triage-v2`** — branch with 1 commit (2026-06-21, 929+/481- lines), no PR, no backlog folder. Day 3. Options:
   1. **File a PR** and merge it (the code is on the branch).
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
   3. If a one-off manual session, merge/close the branch.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **52 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **53 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
 
 - **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell (Capacitor) [WIP]"**
-  (`feat/ios-capacitor`) — now **22 days** open (since 2026-05-31), no backlog folder. Options:
+  (`feat/ios-capacitor`) — now **23 days** open (since 2026-05-31), no backlog folder. Options:
   1. **Track it** — create `020-ios-app-shell/` seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing).
   3. **Close it** — close the PR if on indefinite hold.
@@ -39,7 +39,7 @@ _Last run: 2026-06-22 (steward). Overwritten each run; latest state only._
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
 - Every `Status:` agrees with GitHub: #16–#29 merged → shipped; 011/018/019 have no branch/PR → consistent.
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
-- LEARNINGS.md clean — no contradictions, no dupes. Unchanged.
+- LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged.
 - Nothing `building`/`discussing` → no builder race.
 - No backlog features untouched >30 days (oldest active log: 011-search, 2026-06-07, 15 days).
 
