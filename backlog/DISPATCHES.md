@@ -4,6 +4,15 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-25 — steward run (daily health)
+- 😴 **No drift — board unchanged.** Clean main, 19 features, all structure valid.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 📅 **iOS PR #13 now 27 days open** — `feat/ios-capacitor` (Draft, no backlog folder). No change; flagged again.
+- 🔍 **feature/task-triage-v2** (day 6, local, no PR) and **origin/claude/fix-task-categorization-j8nuy** (day 57) still unresolved. See HEALTH.md for options.
+- 🔬 LEARNINGS.md clean — no contradictions, no dead refs, no dupes. No edits needed.
+- No push sent (standing blockers, nothing new).
+
 ## 2026-06-24 #3 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase, nothing `iterating`/`preview`, no merges since #29.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
