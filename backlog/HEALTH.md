@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-24 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-24 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,7 +12,7 @@ _Last run: 2026-06-24 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. Structure clean — same state as yesterday.
+- Nothing to fix. Structure clean — same state as morning run.
 
 ## Needs John
 
@@ -23,10 +23,10 @@ _Last run: 2026-06-24 (steward). Overwritten each run; latest state only._
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
   3. If a one-off manual session, merge/close the branch.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **55 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **56 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
 
 - **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell (Capacitor) [WIP]"**
-  (`feat/ios-capacitor`) — **25 days** open (since 2026-05-31), no backlog folder. Options:
+  (`feat/ios-capacitor`) — **26 days** open (since 2026-05-31), no backlog folder. Options:
   1. **Track it** — create a backlog folder seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing).
   3. **Close it** — close the PR if on indefinite hold.
