@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-25 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-25 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,13 +12,13 @@ _Last run: 2026-06-25 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. Structure clean — same state as yesterday.
+- Nothing to fix. Structure clean — same state as morning run.
 
 ## Needs John
 
 ### Standing (unchanged — day counts updated)
 
-- **`feature/task-triage-v2`** — local branch, 1 commit (929+/481- lines), no PR filed, no backlog folder. **Day 6.** Options:
+- **`feature/task-triage-v2`** — local branch, 1 commit (929+/481- lines), no PR filed, no backlog folder. **Day 7.** Options:
   1. **File a PR** and merge it (the code is on the branch).
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
   3. If a one-off manual session, merge/close the branch.
