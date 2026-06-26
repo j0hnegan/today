@@ -1,7 +1,7 @@
 Status: shipped
 Class: review
-Branch: auto/012-today-panel-drag
-PR: #23 (draft) — https://github.com/j0hnegan/today/pull/23
+Branch: auto/012-today-panel-drag (merged)
+PR: #23 (merged) — https://github.com/j0hnegan/today/pull/23
 
 ## Done
 

@@ -1,7 +1,7 @@
 Status: shipped
 Class: review
-Branch: auto/017-desc-dot
-PR: #29 (draft)
+Branch: auto/017-desc-dot (merged)
+PR: #29 (merged) — https://github.com/j0hnegan/today/pull/29
 
 ## Decisions / feedback log
 - [2026-06-09 John] Requested live: no desc preview in lists; dot right of title; blue

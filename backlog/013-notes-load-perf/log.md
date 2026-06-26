@@ -1,7 +1,7 @@
 Status: shipped
 Class: review
-Branch: auto/013-notes-load-perf
-PR: #24 (draft) — https://github.com/j0hnegan/today/pull/24
+Branch: auto/013-notes-load-perf (merged)
+PR: #24 (merged) — https://github.com/j0hnegan/today/pull/24
 
 ## Done
 - [x] Root cause: 003 coupled the Today page render to the task query (Promise.all).
