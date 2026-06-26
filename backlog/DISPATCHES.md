@@ -4,6 +4,13 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-26 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main, no PAUSED. No builder PRs to rebase, nothing `iterating`/`preview`, no merges since #29.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go ("go on 011" to build Phase 1: docs/notes search).
+- ℹ️ Only open PR is #13 (iOS Capacitor shell, day 28). Still DRAFT, no new feedback.
+- No push sent (standing blockers; nothing newly needs John).
+
 ## 2026-06-25 #2 — steward run (daily health, second pass)
 - 😴 **No drift — board unchanged.** Same state as morning steward run; builder ran twice in between.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
