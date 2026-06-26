@@ -4,6 +4,15 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-26 #2 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main (1 local commit ahead of origin from prior run; pushing now). No auto/* branches to rebase, nothing `iterating`/`preview`, no merges since #29.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs the 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go ("go on 011" to build Phase 1: docs/notes search).
+- ℹ️ Only open PR is #13 (iOS Capacitor shell, day 29+). Still DRAFT, no new feedback.
+- No push sent (standing blockers; nothing newly needs John).
+
+---
+
 ## 2026-06-26 — builder run (cron, quiet)
 - 🟢 Quiet run — nothing built, iterated, proposed, or shipped. Board unchanged.
 - 🛑 Nothing eligible to build: 018 (Finance tab) `ready` but gated on 019; 019 (Plaid→Chase sync) `blocked` — needs a DB migration (4 tables) + John's Plaid account/env setup, a hard-rule stop. 011 (search) already `proposed`, awaiting John's go/no-go.
