@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-26 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-26 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,21 +12,21 @@ _Last run: 2026-06-26 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- **012, 013, 017 log.md headers:** PR notation was `(draft)` despite Status: shipped and John's merge entries in the log. Corrected to `(merged)` in all three headers; branch lines updated to match. (GitHub is authoritative.)
+- **iOS PR #13 day count corrected:** morning HEALTH said "day 28" (2 days from 30-day threshold). Checked GitHub — PR created 2026-05-31; today is 2026-06-26 = **26 days open**. 30-day flag threshold is 2026-06-30 (4 days away). No structural fix needed; count corrected here.
 
 ## Needs John
 
-### Standing (unchanged — day counts updated)
+### Standing (unchanged)
 
-- **`feature/task-triage-v2`** — local branch, 1 commit (929+/481- lines), no PR filed, no backlog folder. **Day 8.** Options:
+- **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21), no PR filed, no backlog folder. **~5 days old.** Options:
   1. **File a PR** and merge it (the code is on the branch).
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
   3. If a one-off manual session, merge/close the branch.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **58 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **~56 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
 
 - **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell (Capacitor) [WIP]"**
-  (`feat/ios-capacitor`) — **28 days** open (since 2026-05-31), 2 days from the 30-day flag threshold. No backlog folder. Options:
+  (`feat/ios-capacitor`) — **26 days** open (since 2026-05-31). **4 days from the 30-day flag.** No backlog folder. Options:
   1. **Track it** — create a backlog folder seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing).
   3. **Close it** — close the PR if on indefinite hold.
@@ -41,7 +41,7 @@ _Last run: 2026-06-26 (steward). Overwritten each run; latest state only._
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
 - LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged.
 - Nothing `building`/`discussing` → no builder race.
-- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, 19 days).
+- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, ~19 days).
 
 ## Cleanup candidates (not the steward's to delete)
 - Local branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app`, `feat/responsive-mobile` — zero commits ahead of main, safe to delete.
