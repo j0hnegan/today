@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-27 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-27 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,7 +12,7 @@ _Last run: 2026-06-27 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix — board, LEARNINGS, and structure all clean.
+- Nothing to fix — board, LEARNINGS, and structure all clean. Second steward pass today; builder ran twice in between with no changes.
 
 ## Needs John
 
@@ -26,7 +26,7 @@ _Last run: 2026-06-27 (steward). Overwritten each run; latest state only._
 
 ### Standing (unchanged)
 
-- **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21), **6 days old**, no PR filed, no backlog folder. Options:
+- **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21, 6 days old), no PR filed, no backlog folder. Options:
   1. **File a PR** and merge it (the code is on the branch).
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
   3. If a one-off manual session, merge/close the branch.
@@ -43,7 +43,7 @@ _Last run: 2026-06-27 (steward). Overwritten each run; latest state only._
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
 - LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged.
 - Nothing `building`/`discussing` → no builder race.
-- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, ~20 days).
+- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, 20 days).
 
 ## Cleanup candidates (not the steward's to delete)
 - Local branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app`, `feat/responsive-mobile` — zero commits ahead of main, safe to delete.

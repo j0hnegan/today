@@ -4,6 +4,17 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-27 #2 — steward run (daily health, second pass)
+- 😴 **No drift — board unchanged.** Builder ran twice after this morning's steward; state identical.
+- ⚠️ **iOS PR #13 still 27 days open** — 3 days from 30-day flag (2026-06-30). Decision needed: track, park, or close.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go (20 days since intake).
+- 🔍 **feature/task-triage-v2** (day 6, local, no PR) and **origin/claude/fix-task-categorization-j8nuy** (~57 days) still unresolved.
+- 🔬 LEARNINGS.md clean — no changes needed.
+- No push sent (same standing blockers as morning run; nothing newly needs John).
+
+---
+
 ## 2026-06-27 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Clean main, 19 features, all structure valid.
 - ⚠️ **iOS PR #13 now 27 days open** — `feat/ios-capacitor` (Draft, no backlog folder). **3 days from the 30-day flag (2026-06-30).** Decision needed before Monday: track, park, or close.
