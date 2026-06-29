@@ -4,6 +4,15 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-29 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** No eligible items to build, no `iterating`/`preview` work, no new merges.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go ("go on 011" to build Phase 1: docs/notes search).
+- ⚠️ **iOS PR #13 now 29 days open** — 30-day flag triggers **tomorrow 2026-06-30**. Decision needed today: track, park, or close.
+- No push sent (quiet run; all standing blockers unchanged).
+
+---
+
 ## 2026-06-27 #2 — steward run (daily health, second pass)
 - 😴 **No drift — board unchanged.** Builder ran twice after this morning's steward; state identical.
 - ⚠️ **iOS PR #13 still 27 days open** — 3 days from 30-day flag (2026-06-30). Decision needed: track, park, or close.
