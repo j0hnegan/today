@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-06-27 #2 (steward). Overwritten each run; latest state only._
+_Last run: 2026-06-29 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,30 +12,30 @@ _Last run: 2026-06-27 #2 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix — board, LEARNINGS, and structure all clean. Second steward pass today; builder ran twice in between with no changes.
+- Nothing to fix — board, LEARNINGS, and structure all clean. (June 28 steward wrote HEALTH.md but didn't commit; absorbed into today's run.)
 
 ## Needs John
 
-### ⚠️ Escalating
+### ⚠️ 30-day flag triggers tomorrow — action needed
 
 - **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell (Capacitor) [WIP]"**
-  (`feat/ios-capacitor`) — **27 days open** (since 2026-05-31). **3 days from the 30-day flag (2026-06-30).** No backlog folder. Decision needed before Monday:
+  (`feat/ios-capacitor`) — **29 days open** (since 2026-05-31). **Flag triggers 2026-06-30 (tomorrow).** No backlog folder. Three options:
   1. **Track it** — create a backlog folder seeded from the PR description.
-  2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing).
+  2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing to proceed).
   3. **Close it** — close the PR if on indefinite hold.
 
 ### Standing (unchanged)
 
-- **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21, 6 days old), no PR filed, no backlog folder. Options:
-  1. **File a PR** and merge it (the code is on the branch).
+- **`feature/task-triage-v2`** — local branch, 8 days old (1 commit 2026-06-21), no PR filed, no backlog folder. Options:
+  1. **File a PR** and merge it.
   2. **Create a backlog folder** (`020-task-triage-v2/`) via `/backlog` so the loop tracks it.
-  3. If a one-off manual session, merge/close the branch.
+  3. Merge/close the branch if it was a one-off manual session.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (2026-05-01, **~57 days**), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Worth checking whether `feature/task-triage-v2` already addresses this; if so, close the branch. If not, open a PR.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~59 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Fix: "in_progress tasks landing under Someday on My Tasks." Check whether `feature/task-triage-v2` addresses this; if so, close the branch. If not, open a PR.
 
 - **019 Plaid→Chase sync stays blocked** — needs 4-table migration + Plaid account + env vars. 018 Finance tab queued right behind it.
 
-- **011 search** — `proposed`, awaiting your one-tap go/no-go (20 days since intake).
+- **011 search** — `proposed`, awaiting your one-tap go/no-go (22 days since intake). Builder pre-digested proposal in spec.md: Phase 1 = docs/notes search box; Phase 2 = global ⌘K. Reply "go on 011" to build.
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
@@ -43,10 +43,10 @@ _Last run: 2026-06-27 #2 (steward). Overwritten each run; latest state only._
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
 - LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged.
 - Nothing `building`/`discussing` → no builder race.
-- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, 20 days).
+- No backlog features untouched >30 days (oldest active: 011-search, 2026-06-07, 22 days).
 
 ## Cleanup candidates (not the steward's to delete)
 - Local branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app`, `feat/responsive-mobile` — zero commits ahead of main, safe to delete.
-- Remote branch `origin/claude/task-duplication-bug-Mrona` — fix already on main; harmless leftover.
+- Remote branch `origin/claude/task-duplication-bug-Mrona` — fix likely already on main; harmless leftover.
 - Remote stale `origin/auto/005-step2b-code`, `origin/auto/014-carryover-empty-guard` — PRs merged, harmless leftovers.
 - Untracked `ios/` folder in working tree — Capacitor build artifact from `feat/ios-capacitor`.
