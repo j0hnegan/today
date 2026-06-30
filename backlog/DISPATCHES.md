@@ -4,6 +4,14 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-06-30 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go.
+- ℹ️ No push sent (nothing newly needs John).
+
+---
+
 ## 2026-06-29 #2 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Same state as this morning's builder run; nothing new to build, iterate, or merge.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
