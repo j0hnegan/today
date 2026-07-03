@@ -4,6 +4,18 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-03 — steward run (daily health)
+- 😴 **No drift — board unchanged.** Clean main, 19 features, all `Status:`/`Class:` valid, dashboard ↔ folders 1:1.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go (26 days since intake).
+- 📅 **iOS PR #13 now 33 days open** — `feat/ios-capacitor` (Draft, no backlog folder). 30-day flag still open; decision pending: track, park, or close.
+- 🔍 **`feature/task-triage-v2`** (12 days, local, no PR) and **`origin/claude/fix-task-categorization-j8nuy`** (~63 days) still unresolved. See HEALTH.md for options.
+- 🔬 **Re-verified two "safe to delete" cleanup candidates by content, not just commit count:** `origin/claude/task-duplication-bug-Mrona` is fully merged (0 commits ahead of main). `feat/responsive-mobile` shows 2 commits not on main by hash, but that's a squash-merge artifact (PR #12) — diffed the tip commit against main and its one real change (`next.config.mjs` build-fix) is already present byte-for-byte. Both safe to delete.
+- 🔬 LEARNINGS.md clean — no contradictions, no dead refs, no dupes. No edits needed.
+- No push sent (all standing items already flagged in prior runs; nothing newly needs John).
+
+---
+
 ## 2026-07-03 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it. No other `ready` items are eligible (both are the only non-shipped build candidates).
