@@ -4,6 +4,14 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-03 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it. No other `ready` items are eligible (both are the only non-shipped build candidates).
+- 🤔 **011 (search) still `proposed`** — awaiting John's go/no-go ("go on 011" to build Phase 1: docs/notes search on the Docs page).
+- 🔎 No `iterating`/`preview` features; no `discuss` items sit in `ready`, so nothing to iterate or pre-digest. No merges since 2026-06-10 → LEARNINGS unchanged.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell), now 33 days open — John's manual work, not a backlog `auto/*` item, left untouched. Two stale remote `auto/*` branches (005, 014) map to already-merged PRs; harmless, left as-is.
+- No push sent (nothing newly needs John; same standing items as prior runs).
+
 ## 2026-07-02 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Clean main, 19 features, all structure valid.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
