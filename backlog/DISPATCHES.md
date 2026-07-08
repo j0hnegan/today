@@ -546,3 +546,11 @@ Append-only run log. `/standup` reads the latest entries.
 - 🔎 No open `auto/*` branches needing rebase (the 2 stale ones — `auto/005-step2b-code`, `auto/014-carryover-empty-guard` — remain fully redundant by content, per steward's 2026-07-03 verification); no `iterating`/`preview` features with new feedback; no `discuss` items sit in `ready` to pre-digest.
 - ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual work, not a backlog `auto/*` item, left untouched. Untracked `ios/` dir on main left alone (pre-existing, not builder-owned).
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-08 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches needing rebase (stale `auto/005-step2b-code`, `auto/014-carryover-empty-guard` remain harmless leftovers of merged PRs); no `iterating`/`preview` features with new feedback; no `discuss` items sit in `ready` to pre-digest.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual work, not a backlog `auto/*` item, left untouched. Untracked `ios/` dir on main left alone (pre-existing, not builder-owned).
+- No push sent (nothing newly needs John; same standing items as prior runs).
