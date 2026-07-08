@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-07-08 (builder — quiet run, board unchanged; 018 still gated on blocked 019, 011 still awaiting your go/no-go)_
+_Last run: 2026-07-08 (steward — learnings + structure clean, board unchanged; 011 now 31 days untouched, PR #13 (ios-capacitor) still orphaned — see HEALTH.md)_
 
 <!-- DASHBOARD:END -->
 
