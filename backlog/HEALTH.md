@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-08 (steward). Overwritten each run; latest state only._
+_Last run: 2026-07-08 #2 (steward, re-confirmation). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,7 +12,14 @@ _Last run: 2026-07-08 (steward). Overwritten each run; latest state only._
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix — board, LEARNINGS, and structure all clean. (A builder quiet run landed earlier today, 2026-07-08 11:54 ET — dashboard/dispatch touch only, no board changes.)
+- Nothing to fix — this is a second steward run today. Re-audited LEARNINGS.md
+  (no dead refs, no dupes, no contradictions), backlog structure (all 19 folders
+  have spec.md + log.md, all Status/Class values valid, all agree with `gh pr
+  list`), and file references from LEARNINGS.md (PagePanel.tsx, ServerSWR.tsx,
+  SWRProvider.tsx, api-auth.ts, triage.ts, lib/mcp/ all exist). Nothing changed
+  since the 11:55 ET run this morning — no new PRs, no branch movement, no
+  learnings edits. A builder quiet run landed in between (dashboard/dispatch
+  touch only, no board changes).
 
 ## Needs John
 
