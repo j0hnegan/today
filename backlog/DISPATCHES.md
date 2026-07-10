@@ -571,6 +571,17 @@ Append-only run log. `/standup` reads the latest entries.
 - ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual work, not a backlog `auto/*` item, left untouched (no new comments/reviews since 2026-05-31). Untracked `ios/` dir on main left alone (pre-existing, not builder-owned).
 - No push sent (nothing newly needs John; same standing items as prior runs).
 
+## 2026-07-10 — steward run (daily health)
+- 😴 **No drift — board unchanged.** Clean main, 19 features, all `Status:`/`Class:` valid, dashboard ↔ folders 1:1, all agree with `gh pr list`. No commits since the 2026-07-09 #3 steward run (three quiet builder/steward runs landed in between, dashboard/dispatch touch only).
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go (33 days since intake).
+- 📅 **iOS PR #13 now 40 days open** — `feat/ios-capacitor` (Draft, no backlog folder). Decision still pending: track, park, or close.
+- 🔍 **`feature/task-triage-v2`** (19 days, local, no PR) and **`origin/claude/fix-task-categorization-j8nuy`** (~70 days) still unresolved. See HEALTH.md for options.
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs (all 6 file references still resolve), no dupes. No edits needed.
+- No push sent (all standing items already flagged in prior runs; nothing newly needs John).
+
+---
+
 ## 2026-07-09 #3 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Clean main, 19 features, all `Status:`/`Class:` valid, dashboard ↔ folders 1:1, all agree with `gh pr list`. No commits since the 2026-07-08 #2 steward run (two quiet builder runs landed in between, dashboard/dispatch touch only).
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it.
