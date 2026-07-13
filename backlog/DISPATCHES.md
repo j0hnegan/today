@@ -4,6 +4,23 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-13 #2 — steward run (daily health, second pass)
+- 😴 **No drift — board unchanged.** Re-ran the full playbook: LEARNINGS.md re-checked
+  (no contradictions, no dead refs, no dupes, unchanged since 2026-06-10), all 19
+  backlog folders re-audited (`spec.md`+`log.md` present, `Status:`/`Class:` valid,
+  agree with `gh pr list`). Since this morning's steward run (f2a64b5), three quiet
+  builder passes landed (#2–#4) — all doc-only (dashboard + dispatch), zero app code,
+  zero folder/status changes.
+- 🤔 **011 (search) still `proposed`** — 36 days untouched, awaiting your go/no-go.
+- 🚧 **018/019 still gated/blocked** — 32 days since last activity, same known
+  prerequisite (Plaid account + 4-table migration).
+- 📅 **iOS PR #13 now 43 days open** — no backlog folder; standing track/park/close
+  decision unchanged.
+- 🔍 `feature/task-triage-v2` (22 days, local, no PR) and
+  `origin/claude/fix-task-categorization-j8nuy` (~73 days) still unresolved.
+- No push sent — all items above are standing/already-flagged in prior runs; nothing
+  newly needs John.
+
 ## 2026-07-13 #4 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped since the earlier runs today.
 - 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it. No other `ready` items are eligible.

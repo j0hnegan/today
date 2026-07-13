@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-13 (steward, daily health). Overwritten each run; latest state only._
+_Last run: 2026-07-13 #2 (steward, daily health, second pass). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -13,15 +13,15 @@ _Last run: 2026-07-13 (steward, daily health). Overwritten each run; latest stat
 
 ## Fixed this run
 - Nothing to fix. Re-audited LEARNINGS.md (no dead refs, no dupes, no contradictions —
-  all six file references still resolve: `PagePanel.tsx`, `ServerSWR.tsx`,
-  `SWRProvider.tsx`, `api-auth.ts`, `triage.ts`, `lib/mcp/`), backlog structure (all 19
-  folders have `spec.md` + `log.md`, all `Status:`/`Class:` values valid, all agree
-  with `gh pr list`). No commits at all since the 2026-07-11 steward run — zero
-  builder activity landed in the interim (board fully static for two days).
+  same six file references still resolve). Re-verified all 19 backlog folders have
+  `spec.md` + `log.md`, all `Status:`/`Class:` values valid, all agree with `gh pr list`.
+  Since the morning steward run (f2a64b5), only three quiet builder passes landed
+  (#2–#4), and each touched doc-only files (dashboard + dispatch log) — zero app
+  code, zero folder/status changes. Board is fully static.
 
 ## Needs John
 
-### Standing (unchanged)
+### Standing (unchanged from this morning's run)
 
 - **011 search — 36 days untouched** (intake 2026-06-07, still only the original
   entry in `log.md`). Re-triage flag, not auto-close. Reply "go" for a Phase-1
