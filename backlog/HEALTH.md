@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-13 #2 (steward, daily health, second pass). Overwritten each run; latest state only._
+_Last run: 2026-07-14 (steward, daily health). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,37 +12,38 @@ _Last run: 2026-07-13 #2 (steward, daily health, second pass). Overwritten each 
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. Re-audited LEARNINGS.md (no dead refs, no dupes, no contradictions —
+- Nothing to fix. Re-audited `LEARNINGS.md` (no dead refs, no dupes, no contradictions —
   same six file references still resolve). Re-verified all 19 backlog folders have
   `spec.md` + `log.md`, all `Status:`/`Class:` values valid, all agree with `gh pr list`.
-  Since the morning steward run (f2a64b5), only three quiet builder passes landed
-  (#2–#4), and each touched doc-only files (dashboard + dispatch log) — zero app
-  code, zero folder/status changes. Board is fully static.
+  Since yesterday's steward run (fe89969), three quiet builder passes landed
+  (#2–#4 on 2026-07-14), each touching doc-only files (dashboard + dispatch log) —
+  zero app code, zero folder/status changes. Board is fully static. Refreshed the
+  dashboard "Last run" line only.
 
 ## Needs John
 
-### Standing (unchanged from this morning's run)
+### Standing (unchanged from yesterday's run)
 
-- **011 search — 36 days untouched** (intake 2026-06-07, still only the original
+- **011 search — 37 days untouched** (intake 2026-06-07, still only the original
   entry in `log.md`). Re-triage flag, not auto-close. Reply "go" for a Phase-1
   pitch (docs/notes search), narrow scope, or park another cycle.
 
-- **018 and 019 — 32 days since last `log.md` activity** (2026-06-11). Not neglect —
+- **018 and 019 — 33 days since last `log.md` activity** (2026-06-11). Not neglect —
   both are actively blocked on the same known prerequisite (019 needs the Plaid
   account + 4-table migration; 018 is gated behind 019 by design). No new
   information this run; flagging continues per the stale-item rule.
 
 - **[Draft PR #13](https://github.com/j0hnegan/today/pull/13) "Native iOS app shell (Capacitor) [WIP]"**
-  (`feat/ios-capacitor`) — **43 days open** (since 2026-05-31). No backlog folder. Three options:
+  (`feat/ios-capacitor`) — **44 days open** (since 2026-05-31). No backlog folder. Three options:
   1. **Track it** — create a backlog folder seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing to proceed).
   3. **Close it** — close the PR if on indefinite hold.
   (Note: the working tree currently has an untracked `ios/` build-artifact
   folder that correlates with this branch — left untouched, it's app code.)
 
-- **`feature/task-triage-v2`** — local branch, 22 days old (1 commit 2026-06-21), no PR filed, no backlog folder. Options: file a PR, create a backlog folder via `/backlog`, or merge/close if it was a one-off.
+- **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21), no PR filed, no backlog folder. Options: file a PR, create a backlog folder via `/backlog`, or merge/close if it was a one-off.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~73 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Check whether `feature/task-triage-v2` addresses this; if so, close the branch.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~74 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Check whether `feature/task-triage-v2` addresses this; if so, close the branch.
 
 - **019 Plaid→Chase sync stays blocked** — needs 4-table migration + Plaid account + env vars. 018 Finance tab queued right behind it.
 
@@ -52,7 +53,7 @@ _Last run: 2026-07-13 #2 (steward, daily health, second pass). Overwritten each 
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
 - LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged since 2026-06-10.
 - Nothing `building`/`discussing` → no builder race.
-- Active features last touched: 011 (36 days — flagged above), 018 (32 days), 019 (32 days).
+- Active features last touched: 011 (37 days — flagged above), 018 (33 days), 019 (33 days).
 
 ## Cleanup candidates (not the steward's to delete)
 - Local branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app` — zero commits ahead of main, safe to delete. `feat/responsive-mobile` shows 1 commit by hash not on main (upstream gone), previously verified: content is fully redundant (squash-merged as PR #12; the lone remaining commit's fix is already present on main byte-for-byte) — safe to delete.
