@@ -4,6 +4,24 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-15 — steward run (daily health)
+- 😴 **No drift — board unchanged.** Clean main (untracked `ios/` build artifact left
+  alone, pre-existing/not backlog-owned), 19 features, all `spec.md`+`log.md` present,
+  all `Status:`/`Class:` valid, all agree with `gh pr list`. Since yesterday's steward
+  run (58757bb), one quiet builder pass landed (d0e1524) — doc-only, zero app code.
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs (verified
+  `lib/server-fetchers.ts` and `lib/validation/` still exist), no dupes. Unchanged
+  since 2026-06-10. No edits needed.
+- 🤔 **011 (search) still `proposed`** — 38 days untouched, awaiting your go/no-go.
+- 🚧 **018/019 still gated/blocked** — 34 days since last activity, same known
+  prerequisite (Plaid account + 4-table migration).
+- 📅 **iOS PR #13 now 45 days open** — no backlog folder; standing track/park/close
+  decision unchanged.
+- 🔍 `feature/task-triage-v2` (24 days, local, no PR) and
+  `origin/claude/fix-task-categorization-j8nuy` (~75 days) still unresolved.
+- No push sent — all items above are standing/already-flagged in prior runs; nothing
+  newly needs John.
+
 ## 2026-07-13 #2 — steward run (daily health, second pass)
 - 😴 **No drift — board unchanged.** Re-ran the full playbook: LEARNINGS.md re-checked
   (no contradictions, no dead refs, no dupes, unchanged since 2026-06-10), all 19
