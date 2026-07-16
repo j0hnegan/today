@@ -763,3 +763,11 @@ Append-only run log. `/standup` reads the latest entries.
 - 🔎 No open `auto/*` branches needing rebase (stale `auto/005-step2b-code`, `auto/014-carryover-empty-guard` remain harmless leftovers of already-merged PRs #28/#25, confirmed `MERGED` via `gh pr list`); no `iterating`/`preview` features with new feedback; no `discuss` items sit in `ready` to pre-digest (011 already sits in `proposed`). No merges since PR #29 (2026-06-10) → LEARNINGS unchanged.
 - ℹ️ Only open PR is still #13 (iOS Capacitor shell, ~45 days open) — John's manual work, not a backlog `auto/*` item, left untouched. Untracked `ios/` dir on main left alone (pre-existing, not builder-owned).
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-16 #2 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars (checked `.env.local` — still no `PLAID_*` keys). **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches needing rebase (stale `auto/005-step2b-code`, `auto/014-carryover-empty-guard` remain harmless leftovers of already-merged PRs #28/#25, confirmed `MERGED` via `gh pr list`); no `iterating`/`preview` features with new feedback; no `discuss` items sit in `ready` to pre-digest (011 already sits in `proposed`). No merges since PR #29 (2026-06-10) → LEARNINGS unchanged.
+- ℹ️ Only open PR is still #13 (iOS Capacitor shell, ~46 days open) — John's manual work, not a backlog `auto/*` item, left untouched. Untracked `ios/` dir on main left alone (pre-existing, not builder-owned).
+- No push sent (nothing newly needs John; same standing items as prior runs).
