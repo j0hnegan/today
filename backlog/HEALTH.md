@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-16 (steward, daily health). Overwritten each run; latest state only._
+_Last run: 2026-07-16 evening (steward, second pass today). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,16 +12,19 @@ _Last run: 2026-07-16 (steward, daily health). Overwritten each run; latest stat
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. Re-audited `LEARNINGS.md` (no dead refs, no dupes, no contradictions —
-  same six file references still resolve, checked `lib/server-fetchers.ts` and
-  `lib/validation/` exist on disk). Re-verified all 19 backlog folders have `spec.md` +
-  `log.md`, all `Status:`/`Class:` values valid, all agree with `gh pr list`. Since
-  yesterday's steward run (f18187d), no further commits landed — board is fully
-  static. Refreshed the dashboard "Last run" line only.
+- Nothing to fix. This is a second steward pass on 2026-07-16 — the morning run
+  (be823e7) already did a full audit today. Since then, three builder "quiet run"
+  passes landed (5da18cc, e71dab0, cd37f51), touching only `DISPATCHES.md` +
+  `README.md`'s "Last run" line — no backlog structure or app code changed.
+  Re-verified: all 19 folders still have `spec.md` + `log.md`, all `Status:`/`Class:`
+  values still valid, all still agree with `gh pr list` (no new PRs, no state
+  changes on #13). LEARNINGS.md re-checked — still no dead refs (`lib/server-fetchers.ts`
+  and `lib/validation/` both exist on disk), no dupes, no contradictions, unchanged
+  since 2026-06-10. Refreshed the dashboard "Last run" line only.
 
 ## Needs John
 
-### Standing (unchanged from yesterday's run)
+### Standing (unchanged from this morning's run)
 
 - **011 search — 39 days untouched** (intake 2026-06-07, still only the original
   entry in `log.md`). Re-triage flag, not auto-close. Reply "go" for a Phase-1
@@ -37,12 +40,12 @@ _Last run: 2026-07-16 (steward, daily health). Overwritten each run; latest stat
   1. **Track it** — create a backlog folder seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing to proceed).
   3. **Close it** — close the PR if on indefinite hold.
-  (Note: the working tree currently has an untracked `ios/` build-artifact
-  folder that correlates with this branch — left untouched, it's app code.)
+  (Note: the working tree has an untracked `ios/` build-artifact folder that
+  correlates with this branch — left untouched, it's app code, not backlog's to touch.)
 
 - **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21), no PR filed, no backlog folder. Options: file a PR, create a backlog folder via `/backlog`, or merge/close if it was a one-off.
 
-- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~76 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Check whether `feature/task-triage-v2` addresses this; if so, close the branch.
+- **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~76 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Diffed the two branches this run: `feature/task-triage-v2` is a much larger rewrite (163 files touched) that includes its own task-categorization changes plus migrations, config, and tooling churn — not a clean superset, so can't confirm it fully subsumes the older branch without a closer read. Worth a look before closing either.
 
 - **019 Plaid→Chase sync stays blocked** — needs 4-table migration + Plaid account + env vars. 018 Finance tab queued right behind it.
 
@@ -52,6 +55,7 @@ _Last run: 2026-07-16 (steward, daily health). Overwritten each run; latest stat
 - Dashboard ↔ folders are 1:1 (001–019). No orphans.
 - LEARNINGS.md clean — no contradictions, no dead refs, no dupes. Unchanged since 2026-06-10.
 - Nothing `building`/`discussing` → no builder race.
+- No `backlog/PAUSED` kill switch present.
 - Active features last touched: 011 (39 days — flagged above), 018 (35 days), 019 (35 days).
 
 ## Cleanup candidates (not the steward's to delete)
