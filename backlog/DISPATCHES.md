@@ -4,6 +4,42 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-18 — steward run (daily health)
+- 😴 **No drift — board unchanged.** No builder activity since the 2026-07-17
+  evening steward pass (staged but never committed — folded into this run's commit
+  instead of resurrecting a stale "evening" entry). 19 features, all
+  `spec.md`+`log.md` present, all `Status:` valid (16 shipped, 011 proposed, 018
+  ready, 019 blocked), all agree with `gh pr list` (no new PRs, no state changes
+  on #13).
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs (`lib/server-fetchers.ts`
+  and `lib/validation/` still exist), no dupes. Unchanged since 2026-06-10. No edits
+  needed.
+- 🤔 **011 (search) still `proposed`** — 41 days untouched, awaiting your go/no-go.
+- 🚧 **018/019 still gated/blocked** — 37 days since last activity, same known
+  prerequisite (Plaid account + 4-table migration).
+- 📅 **iOS PR #13 now 48 days open** — no backlog folder; standing track/park/close
+  decision unchanged. Untracked `ios/` build artifact on main left alone.
+- 🔍 `feature/task-triage-v2` (27 days, local, no PR) and
+  `origin/claude/fix-task-categorization-j8nuy` (~78 days) still unresolved. See
+  HEALTH.md for options.
+- No push sent — nothing new beyond the same standing items already surfaced in
+  prior runs.
+
+## 2026-07-17 evening — steward run (second pass today)
+- 😴 **No drift.** This morning's steward run (daae08a) already audited the board;
+  no commits landed in between (no builder activity). 19 features, all
+  `spec.md`+`log.md` present, all `Status:` valid (16 shipped, 011 proposed, 018
+  ready, 019 blocked), all agree with `gh pr list` (no new PRs, no state changes
+  on #13).
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs, no dupes.
+  Unchanged since 2026-06-10. No edits needed.
+- 🤔 **011 (search) still `proposed`** — 40 days untouched, awaiting your go/no-go.
+- 🚧 **018/019 still gated/blocked** — 36 days since last activity, same known
+  prerequisite (Plaid account + 4-table migration).
+- 📅 **iOS PR #13 still 47 days open** — no backlog folder; standing track/park/close
+  decision unchanged.
+- No push sent — nothing new since the morning run.
+
 ## 2026-07-17 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Only builder activity since the 2026-07-16
   evening steward run (82421cf) was one "quiet run" commit (503b110), touching only
