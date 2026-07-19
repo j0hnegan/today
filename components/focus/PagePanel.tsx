@@ -88,6 +88,9 @@ export function PagePanel() {
   const noteRef = useRef(note);
   noteRef.current = note;
   const [carryover, setCarryover] = useState<{ fromDate: string; content: string } | null>(null);
+  // Bumped after a carry-over so NoteEditor remounts and loads the merged
+  // content — it only reads note content once per date otherwise.
+  const [editorKey, setEditorKey] = useState(0);
 
   useEffect(() => {
     function checkRollover() {
@@ -121,12 +124,14 @@ export function PagePanel() {
     } catch { /* treat as empty */ }
     const merged = existing.trim() ? `${existing}<hr>${carryover.content}` : carryover.content;
     try {
-      await fetch("/api/notes", {
-        method: "POST",
+      const res = await fetch("/api/notes", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: todayStr, content: merged, blocks: null }),
       });
-      mutateNote();
+      if (!res.ok) throw new Error();
+      await mutateNote();
+      setEditorKey((k) => k + 1);
       toast.success("Carried over yesterday's notes");
     } catch {
       toast.error("Couldn't carry over notes");
@@ -248,9 +253,11 @@ export function PagePanel() {
       onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
         if (window.innerWidth < 1026 || draggingPanel) return;
         const r = e.currentTarget.getBoundingClientRect();
+        // The edge facing the divider belongs to the resize grab zone, so only
+        // the outer vertical edge (plus top/bottom) triggers the swap drag.
+        const isLeftPanel = (panel === "tasks") !== swapped;
         const near =
-          e.clientX - r.left < EDGE_PX ||
-          r.right - e.clientX < EDGE_PX ||
+          (isLeftPanel ? e.clientX - r.left < EDGE_PX : r.right - e.clientX < EDGE_PX) ||
           e.clientY - r.top < EDGE_PX ||
           r.bottom - e.clientY < EDGE_PX;
         setEdgePanel((p) => (near ? panel : p === panel ? null : p));
@@ -448,12 +455,18 @@ export function PagePanel() {
         />
       </div>
 
-      {/* Resize divider (md+ only) */}
-      <div
-        onMouseDown={startResize}
-        title="Drag to resize"
-        className="hidden md:block w-1 self-stretch flex-shrink-0 cursor-col-resize rounded-full bg-transparent hover:bg-accent active:bg-accent transition-colors"
-      />
+      {/* Resize divider (md+ only). The grab zone extends past the 4px bar to
+          cover the whole gutter plus both panels' inner edges, so grabbing
+          either panel's side next to the gap starts the resize. */}
+      <div className="hidden md:block relative w-1 self-stretch flex-shrink-0">
+        <div
+          onMouseDown={startResize}
+          title="Drag to resize"
+          className="group absolute inset-y-0 -left-4 -right-4 z-10 flex justify-center cursor-col-resize"
+        >
+          <div className="w-1 rounded-full group-hover:bg-accent group-active:bg-accent transition-colors" />
+        </div>
+      </div>
 
       {/* Notes (right) */}
       <div className="flex flex-col flex-1 min-w-0 md:min-h-0">
@@ -469,6 +482,7 @@ export function PagePanel() {
           )}
         >
           <NoteEditor
+            key={editorKey}
             note={note}
             dateStr={dateStr}
             noteId={note?.id ?? null}

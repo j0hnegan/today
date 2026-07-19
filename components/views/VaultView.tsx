@@ -26,7 +26,7 @@ import {
 import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
-import { patchTask, reorderTasks, moveToInProgress, moveToToday } from "@/lib/taskMutations";
+import { patchTask, reorderTasks, moveToInProgress, moveToToday, moveToUpcoming } from "@/lib/taskMutations";
 import { moveByInsertion } from "@/lib/useTouchDragSort";
 import { cn } from "@/lib/utils";
 import { useTasks, useTags, useSettings } from "@/lib/hooks";
@@ -708,6 +708,14 @@ export function VaultView() {
     await markTaskDone(task);
   }
 
+  async function handleNotToday(task: Task) {
+    try {
+      await moveToUpcoming(task);
+    } catch {
+      /* helper already toasted */
+    }
+  }
+
   // Hold the check circle to toggle In Progress (mirrors the Today panel).
   async function handleLongPress(task: Task) {
     try {
@@ -1096,6 +1104,7 @@ export function VaultView() {
                   tasks={tasks}
                   {...taskListProps}
                   section={section}
+                  onNotToday={section === "on_deck" ? handleNotToday : undefined}
                   dropIndicatorIndex={dropIndicator?.section === section ? dropIndicator.index : null}
                 />
               </VaultSection>

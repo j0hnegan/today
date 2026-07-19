@@ -166,12 +166,13 @@ export async function moveToToday(task: Task): Promise<void> {
   await patchTask(task, { destination: "on_deck" });
 }
 
-export async function moveToSomeday(task: Task): Promise<void> {
-  await patchTask(task, { destination: "someday", due_date: null, consequence: "none" });
-}
-
 export async function moveToUpcoming(task: Task): Promise<void> {
-  await patchTask(task, { destination: "upcoming" });
+  // A due-today/overdue date must go too, or automation promotes it right back.
+  if (task.due_date && isDueToday(task.due_date)) {
+    await patchTask(task, { destination: "upcoming", due_date: null });
+  } else {
+    await patchTask(task, { destination: "upcoming" });
+  }
 }
 
 export async function deleteTask(task: Task): Promise<void> {

@@ -5,7 +5,6 @@ import {
   deleteTask,
   moveToInProgress,
   moveToToday,
-  moveToSomeday,
   moveToUpcoming,
   patchTask,
 } from "@/lib/taskMutations";
@@ -44,14 +43,6 @@ export function useTaskActions(allTasks: Task[]) {
 
   const onNotTodayTask = useCallback(async (task: Task) => {
     try {
-      await moveToSomeday(task);
-    } catch {
-      /* helper already toasted */
-    }
-  }, []);
-
-  const onUpcomingTask = useCallback(async (task: Task) => {
-    try {
       await moveToUpcoming(task);
     } catch {
       /* helper already toasted */
@@ -79,7 +70,6 @@ export function useTaskActions(allTasks: Task[]) {
     onInProgressTask,
     onBackToTodayTask,
     onNotTodayTask,
-    onUpcomingTask,
     saveTaskTitle,
   };
 }
