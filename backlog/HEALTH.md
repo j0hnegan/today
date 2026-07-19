@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-19 (steward, daily). Overwritten each run; latest state only._
+_Last run: 2026-07-19, 2nd pass (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,9 +12,9 @@ _Last run: 2026-07-19 (steward, daily). Overwritten each run; latest state only.
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. No builder activity since yesterday's steward commit (`ecd8bed`,
-  2026-07-18) — zero commits landed in between, no backlog structure or app code
-  changed. Re-verified: all 19 folders still have `spec.md` + `log.md`, all
+- Nothing to fix. This is a second steward pass today — zero commits landed since
+  this morning's steward commit (`ea99b37`, 2026-07-19), no backlog structure or
+  app code changed. Re-verified: all 19 folders still have `spec.md` + `log.md`, all
   `Status:` values still valid (16 shipped, 011 proposed, 018 ready, 019 blocked),
   all still agree with `gh pr list` (no new PRs, no state changes on #13, still
   the only open PR). LEARNINGS.md re-checked — still no dead refs
