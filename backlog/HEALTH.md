@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-19, 2nd pass (steward). Overwritten each run; latest state only._
+_Last run: 2026-07-19, 3rd pass (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -12,15 +12,28 @@ _Last run: 2026-07-19, 2nd pass (steward). Overwritten each run; latest state on
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
 
 ## Fixed this run
-- Nothing to fix. This is a second steward pass today — zero commits landed since
-  this morning's steward commit (`ea99b37`, 2026-07-19), no backlog structure or
-  app code changed. Re-verified: all 19 folders still have `spec.md` + `log.md`, all
-  `Status:` values still valid (16 shipped, 011 proposed, 018 ready, 019 blocked),
-  all still agree with `gh pr list` (no new PRs, no state changes on #13, still
-  the only open PR). LEARNINGS.md re-checked — still no dead refs
-  (`lib/server-fetchers.ts` and `lib/validation/` both exist on disk), no dupes,
-  no contradictions, unchanged since 2026-06-10. No `backlog/PAUSED` kill switch.
-  Refreshed the dashboard "Last run" line.
+- Nothing to fix. Backlog structure and status fields are unchanged since this
+  morning's steward commit (`80cf9c0`, 2026-07-19 2nd pass). Re-verified: all 19
+  folders still have `spec.md` + `log.md`, all `Status:` values still valid (16
+  shipped, 011 proposed, 018 ready, 019 blocked), all still agree with
+  `gh pr list` (#13 remains the only open PR, no new PRs, no state changes).
+  LEARNINGS.md re-checked — still no dead refs, no dupes, no contradictions,
+  unchanged since 2026-06-10. No `backlog/PAUSED` kill switch. Refreshed the
+  dashboard "Last run" line.
+
+- **One new commit landed on `main` since the last pass**: `d72089a` "Fix note
+  carry-over, edge-grab resize, Not Today → Upcoming," authored directly by
+  John (not via a backlog `auto/*` branch or PR — no CI gate, no draft PR).
+  Touches `PagePanel.tsx`, `VaultView.tsx`, `taskMutations.ts`,
+  `useTaskActions.ts`. It fixes/extends behavior in the territory of already-
+  shipped features 004/014 (carry-over) and 015 (panel resize), and changes
+  "Not today" to move tasks to `upcoming` instead of `someday`. This is
+  John working directly in the app, outside the loop — nothing for the
+  steward to fix or flag structurally, but noted here since it touches
+  shipped-feature territory. No backlog folder needed (not builder-tracked
+  work); no `log.md` updated (steward doesn't rewrite history for out-of-band
+  commits — that's a judgment call left to you if you want 004/014/015's logs
+  annotated).
 
 ## Needs John
 
@@ -48,6 +61,11 @@ _Last run: 2026-07-19, 2nd pass (steward). Overwritten each run; latest state on
 - **`origin/claude/fix-task-categorization-j8nuy`** — old bug-fix branch (~79 days, 2026-05-01), 1 commit ahead of main, no PR ever filed. Previously diffed against `feature/task-triage-v2`: the latter is a much larger rewrite (163 files touched) that includes its own task-categorization changes plus migrations, config, and tooling churn — not a clean superset, so can't confirm it fully subsumes the older branch without a closer read. Worth a look before closing either.
 
 - **019 Plaid→Chase sync stays blocked** — needs 4-table migration + Plaid account + env vars. 018 Finance tab queued right behind it.
+
+- **New: John's direct-to-main commit `d72089a`** touches carry-over (004/014) and
+  panel-resize (015) territory without going through the backlog pipeline —
+  no CI gate ran on it. Purely FYI; flagging so it's visible in the heartbeat,
+  not because anything looks wrong.
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid.
