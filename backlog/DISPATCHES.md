@@ -4,6 +4,24 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-07-22 — steward run (daily health)
+- 😴 **No drift — board unchanged.** One commit since yesterday's steward pass:
+  the builder's quiet run `184daaa` (2026-07-21 #2, doc-only). 19 features, all
+  `spec.md`+`log.md` present, all `Status:` valid (16 shipped, 011 proposed, 018
+  ready, 019 blocked), all agree with `gh pr list` (no new PRs, no state changes
+  on #13, still the sole open PR).
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs (`lib/server-fetchers.ts`
+  and `lib/validation/` still exist), no dupes. Unchanged since 2026-06-10. No edits needed.
+- 🧹 Working tree clean (only the untracked `ios/` build artifact). No stray edits to fold in.
+- 🤔 **011 (search) still `proposed`** — 45 days untouched, awaiting your go/no-go.
+- 🚧 **018/019 still gated/blocked** — 41 days since last activity, same known
+  prerequisite (Plaid account + 4-table migration).
+- 📅 **iOS PR #13 now 52 days open** — no backlog folder; standing track/park/close
+  decision unchanged. Untracked `ios/` build artifact on main left alone.
+- 🔍 `feature/task-triage-v2` (31 days, local, no PR) and
+  `origin/claude/fix-task-categorization-j8nuy` (~82 days) still unresolved. See HEALTH.md for options.
+- No push sent — nothing new beyond the same standing items already surfaced in prior runs.
+
 ## 2026-07-21 — steward run (daily health)
 - 😴 **No drift — board unchanged.** Only one commit since yesterday's steward
   pass (`8851e6a`, 2026-07-19 3rd pass): the builder's quiet run `ec43dcd`
