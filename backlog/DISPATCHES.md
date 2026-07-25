@@ -46,6 +46,21 @@ Append-only run log. `/standup` reads the latest entries.
 - No push sent — nothing new beyond the same standing items already surfaced in
   prior runs.
 
+## 2026-07-25 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Clean main, no PAUSED, no drift since the 2026-07-23
+  builder passes. 19 features: 16 shipped, 011 `proposed`, 018 `ready` (gated on 019), 019
+  `blocked`. All statuses agree with `gh pr list`.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — no `PLAID_*` env vars, no migration file yet.
+  **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches to rebase (005-step2b/014 remotes are already-merged, no open
+  PR); no `iterating`/`preview` features with new feedback; no `discuss` items sit in `ready`
+  to pre-digest (011 already proposed). No merges since PR #29 (2026-06-10) → LEARNINGS unchanged.
+- ℹ️ Only open PR is #13 (iOS Capacitor shell) — John's manual work, not a backlog `auto/*`
+  item, left untouched. Untracked `ios/` dir on main left alone (pre-existing, not
+  builder-owned).
+- No push sent (nothing newly needs John; same standing items as prior runs).
+
 ## 2026-07-20 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Clean main, no PAUSED, no drift since the 2026-07-19
   steward passes. 19 features: 16 shipped, 011 `proposed`, 018 `ready` (gated on 019), 019
