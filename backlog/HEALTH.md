@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-25 (steward). Overwritten each run; latest state only._
+_Last run: 2026-07-25 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -13,15 +13,14 @@ _Last run: 2026-07-25 (steward). Overwritten each run; latest state only._
 **Shipped this week:** 0 (last merge was #29 on 2026-06-09).
 
 ## Fixed this run
-- Nothing to fix. Backlog structure and status fields are unchanged since the prior
-  steward run (2026-07-22). The only intervening commits are three builder quiet
-  runs (`c17b3fa`, `84ab1a4`, `4eab4bb` — one landed mid-steward-run, cleanly) that
-  touched only DISPATCHES.md and the dashboard "Last run" line; the board body is
-  byte-for-byte unchanged. Re-verified: all 19 folders still have `spec.md` +
-  `log.md`, all `Status:` values valid (16 shipped, 011 proposed, 018 ready, 019
-  blocked), and all agree with `gh pr list` (#13 remains the only open PR — no new
-  PRs, no state changes). LEARNINGS.md re-checked — no dead refs
-  (`lib/server-fetchers.ts` and `lib/validation/` confirmed present), no dupes, no
+- Nothing to fix. This is the second steward pass of 2026-07-25 (prior run `056e748`
+  earlier today). The board is byte-for-byte unchanged since; the only intervening
+  commit is one builder quiet run (`4eab4bb`) that touched only DISPATCHES.md and the
+  dashboard "Last run" line. Re-verified from a clean `main`: all 19 folders still
+  have `spec.md` + `log.md`, all `Status:` values valid (16 shipped, 011 proposed,
+  018 ready, 019 blocked), and all agree with `gh pr list` (#13 remains the only open
+  PR — no new PRs, no state changes). LEARNINGS.md re-checked — no dead refs
+  (`lib/server-fetchers.ts` + `lib/validation/` confirmed present), no dupes, no
   contradictions; unchanged since 2026-06-10. No `backlog/PAUSED` kill switch.
   Refreshed the dashboard "Last run" line.
 
