@@ -987,3 +987,12 @@ Append-only run log. `/standup` reads the latest entries.
 - ⚠️ **Main has an uncommitted in-progress tree** — a live in-app "backlog view" (`components/views/BacklogView.tsx`, `app/(main)/backlog/`), broad edits across ~18 tracked files, an untracked `ios/` dir, and an **untracked migration** `supabase/migrations/20260726000000_add_backlog_destination.sql`. Looks like your own live session's work; **left entirely untouched.** Heads-up: builder runs can't branch cleanly off a dirty main, so commit/stash it when you get a chance (didn't block this run — nothing was eligible to build anyway).
 - ℹ️ Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-27 #2 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped. Same standing state as the earlier 07-27 run.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars. **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches to rebase; no `iterating`/`preview` features with new feedback; no `discuss` items in `ready` to pre-digest (011 already `proposed`). No merges since PR #29 → LEARNINGS unchanged.
+- ⚠️ **Main still carries the uncommitted in-progress tree** from before — in-app "backlog view" (`components/views/BacklogView.tsx`, `app/(main)/backlog/`), ~18 edited tracked files, untracked `ios/`, and untracked migration `supabase/migrations/20260726000000_add_backlog_destination.sql`. Your live work; **left entirely untouched.** Reminder: builder runs can't branch cleanly off a dirty main, so commit/stash when convenient (didn't block this run — nothing was eligible anyway).
+- ℹ️ Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
+- No push sent (nothing newly needs John; same standing items as prior runs).
