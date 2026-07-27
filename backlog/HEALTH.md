@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-26 (steward). Overwritten each run; latest state only._
+_Last run: 2026-07-26 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -13,15 +13,23 @@ _Last run: 2026-07-26 (steward). Overwritten each run; latest state only._
 **Shipped this week:** 0 (last merge was #29 on 2026-06-09).
 
 ## Fixed this run
-- Nothing to fix. First steward pass of 2026-07-26. Board byte-for-byte unchanged
-  since the last run (`29b55b0`, 2026-07-25 #2). Re-verified from a clean `main`:
-  all 19 folders still have `spec.md` + `log.md`; all `Status:` values valid (16
-  shipped, 011 proposed, 018 ready, 019 blocked) and all agree with `gh pr list`
-  (#13 remains the only open PR — no new PRs, no state changes). LEARNINGS.md
-  re-checked — refs confirmed live (`lib/server-fetchers.ts`, `lib/validation/`,
-  `components/focus/` all present), no dupes, no contradictions; unchanged since
-  2026-06-10. No `backlog/PAUSED` kill switch. Refreshed the dashboard "Last run"
-  line only.
+- Nothing to fix. Second steward pass of 2026-07-26 (first was 13:15, `8dec6a3`).
+  Board byte-for-byte unchanged since. Re-verified: all 19 folders still have
+  `spec.md` + `log.md`; all `Status:` values valid (16 shipped, 011 proposed, 018
+  ready, 019 blocked) and all agree with `gh pr list` (#13 remains the only open PR,
+  still DRAFT — no new PRs, no state changes). LEARNINGS.md re-checked — refs
+  confirmed live (`lib/server-fetchers.ts`, `lib/validation/` present), no dupes, no
+  contradictions; unchanged since 2026-06-10. No `backlog/PAUSED` kill switch.
+  Refreshed the dashboard "Last run" line only.
+
+## Observation this run (not the steward's to touch)
+- The working tree currently holds **uncommitted app-code WIP from a live session** —
+  a new "backlog destination" feature (`components/views/BacklogView.tsx`,
+  `app/(main)/backlog/`, `supabase/migrations/20260726000000_add_backlog_destination.sql`,
+  plus edits across ~16 app files) and the untracked `ios/` folder. Left entirely
+  untouched — app code is never the steward's to edit, and an active edit session
+  must not be raced. No backlog folder exists for it yet; if this graduates to real
+  work, run `/backlog` to give it a folder. Flagging only, no action.
 
 ## Needs John
 
@@ -41,8 +49,8 @@ _Last run: 2026-07-26 (steward). Overwritten each run; latest state only._
   1. **Track it** — create a backlog folder seeded from the PR description.
   2. **Park it** — minimal folder, `status: blocked` (needs Xcode/signing to proceed).
   3. **Close it** — close the PR if on indefinite hold.
-  (Note: the working tree has an untracked `ios/` folder that correlates with this
-  branch — left untouched; it's app code, not backlog's to touch.)
+  (Note: the untracked `ios/` folder in the working tree correlates with this branch
+  and the live WIP above — left untouched; it's app code, not backlog's to touch.)
 
 - **`feature/task-triage-v2`** — local branch, 1 commit (2026-06-21, 35 days), no PR filed, no backlog folder. Options: file a PR, create a backlog folder via `/backlog`, or merge/close if it was a one-off.
 
@@ -61,4 +69,4 @@ _Last run: 2026-07-26 (steward). Overwritten each run; latest state only._
 - Local branches `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app` — zero commits ahead of main, safe to delete. `feat/responsive-mobile` shows 2 commits by hash not on main (upstream gone), previously verified: content is fully redundant (squash-merged as PR #12; both remaining commits' changes are already present on main byte-for-byte) — safe to delete.
 - Remote branch `origin/claude/task-duplication-bug-Mrona` — previously verified: 0 commits ahead of main, fully merged. Safe to delete.
 - Remote stale `origin/auto/005-step2b-code`, `origin/auto/014-carryover-empty-guard` — PRs merged (#28, #25), harmless leftovers.
-- Untracked `ios/` folder in working tree — Capacitor build artifact from `feat/ios-capacitor`.
+- Untracked `ios/` folder in working tree — Capacitor build artifact from `feat/ios-capacitor` / live WIP.
