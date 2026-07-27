@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-07-27 (steward). Overwritten each run; latest state only._
+_Last run: 2026-07-27 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -13,15 +13,16 @@ _Last run: 2026-07-27 (steward). Overwritten each run; latest state only._
 **Shipped this week:** 0 (last merge was #29 on 2026-06-10).
 
 ## Fixed this run
-- Nothing to fix. Board byte-for-byte unchanged since the 2026-07-26 #2 steward pass.
-  Since then only today's builder quiet run (`f8912d9`) touched docs (DISPATCHES +
-  README "Last run" line) — no board change. Re-verified: all 19 folders still have
-  `spec.md` + `log.md`; all `Status:` values valid (16 shipped, 011 proposed, 018
-  ready, 019 blocked) and all agree with `gh pr list` (#13 remains the only open PR,
-  still DRAFT — no new PRs, no state changes since #29). LEARNINGS.md re-checked —
-  refs confirmed live (`lib/server-fetchers.ts`, `lib/validation/` present), no dupes,
-  no contradictions; unchanged since 2026-06-10. No `backlog/PAUSED` kill switch.
-  Refreshed the dashboard "Last run" line only.
+- Nothing to fix. Board byte-for-byte unchanged since the earlier 2026-07-27 steward
+  pass (`a764754`); the only commits since were two builder quiet runs (`f8912d9`,
+  `910bbf1`) that touched DISPATCHES + the README "Last run" line — no board change.
+  Re-verified: all 19 folders still have `spec.md` + `log.md`; all `Status:` values
+  valid (16 shipped, 011 proposed, 018 ready, 019 blocked) and all agree with
+  `gh pr list` (#13 remains the only open PR, still DRAFT — no new PRs or state
+  changes since #29). LEARNINGS.md re-checked — refs confirmed live
+  (`lib/server-fetchers.ts`, `lib/validation/` present), no dupes, no contradictions;
+  unchanged since 2026-06-10. No `backlog/PAUSED` kill switch. Refreshed the dashboard
+  "Last run" line only.
 
 ## Observation this run (not the steward's to touch)
 - The working tree still holds **uncommitted app-code WIP from a live session** — a
@@ -30,8 +31,8 @@ _Last run: 2026-07-27 (steward). Overwritten each run; latest state only._
   ~18 tracked files) and the untracked `ios/` folder. Left entirely untouched — app
   code is never the steward's to edit, and an active edit session must not be raced.
   No backlog folder exists for it yet; if it graduates to real work, run `/backlog`
-  to give it a folder. Heads-up (from the builder's dispatch too): a dirty `main`
-  blocks clean branch-offs, so commit or stash it when convenient. Flagging only.
+  to give it a folder. Heads-up: a dirty `main` blocks clean branch-offs, so commit or
+  stash it when convenient. Flagging only.
 
 ## Needs John
 
@@ -72,3 +73,5 @@ _Last run: 2026-07-27 (steward). Overwritten each run; latest state only._
 - Remote branch `origin/claude/task-duplication-bug-Mrona` — previously verified: 0 commits ahead of main, fully merged. Safe to delete.
 - Remote stale `origin/auto/005-step2b-code`, `origin/auto/014-carryover-empty-guard` — PRs merged (#28, #25), harmless leftovers.
 - Untracked `ios/` folder in working tree — Capacitor build artifact from `feat/ios-capacitor` / live WIP.
+</content>
+</invoke>
