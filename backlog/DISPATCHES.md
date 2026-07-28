@@ -1005,3 +1005,11 @@ Append-only run log. `/standup` reads the latest entries.
 - ✅ **Prior dirty-tree warning resolved** — your live backlog-view work has landed on main (commits `a52520b`, `cf9f3f6`: Backlog destination + migration, bulk Move, stale-tab sync fix). Main is now clean; only leftover is an untracked `ios/` dir (your manual work, left alone).
 - ℹ️ Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-28 #2 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + `PLAID_*` env vars. **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches to rebase; no `iterating`/`preview` features with new feedback; no `discuss` items in `ready` to pre-digest (011 already `proposed`). No merges since PR #29 → LEARNINGS unchanged.
+- ℹ️ Main clean aside from an untracked `ios/` dir (your manual work, left alone). Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
+- No push sent (nothing newly needs John; same standing items as prior runs).
