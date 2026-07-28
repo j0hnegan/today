@@ -996,3 +996,12 @@ Append-only run log. `/standup` reads the latest entries.
 - ⚠️ **Main still carries the uncommitted in-progress tree** from before — in-app "backlog view" (`components/views/BacklogView.tsx`, `app/(main)/backlog/`), ~18 edited tracked files, untracked `ios/`, and untracked migration `supabase/migrations/20260726000000_add_backlog_destination.sql`. Your live work; **left entirely untouched.** Reminder: builder runs can't branch cleanly off a dirty main, so commit/stash when convenient (didn't block this run — nothing was eligible anyway).
 - ℹ️ Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-28 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — needs 4-table migration + Plaid account + env vars (still no `PLAID_*` keys). **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go.
+- 🔎 No open `auto/*` branches to rebase; no `iterating`/`preview` features with new feedback; no `discuss` items in `ready` to pre-digest (011 already `proposed`). No merges since PR #29 → LEARNINGS unchanged.
+- ✅ **Prior dirty-tree warning resolved** — your live backlog-view work has landed on main (commits `a52520b`, `cf9f3f6`: Backlog destination + migration, bulk Move, stale-tab sync fix). Main is now clean; only leftover is an untracked `ios/` dir (your manual work, left alone).
+- ℹ️ Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
+- No push sent (nothing newly needs John; same standing items as prior runs).
