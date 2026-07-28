@@ -23,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target } from "lucide-react";
+import { SlidersHorizontal, Trash2, CalendarIcon, X, Check, ChevronDown, ArrowUpDown, Target, FolderInput } from "lucide-react";
 import { TagsModal } from "@/components/tags/TagsModal";
 import { markTaskDone } from "@/lib/done-toast";
 import { patchTask, reorderTasks, moveToInProgress, moveToToday, moveToUpcoming } from "@/lib/taskMutations";
@@ -105,13 +105,27 @@ const VAULT_SECTIONS = [
   { key: "inProgress", section: "in_progress", title: "In Progress", defaultOpen: true, alwaysShow: false },
   { key: "upcoming", section: "upcoming", title: "Upcoming", defaultOpen: true, alwaysShow: false },
   { key: "someday", section: "someday", title: "Someday", defaultOpen: true, alwaysShow: true },
+  { key: "backlog", section: "backlog", title: "Backlog", defaultOpen: true, alwaysShow: false },
   { key: "done", section: "done", title: "Done", defaultOpen: false, alwaysShow: false },
 ] as const;
 
 const ALL_SECTION_KEYS = VAULT_SECTIONS.map((s) => s.section) as string[];
+// Backlog is parked ideas — hidden from My Tasks unless the filter opts in.
+const DEFAULT_VISIBLE_SECTIONS = ALL_SECTION_KEYS.filter((s) => s !== "backlog");
 const SECTION_LABELS: Record<string, string> = Object.fromEntries(
   VAULT_SECTIONS.map((s) => [s.section, s.title])
 );
+
+/** Patch needed to move a task into a section; null if it's already there. */
+function bodyForSection(task: Task, targetSection: string): Record<string, string> | null {
+  if (targetSection === "done") {
+    return task.status !== "done" ? { status: "done" } : null;
+  }
+  if (task.destination !== targetSection || task.status === "done") {
+    return { destination: targetSection, status: "active" };
+  }
+  return null;
+}
 
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
 const SIZE_LABELS: Record<Size, string> = {
@@ -160,7 +174,7 @@ export function VaultView() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [goalFilterIds, setGoalFilterIds] = useState<number[] | null>(null);
-  const [visibleSections, setVisibleSections] = useState<string[]>([...ALL_SECTION_KEYS]);
+  const [visibleSections, setVisibleSections] = useState<string[]>([...DEFAULT_VISIBLE_SECTIONS]);
   const [goalSearch, setGoalSearch] = useState("");
   const [goalDropdownOpen, setGoalDropdownOpen] = useState(false);
   const [dateFromOpen, setDateFromOpen] = useState(false);
@@ -177,6 +191,7 @@ export function VaultView() {
     in_progress: "due_date",
     upcoming: "due_date",
     someday: "due_date",
+    backlog: "due_date",
     done: "due_date",
   });
 
@@ -257,20 +272,20 @@ export function VaultView() {
   const [dropIndicator, setDropIndicator] = useState<{ section: string; index: number } | null>(null);
 
   const grouped = useMemo(() => {
-    if (!tasks) return { onDeck: [], inProgress: [], upcoming: [], someday: [], done: [] };
+    if (!tasks) return { onDeck: [], inProgress: [], upcoming: [], someday: [], backlog: [], done: [] };
 
     const onDeck: Task[] = [];
     const inProgress: Task[] = [];
     const upcoming: Task[] = [];
     const someday: Task[] = [];
+    const backlog: Task[] = [];
     const done: Task[] = [];
 
     for (const task of tasks) {
-      // Backlog lives on its own page, but done backlog tasks still count as Done
       if (task.status === "done") {
         done.push(task);
       } else if (task.destination === "backlog") {
-        continue;
+        backlog.push(task);
       } else if (task.destination === "on_deck") {
         onDeck.push(task);
       } else if (task.destination === "in_progress") {
@@ -282,7 +297,7 @@ export function VaultView() {
       }
     }
 
-    return { onDeck, inProgress, upcoming, someday, done };
+    return { onDeck, inProgress, upcoming, someday, backlog, done };
   }, [tasks]);
 
   // Apply active filters to grouped tasks
@@ -325,6 +340,7 @@ export function VaultView() {
       inProgress: sortTasks(applyFilters(grouped.inProgress), sortKeys.in_progress),
       upcoming: sortTasks(applyFilters(grouped.upcoming), sortKeys.upcoming),
       someday: sortTasks(applyFilters(grouped.someday), sortKeys.someday),
+      backlog: sortTasks(applyFilters(grouped.backlog), sortKeys.backlog),
       done: sortTasks(applyFilters(grouped.done), sortKeys.done),
     };
   }, [grouped, showSize, sizeFilter, showDates, dateFrom, dateTo, showGoals, goalFilterIds, sortKeys]);
@@ -336,13 +352,14 @@ export function VaultView() {
     for (const t of filteredGrouped.inProgress) map.set(t.id, "in_progress");
     for (const t of filteredGrouped.upcoming) map.set(t.id, "upcoming");
     for (const t of filteredGrouped.someday) map.set(t.id, "someday");
+    for (const t of filteredGrouped.backlog) map.set(t.id, "backlog");
     for (const t of filteredGrouped.done) map.set(t.id, "done");
     return map;
   }, [filteredGrouped]);
 
   // Flat ordered list for shift-range selection (uses filtered data)
   const allTasksOrdered = useMemo(() => {
-    return [...filteredGrouped.onDeck, ...filteredGrouped.inProgress, ...filteredGrouped.upcoming, ...filteredGrouped.someday, ...filteredGrouped.done];
+    return [...filteredGrouped.onDeck, ...filteredGrouped.inProgress, ...filteredGrouped.upcoming, ...filteredGrouped.someday, ...filteredGrouped.backlog, ...filteredGrouped.done];
   }, [filteredGrouped]);
 
   function handleReviewSomeday() {
@@ -368,7 +385,7 @@ export function VaultView() {
     setDateFrom(undefined);
     setDateTo(undefined);
     setGoalFilterIds(null);
-    setVisibleSections([...ALL_SECTION_KEYS]);
+    setVisibleSections([...DEFAULT_VISIBLE_SECTIONS]);
     setGoalSearch("");
     fetch("/api/settings", {
       method: "PATCH",
@@ -379,7 +396,7 @@ export function VaultView() {
         vault_show_goals: "true",
         vault_size_filter: "all",
         vault_goal_filter: "all",
-        vault_visible_sections: ALL_SECTION_KEYS.join(","),
+        vault_visible_sections: DEFAULT_VISIBLE_SECTIONS.join(","),
       }),
     }).then(() => mutate("/api/settings"));
   }
@@ -561,7 +578,7 @@ export function VaultView() {
 
     if (isSameSection && savedIndicator) {
       // Same-section reorder
-      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "in_progress" ? "inProgress" : targetSection === "upcoming" ? "upcoming" : targetSection === "done" ? "done" : "someday";
+      const sectionKey = targetSection === "on_deck" ? "onDeck" : targetSection === "in_progress" ? "inProgress" : targetSection === "upcoming" ? "upcoming" : targetSection === "backlog" ? "backlog" : targetSection === "done" ? "done" : "someday";
       const sectionTasks = filteredGrouped[sectionKey as keyof typeof filteredGrouped];
       const draggedSet = new Set(taskIds);
 
@@ -586,38 +603,11 @@ export function VaultView() {
     }
 
     // Cross-section move (existing behavior)
-    function getBody(task: Task): Record<string, string> | null {
-      if (
-        targetSection === "on_deck" &&
-        (task.destination !== "on_deck" || task.status === "done")
-      ) {
-        return { destination: "on_deck", status: "active" };
-      } else if (
-        targetSection === "in_progress" &&
-        (task.destination !== "in_progress" || task.status === "done")
-      ) {
-        return { destination: "in_progress", status: "active" };
-      } else if (
-        targetSection === "upcoming" &&
-        (task.destination !== "upcoming" || task.status === "done")
-      ) {
-        return { destination: "upcoming", status: "active" };
-      } else if (
-        targetSection === "someday" &&
-        (task.destination !== "someday" || task.status === "done")
-      ) {
-        return { destination: "someday", status: "active" };
-      } else if (targetSection === "done" && task.status !== "done") {
-        return { status: "done" };
-      }
-      return null;
-    }
-
     const movedTasks: Task[] = [];
     for (const id of taskIds) {
       const task = tasks?.find((t) => t.id === id);
       if (!task) continue;
-      const body = getBody(task);
+      const body = bodyForSection(task, targetSection);
       if (!body) continue;
       movedTasks.push(task);
       patchTask(task, body);
@@ -627,18 +617,31 @@ export function VaultView() {
 
     setSelectedIds(new Set());
 
-    const sectionNames: Record<string, string> = {
-      on_deck: "Today",
-      in_progress: "In Progress",
-      upcoming: "Upcoming",
-      someday: "Someday",
-      done: "Done",
-    };
     const count = movedTasks.length;
     toast.success(
       count === 1
-        ? `Moved to ${sectionNames[targetSection]}`
-        : `Moved ${count} tasks to ${sectionNames[targetSection]}`
+        ? `Moved to ${SECTION_LABELS[targetSection]}`
+        : `Moved ${count} tasks to ${SECTION_LABELS[targetSection]}`
+    );
+  }
+
+  // Bulk-move the current selection via the action bar's Move dropdown.
+  function handleBulkMove(targetSection: string) {
+    const moved: Task[] = [];
+    for (const id of Array.from(selectedIds)) {
+      const task = tasks?.find((t) => t.id === id);
+      if (!task) continue;
+      const body = bodyForSection(task, targetSection);
+      if (!body) continue;
+      moved.push(task);
+      patchTask(task, body);
+    }
+    setSelectedIds(new Set());
+    if (moved.length === 0) return;
+    toast.success(
+      moved.length === 1
+        ? `Moved to ${SECTION_LABELS[targetSection]}`
+        : `Moved ${moved.length} tasks to ${SECTION_LABELS[targetSection]}`
     );
   }
 
@@ -656,9 +659,11 @@ export function VaultView() {
           ? "inProgress"
           : section === "upcoming"
             ? "upcoming"
-            : section === "done"
-              ? "done"
-              : "someday";
+            : section === "backlog"
+              ? "backlog"
+              : section === "done"
+                ? "done"
+                : "someday";
     const sectionTasks = filteredGrouped[key as keyof typeof filteredGrouped];
     const ids = sectionTasks.map((t) => t.id);
     const from = ids.indexOf(fromTaskId);
@@ -768,6 +773,14 @@ export function VaultView() {
   const dropHighlight =
     "ring-2 ring-accent ring-offset-2 ring-offset-background rounded-[10px]";
 
+  // Anything actively narrowing the list lights up the Filters button —
+  // including the default backlog-hidden state, so it's discoverable.
+  const filtersActive =
+    visibleSections.length < ALL_SECTION_KEYS.length ||
+    (showSize && sizeFilter.length < ALL_SIZES.length) ||
+    (showDates && (dateFrom !== undefined || dateTo !== undefined)) ||
+    (showGoals && goalFilterIds !== null);
+
   async function handleMarkDone(task: Task) {
     await markTaskDone(task);
   }
@@ -863,9 +876,19 @@ export function VaultView() {
           </button>
         <Popover>
           <PopoverTrigger asChild>
-            <button className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              className={cn(
+                "inline-flex items-center gap-1.5 text-xs transition-colors",
+                filtersActive
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
+              {filtersActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[#a855f7]" />
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="end">
@@ -1228,6 +1251,26 @@ export function VaultView() {
           <span className="text-sm font-medium">
             {selectedIds.size} selected
           </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors p-1">
+                <FolderInput className="h-4 w-4" />
+                Move
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" side="top" align="center">
+              {VAULT_SECTIONS.map(({ section, title }) => (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => handleBulkMove(section)}
+                  className="flex w-full items-center rounded-sm px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors hover:bg-accent"
+                >
+                  {title}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
           <button
             onClick={handleBulkDeleteRequest}
             className="text-muted-foreground hover:text-destructive transition-colors p-1"
