@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { createClient } from "./supabase-browser";
+import { mutate } from "./swr-helpers";
 import { applyRealtimeUpsert, applyRealtimeDelete, isLocalWrite } from "./taskCache";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { Task } from "./types";
@@ -39,10 +40,22 @@ export function useTaskRealtime() {
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
       if (data.session) await supabase.realtime.setAuth(data.session.access_token);
+      // Events that arrive while the socket is down (laptop sleep, network
+      // change, token expiry) are gone forever — the channel replays nothing.
+      // So every re-subscribe after a drop must refetch the task lists to
+      // backfill whatever was missed.
+      let hadDropped = false;
       channel = supabase
         .channel("tasks-realtime")
         .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, onChange)
-        .subscribe();
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && hadDropped) {
+            hadDropped = false;
+            mutate((k: unknown) => typeof k === "string" && k.startsWith("/api/tasks"));
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            hadDropped = true;
+          }
+        });
     })();
 
     // Keep the socket's token fresh across refreshes / sign-in.

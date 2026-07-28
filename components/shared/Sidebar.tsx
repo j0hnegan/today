@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { preload } from "swr";
-import { CircleCheck, ListTodo, Eclipse, FileText, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
+import { CircleCheck, ListTodo, Eclipse, FileText, Archive, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -31,6 +31,13 @@ export const navItems: { href: string; label: string; icon: typeof CircleCheck; 
     icon: ListTodo,
     color: "#a855f7",
     preloadKeys: ["/api/tasks"],
+  },
+  {
+    href: "/backlog",
+    label: "Backlog",
+    icon: Archive,
+    color: "#64748b",
+    preloadKeys: ["/api/tasks?destination=backlog&status=active"],
   },
   {
     href: "/docs",

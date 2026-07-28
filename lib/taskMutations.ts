@@ -35,9 +35,12 @@ export async function createTask(input: {
   tag_ids?: number[];
   tags?: Tag[];
 }): Promise<Task> {
-  // Replicate server-side auto-triage so the optimistic task lands in the right list
+  // Replicate server-side auto-triage so the optimistic task lands in the right list.
+  // Backlog is exempt from triage — a parked idea stays parked.
   let destination: Destination;
-  if (input.due_date && isDueToday(input.due_date)) {
+  if (input.destination === "backlog") {
+    destination = "backlog";
+  } else if (input.due_date && isDueToday(input.due_date)) {
     destination = "on_deck";
   } else if (input.due_date) {
     destination = input.destination === "upcoming" ? "upcoming" : "someday";
@@ -91,6 +94,12 @@ export async function createTask(input: {
     markLocalWrite(real.id);
     mutate(key, (curr: Task[] | undefined) => swapTemp(curr, tempId, real), { revalidate: false });
     mirrorAll((curr) => swapTemp(curr, tempId, real));
+    // Converge with the server: a revalidation that was already in flight when
+    // the POST landed can resolve without the new row and clobber the swap
+    // above, leaving the task invisible until the next refetch. One follow-up
+    // revalidate guarantees the list settles on the server's truth.
+    mutate(key);
+    mutate(ALL_KEY);
     invalidateDatesWithContent();
     return real;
   } catch {

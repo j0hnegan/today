@@ -186,6 +186,7 @@ export function TaskEditModal({
                   <SelectItem value="on_deck">Today</SelectItem>
                   <SelectItem value="upcoming">Upcoming</SelectItem>
                   <SelectItem value="someday">Someday</SelectItem>
+                  <SelectItem value="backlog">Backlog</SelectItem>
                 </SelectContent>
               </Select>
             </div>

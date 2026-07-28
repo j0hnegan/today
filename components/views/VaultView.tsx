@@ -87,8 +87,13 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
       return aPriority - bPriority;
     }
 
-    // Stable fallback: older tasks first (newer at bottom)
-    return (a.id as number) - (b.id as number);
+    // Stable fallback: older tasks first (newer at bottom). Optimistic rows
+    // carry a temp id of -Date.now(); ranking them by |id| (a ms timestamp,
+    // far above any real sequence id) keeps a just-added task at the bottom
+    // instead of flashing at the top until the server id arrives.
+    const aRank = (a.id as number) < 0 ? -(a.id as number) : (a.id as number);
+    const bRank = (b.id as number) < 0 ? -(b.id as number) : (b.id as number);
+    return aRank - bRank;
   });
 }
 
@@ -102,6 +107,11 @@ const VAULT_SECTIONS = [
   { key: "someday", section: "someday", title: "Someday", defaultOpen: true, alwaysShow: true },
   { key: "done", section: "done", title: "Done", defaultOpen: false, alwaysShow: false },
 ] as const;
+
+const ALL_SECTION_KEYS = VAULT_SECTIONS.map((s) => s.section) as string[];
+const SECTION_LABELS: Record<string, string> = Object.fromEntries(
+  VAULT_SECTIONS.map((s) => [s.section, s.title])
+);
 
 const ALL_SIZES: Size[] = ["xs", "small", "medium", "large"];
 const SIZE_LABELS: Record<Size, string> = {
@@ -121,7 +131,7 @@ function refreshAll() {
   );
 }
 
-async function saveFilter(key: string, value: boolean) {
+async function saveFilter(key: string, value: boolean | string) {
   await fetch("/api/settings", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -144,18 +154,22 @@ export function VaultView() {
   const [showDates, setShowDates] = useState(true);
   const [showGoals, setShowGoals] = useState(true);
 
-  // Filter values (session-only, not persisted)
+  // Filter values (persisted via settings, except the date range — a saved
+  // absolute date range would silently hide tasks weeks later)
   const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [goalFilterIds, setGoalFilterIds] = useState<number[] | null>(null);
+  const [visibleSections, setVisibleSections] = useState<string[]>([...ALL_SECTION_KEYS]);
   const [goalSearch, setGoalSearch] = useState("");
   const [goalDropdownOpen, setGoalDropdownOpen] = useState(false);
   const [dateFromOpen, setDateFromOpen] = useState(false);
   const [dateToOpen, setDateToOpen] = useState(false);
   const [sizeDropdownOpen, setSizeDropdownOpen] = useState(false);
+  const [sectionsDropdownOpen, setSectionsDropdownOpen] = useState(false);
   const goalContainerRef = useRef<HTMLDivElement>(null);
   const sizeContainerRef = useRef<HTMLDivElement>(null);
+  const sectionsContainerRef = useRef<HTMLDivElement>(null);
 
   // Per-section sort keys
   const [sortKeys, setSortKeys] = useState<Record<string, SortKey>>({
@@ -181,6 +195,12 @@ export function VaultView() {
       ) {
         setSizeDropdownOpen(false);
       }
+      if (
+        sectionsContainerRef.current &&
+        !sectionsContainerRef.current.contains(e.target as Node)
+      ) {
+        setSectionsDropdownOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -195,6 +215,28 @@ export function VaultView() {
         setShowDates(settings.vault_show_dates !== "false");
       if (settings.vault_show_goals !== undefined)
         setShowGoals(settings.vault_show_goals !== "false");
+      if (settings.vault_size_filter !== undefined) {
+        const sizes =
+          settings.vault_size_filter === "all"
+            ? [...ALL_SIZES]
+            : (settings.vault_size_filter.split(",").filter((s) => ALL_SIZES.includes(s as Size)) as Size[]);
+        if (sizes.length > 0) setSizeFilter(sizes);
+      }
+      if (settings.vault_goal_filter !== undefined) {
+        const ids = settings.vault_goal_filter
+          .split(",")
+          .map(Number)
+          .filter((n) => !isNaN(n));
+        setGoalFilterIds(
+          settings.vault_goal_filter === "all" || ids.length === 0 ? null : ids
+        );
+      }
+      if (settings.vault_visible_sections !== undefined) {
+        const sections = settings.vault_visible_sections
+          .split(",")
+          .filter((s) => ALL_SECTION_KEYS.includes(s));
+        if (sections.length > 0) setVisibleSections(sections);
+      }
     }
   }, [settings]);
 
@@ -224,8 +266,11 @@ export function VaultView() {
     const done: Task[] = [];
 
     for (const task of tasks) {
+      // Backlog lives on its own page, but done backlog tasks still count as Done
       if (task.status === "done") {
         done.push(task);
+      } else if (task.destination === "backlog") {
+        continue;
       } else if (task.destination === "on_deck") {
         onDeck.push(task);
       } else if (task.destination === "in_progress") {
@@ -323,6 +368,7 @@ export function VaultView() {
     setDateFrom(undefined);
     setDateTo(undefined);
     setGoalFilterIds(null);
+    setVisibleSections([...ALL_SECTION_KEYS]);
     setGoalSearch("");
     fetch("/api/settings", {
       method: "PATCH",
@@ -331,31 +377,49 @@ export function VaultView() {
         vault_show_size: "true",
         vault_show_dates: "true",
         vault_show_goals: "true",
+        vault_size_filter: "all",
+        vault_goal_filter: "all",
+        vault_visible_sections: ALL_SECTION_KEYS.join(","),
       }),
     }).then(() => mutate("/api/settings"));
   }
 
   // --- Size filter helpers ---
   function toggleSize(s: Size) {
-    setSizeFilter((prev) => {
-      // If all are selected, clicking one selects only that one
-      if (prev.length === ALL_SIZES.length) {
-        return [s];
-      }
-      if (prev.includes(s)) {
-        // Last one standing — deselecting it reselects all
-        if (prev.length === 1) return [...ALL_SIZES];
-        return prev.filter((x) => x !== s);
-      }
-      return [...prev, s];
-    });
+    // If all are selected, clicking one selects only that one; deselecting
+    // the last one standing reselects all
+    let next: Size[];
+    if (sizeFilter.length === ALL_SIZES.length) {
+      next = [s];
+    } else if (sizeFilter.includes(s)) {
+      next = sizeFilter.length === 1 ? [...ALL_SIZES] : sizeFilter.filter((x) => x !== s);
+    } else {
+      next = [...sizeFilter, s];
+    }
+    setSizeFilter(next);
+    saveFilter("vault_size_filter", next.length === ALL_SIZES.length ? "all" : next.join(","));
   }
 
   // --- Goal filter helpers ---
+  function updateGoalFilter(next: number[] | null) {
+    setGoalFilterIds(next);
+    saveFilter("vault_goal_filter", next === null ? "all" : next.join(","));
+  }
+
   function setGoalAll() {
-    setGoalFilterIds(null);
+    updateGoalFilter(null);
     setGoalSearch("");
     setGoalDropdownOpen(false);
+  }
+
+  // --- Section visibility helpers ---
+  function toggleSection(s: string) {
+    const next = visibleSections.includes(s)
+      ? visibleSections.filter((x) => x !== s)
+      : [...visibleSections, s];
+    if (next.length === 0) return; // hiding every section is never what you meant
+    setVisibleSections(next);
+    saveFilter("vault_visible_sections", next.join(","));
   }
 
   // --- Drag and drop handlers ---
@@ -806,6 +870,45 @@ export function VaultView() {
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="end">
             <div className="space-y-3">
+              {/* SECTIONS */}
+              <div>
+                <span className="text-sm">Sections</span>
+                <div className="relative mt-2 pb-3" ref={sectionsContainerRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSectionsDropdownOpen((p) => !p)}
+                    className="flex w-full items-center justify-between rounded-md border border-border bg-transparent px-3 py-1.5 text-xs h-8"
+                  >
+                    <span className="text-muted-foreground">
+                      {visibleSections.length === ALL_SECTION_KEYS.length
+                        ? "All sections"
+                        : `${visibleSections.length} of ${ALL_SECTION_KEYS.length}`}
+                    </span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                  {sectionsDropdownOpen && (
+                    <div className="absolute left-0 right-0 z-50 mt-1 rounded-[10px] border border-border bg-popover p-1 shadow-md" style={{ top: '32px' }}>
+                      {ALL_SECTION_KEYS.map((s) => {
+                        const active = visibleSections.includes(s);
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => toggleSection(s)}
+                            className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent"
+                          >
+                            <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                              {SECTION_LABELS[s]}
+                            </span>
+                            {active && <Check className="h-3 w-3 text-foreground" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* SIZE */}
               <div>
                 <label className="flex items-center justify-between cursor-pointer">
@@ -1019,12 +1122,12 @@ export function VaultView() {
                                   onClick={() => {
                                     if (goalFilterIds === null) {
                                       // Switching from "All" to this single goal
-                                      setGoalFilterIds([tag.id]);
+                                      updateGoalFilter([tag.id]);
                                     } else if (goalFilterIds.includes(tag.id)) {
                                       const next = goalFilterIds.filter((id) => id !== tag.id);
-                                      setGoalFilterIds(next.length === 0 ? null : next);
+                                      updateGoalFilter(next.length === 0 ? null : next);
                                     } else {
-                                      setGoalFilterIds([...goalFilterIds, tag.id]);
+                                      updateGoalFilter([...goalFilterIds, tag.id]);
                                     }
                                   }}
                                   className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-accent"
@@ -1084,7 +1187,13 @@ export function VaultView() {
 
       <div className="space-y-2">
         {VAULT_SECTIONS.map(({ key, section, title, defaultOpen, alwaysShow }) => {
-          if (filterSomeday && !alwaysShow) return null;
+          // Someday review mode overrides section visibility — it must show
+          // Someday even when the saved filter hides it.
+          if (filterSomeday) {
+            if (!alwaysShow) return null;
+          } else if (!visibleSections.includes(section)) {
+            return null;
+          }
           const tasks = filteredGrouped[key];
           return (
             <div

@@ -45,6 +45,7 @@ async function bumpOverdueDates(supabase: SupabaseClient): Promise<number> {
     .from("tasks")
     .select("id")
     .neq("status", "done")
+    .neq("destination", "backlog")
     .not("due_date", "is", null)
     .lt("due_date", today);
 

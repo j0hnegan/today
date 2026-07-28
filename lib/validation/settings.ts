@@ -14,6 +14,9 @@ export const WRITABLE_SETTINGS_KEYS = [
   "vault_show_size",
   "vault_show_dates",
   "vault_show_goals",
+  "vault_visible_sections",
+  "vault_size_filter",
+  "vault_goal_filter",
 ] as const;
 
 export type WritableSettingKey = (typeof WRITABLE_SETTINGS_KEYS)[number];
@@ -32,6 +35,9 @@ export const updateSettingsSchema = z
     vault_show_size: settingValue,
     vault_show_dates: settingValue,
     vault_show_goals: settingValue,
+    vault_visible_sections: settingValue,
+    vault_size_filter: settingValue,
+    vault_goal_filter: settingValue,
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one setting is required",

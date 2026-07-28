@@ -9,7 +9,7 @@ CREATE TABLE tasks (
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   destination TEXT NOT NULL DEFAULT 'someday'
-    CHECK (destination IN ('on_deck', 'someday', 'in_progress', 'upcoming')),
+    CHECK (destination IN ('on_deck', 'someday', 'in_progress', 'upcoming', 'backlog')),
   consequence TEXT NOT NULL DEFAULT 'none'
     CHECK (consequence IN ('none', 'soft', 'hard')),
   size TEXT NOT NULL DEFAULT 'small'

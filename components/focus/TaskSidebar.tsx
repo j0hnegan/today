@@ -85,7 +85,10 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
     }
     if (primary !== 0) return primary;
     if (sortKey !== "consequence" && aPriority !== bPriority) return aPriority - bPriority;
-    return (a.id as number) - (b.id as number);
+    // |id| ranks optimistic temp rows (-Date.now()) as newest — see VaultView.
+    const aRank = (a.id as number) < 0 ? -(a.id as number) : (a.id as number);
+    const bRank = (b.id as number) < 0 ? -(b.id as number) : (b.id as number);
+    return aRank - bRank;
   });
 }
 

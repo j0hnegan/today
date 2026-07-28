@@ -9,17 +9,19 @@ export const TODAY_KEY = "/api/tasks?destination=on_deck&status=active";
 export const IN_PROGRESS_KEY = "/api/tasks?destination=in_progress&status=active";
 export const UPCOMING_KEY = "/api/tasks?destination=upcoming&status=active";
 export const SOMEDAY_KEY = "/api/tasks?destination=someday&status=active";
+export const BACKLOG_KEY = "/api/tasks?destination=backlog&status=active";
 // Vault reads the unfiltered /api/tasks endpoint and groups locally by status
 // + destination, so every write that touches a per-filter list must mirror
 // into this cache too.
 export const ALL_KEY = "/api/tasks";
 
-const PER_DEST_KEYS = [TODAY_KEY, IN_PROGRESS_KEY, UPCOMING_KEY, SOMEDAY_KEY] as const;
+const PER_DEST_KEYS = [TODAY_KEY, IN_PROGRESS_KEY, UPCOMING_KEY, SOMEDAY_KEY, BACKLOG_KEY] as const;
 
 export function keyForDestination(dest: Destination): string {
   if (dest === "on_deck") return TODAY_KEY;
   if (dest === "in_progress") return IN_PROGRESS_KEY;
   if (dest === "upcoming") return UPCOMING_KEY;
+  if (dest === "backlog") return BACKLOG_KEY;
   return SOMEDAY_KEY;
 }
 

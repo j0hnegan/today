@@ -44,8 +44,11 @@ export async function POST(request: NextRequest) {
   } = parsed;
 
   try {
+    // Backlog is exempt from triage — a parked idea stays parked.
     let destination: string;
-    if (due_date && isDueToday(due_date)) {
+    if (reqDestination === "backlog") {
+      destination = "backlog";
+    } else if (due_date && isDueToday(due_date)) {
       destination = "on_deck";
     } else if (due_date) {
       destination = reqDestination === "upcoming" ? "upcoming" : "someday";

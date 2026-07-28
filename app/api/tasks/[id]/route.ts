@@ -63,9 +63,10 @@ export async function PATCH(
             .eq("task_id", id),
     ]);
 
-    // Auto-triage: compute in-memory from the updated row instead of re-fetching
+    // Auto-triage: compute in-memory from the updated row instead of re-fetching.
+    // Backlog is exempt — a parked idea keeps its due date without being promoted.
     let finalTask = task;
-    if ("due_date" in fields && task.status !== "done" && task.due_date) {
+    if ("due_date" in fields && task.status !== "done" && task.due_date && task.destination !== "backlog") {
       const shouldBeToday = isDueToday(task.due_date);
       if (shouldBeToday && task.destination !== "on_deck") {
         const { data: triaged } = await supabase

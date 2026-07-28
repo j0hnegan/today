@@ -67,9 +67,9 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
     "list_tasks",
     {
       description:
-        "List tasks with optional filters. Use this for 'someday', 'in progress', overdue, or date-range queries.",
+        "List tasks with optional filters. Use this for 'someday', 'upcoming', 'in progress', 'backlog', overdue, or date-range queries.",
       inputSchema: {
-        destination: z.enum(["on_deck", "someday", "in_progress"]).optional(),
+        destination: z.enum(["on_deck", "someday", "in_progress", "upcoming", "backlog"]).optional(),
         status: z.enum(["active", "done"]).optional(),
         consequence: z.enum(["none", "soft", "hard"]).optional(),
         due_after: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -143,21 +143,22 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
     "create_task",
     {
       description:
-        "Create a new task. If due_date is today or past, the task lands in Today; otherwise Someday. Pass tag_names to attach existing categories (unknown names are ignored).",
+        "Create a new task. If due_date is today or past, the task lands in Today; otherwise Someday. destination=backlog skips that triage — backlog is the parked-ideas list. Pass tag_names to attach existing categories (unknown names are ignored).",
       inputSchema: {
         title: z.string().min(1).max(200),
         description: z.string().max(10_000).optional(),
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         consequence: z.enum(["none", "soft", "hard"]).optional(),
         size: z.enum(["xs", "small", "medium", "large"]).optional(),
-        destination: z.enum(["on_deck", "someday", "in_progress"]).optional(),
+        destination: z.enum(["on_deck", "someday", "in_progress", "upcoming", "backlog"]).optional(),
         tag_names: z.array(z.string()).optional(),
       },
     },
     async (args) => {
       const dueDate = args.due_date ?? null;
       let destination: string;
-      if (dueDate && isDueToday(dueDate)) destination = "on_deck";
+      if (args.destination === "backlog") destination = "backlog";
+      else if (dueDate && isDueToday(dueDate)) destination = "on_deck";
       else if (dueDate) destination = "someday";
       else destination = args.destination ?? "someday";
 
@@ -253,7 +254,7 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         consequence: z.enum(["none", "soft", "hard"]).optional(),
         size: z.enum(["xs", "small", "medium", "large"]).optional(),
-        destination: z.enum(["on_deck", "someday", "in_progress"]).optional(),
+        destination: z.enum(["on_deck", "someday", "in_progress", "upcoming", "backlog"]).optional(),
         status: z.enum(["active", "done"]).optional(),
       },
     },
@@ -271,7 +272,7 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
           .select("destination, due_date, status")
           .eq("id", id)
           .single();
-        if (current && current.status !== "done" && current.due_date) {
+        if (current && current.status !== "done" && current.due_date && current.destination !== "backlog") {
           const correct = isDueToday(current.due_date) ? "on_deck" : "someday";
           if (current.destination !== correct) {
             await supabase.from("tasks").update({ destination: correct }).eq("id", id);

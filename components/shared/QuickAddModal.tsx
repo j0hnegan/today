@@ -30,7 +30,7 @@ import { TagInput } from "@/components/shared/TagInput";
 import { useTags } from "@/lib/hooks";
 import { createTask } from "@/lib/taskMutations";
 import { toast } from "sonner";
-import type { Consequence, Size } from "@/lib/types";
+import type { Consequence, Destination, Size } from "@/lib/types";
 
 export function QuickAddModal() {
   const [open, setOpen] = useState(false);
@@ -126,7 +126,7 @@ export function QuickAddModal() {
       due_date: dueDateStr,
       tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
       tags: resolvedTags.length > 0 ? resolvedTags : undefined,
-      ...(destination ? { destination: destination as "on_deck" | "someday" | "upcoming" } : {}),
+      ...(destination ? { destination: destination as Destination } : {}),
     }).catch(() => {
       // createTask already handles rollback + error toast
     });

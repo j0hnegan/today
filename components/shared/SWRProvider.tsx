@@ -17,10 +17,19 @@ function localStorageProvider(): Cache {
 
   const map = new Map<string, unknown>(init);
 
-  window.addEventListener("beforeunload", () => {
+  // Persist on hide as well as unload: beforeunload never fires when a
+  // backgrounded tab is killed (mobile Safari, OS memory pressure), which left
+  // localStorage holding a snapshot from whenever the tab was last closed
+  // cleanly — resurrecting long-gone tasks on the next boot.
+  const persist = () => {
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(Array.from(map.entries())));
     } catch {}
+  };
+  window.addEventListener("beforeunload", persist);
+  window.addEventListener("pagehide", persist);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") persist();
   });
 
   return map as unknown as Cache;
@@ -38,7 +47,12 @@ export function SWRProvider({ children }: { children: React.ReactNode }) {
     <SWRConfig
       value={{
         provider: provider.current,
-        revalidateOnFocus: false,
+        // Realtime keeps lists live while the socket is up, but a tab that
+        // slept through a disconnect has silently missed events. Refocus is
+        // exactly when that tab comes back — revalidate then, throttled so an
+        // active tab isn't spamming requests on every window switch.
+        revalidateOnFocus: true,
+        focusThrottleInterval: 10000,
         dedupingInterval: 2000,
         shouldRetryOnError: true,
         errorRetryCount: 3,
