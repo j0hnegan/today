@@ -1069,3 +1069,11 @@ Append-only run log. `/standup` reads the latest entries.
 - 🔎 No open `auto/*` branches to rebase; no `iterating`/`preview` features with new feedback; no `discuss` items in `ready` to pre-digest (011 already `proposed`). No merges since PR #29 → LEARNINGS unchanged.
 - ℹ️ Main clean aside from an untracked `ios/` dir (your manual work, left alone). Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
 - No push sent (nothing newly needs John; same standing items as prior runs).
+
+## 2026-07-30 #2 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped. 19 features: 16 shipped, 011 `proposed`, 018 `ready` (gated), 019 `blocked` — every `log.md` `Status:` matches the dashboard and `gh pr list`.
+- 🚧 **019 (Plaid→Chase sync) still blocked** — re-verified this run: no `PLAID_*` vars in `.env.local`, and the newest migration is still `20260726000000_add_backlog_destination.sql` (none of the 4 tables exist). **018 stays gated** behind it. No other `ready` items are eligible.
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go on Phase 1 (docs/notes search box).
+- 🔎 No open `auto/*` branches to rebase (the `005-step2b`/`014` remotes are already-merged leftovers); no `iterating`/`preview` features with new feedback; no `discuss` items in `ready` to pre-digest (011 already `proposed`). No merges since PR #29 → LEARNINGS unchanged.
+- ℹ️ Main clean aside from an untracked `ios/` dir (your manual work, left alone). Only open PR is still #13 (iOS Capacitor shell) — your manual work, not a backlog `auto/*` item, left untouched.
+- No push sent (nothing newly needs John; same standing items as prior runs).
