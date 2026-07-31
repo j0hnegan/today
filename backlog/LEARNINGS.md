@@ -26,18 +26,17 @@ Format:
 
 ## Code patterns
 
-- [2026-06-10] Persisted layout/UI state that affects first paint (e.g. a resizable
-  panel split) must be applied via a **pre-paint inline script writing a CSS var**,
-  and drag handlers should write that var directly rather than going through React
-  state — otherwise you get a flash on reload. No FOUC for restored layout. (source: PR #26 / 015)
-
 - [2026-06-07] Reads go through `lib/server-fetchers.ts` — the single source of
   truth for every read shape. A new read endpoint means editing the fetcher; the
   route and SSR follow. Don't duplicate query shapes. (source: CLAUDE.md)
 - [2026-06-07] Validate at boundaries with Zod (`lib/validation/*`); trust internal
-  code. API routes run edge except `/api/cron/*` and `/api/mcp/*` (Node). (source: CLAUDE.md)
+  code. API routes run edge except `/api/mcp/*` (Node). (source: CLAUDE.md)
 - [2026-06-07] Proper TypeScript types — no `any` unless truly unavoidable. (source: CLAUDE.md)
 - [2026-06-07] Don't add comments that restate code; only comment non-obvious "why". (source: CLAUDE.md)
+- [2026-06-10] Persisted layout/UI state that affects first paint (e.g. a resizable
+  panel split) must be applied via a **pre-paint inline script writing a CSS var**,
+  and drag handlers should write that var directly rather than going through React
+  state — otherwise you get a flash on reload. No FOUC for restored layout. (source: PR #26 / 015)
 
 ## Process preferences
 
