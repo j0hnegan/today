@@ -62,33 +62,12 @@ export interface Document {
   updated_at: string;
 }
 
-export type BlockType =
-  | "text"
-  | "heading1"
-  | "heading2"
-  | "heading3"
-  | "bullet-list"
-  | "numbered-list"
-  | "quote"
-  | "divider"
-  | "task-list"
-  | "document"
-  | "attachment"
-  | "goal"
-  | "category";
-
-export interface Block {
-  id: string;
-  type: BlockType;
-  content: string;
-  meta?: Record<string, unknown>;
-}
-
 export interface Note {
   id: number | null;
   date: string;
   content: string;
-  blocks?: Block[];
+  /** Day view's Tiptap doc JSON (null/legacy shapes possible — validate before use). */
+  blocks?: unknown;
   attachments?: Attachment[];
   created_at?: string;
   updated_at?: string;

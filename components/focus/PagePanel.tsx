@@ -127,7 +127,7 @@ export function PagePanel() {
       const res = await fetch("/api/notes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: todayStr, content: merged, blocks: null }),
+        body: JSON.stringify({ date: todayStr, content: merged }),
       });
       if (!res.ok) throw new Error();
       await mutateNote();

@@ -64,7 +64,7 @@ export function NoteEditor({ note, dateStr, noteId, mutateNote }: NoteEditorProp
     await fetch("/api/notes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: dateStr, content, blocks: null }),
+      body: JSON.stringify({ date: dateStr, content }),
     });
     mutateNote();
   }, [dateStr, mutateNote]);

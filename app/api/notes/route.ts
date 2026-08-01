@@ -38,14 +38,28 @@ export async function PATCH(request: NextRequest) {
     // Day-notes live in `documents` now (005 Step 2). `date` is UNIQUE; title
     // stays empty (display title derives from the date) and sort_order is
     // unused for day-notes.
-    const { data: note, error } = await supabase
+    //
+    // Partial update: `content` is the Notes editor's HTML, `blocks` is the
+    // Day view's Tiptap doc JSON. Each view sends only its own field, and an
+    // omitted field must never overwrite the other view's data — so update
+    // only what was provided.
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (content !== undefined) patch.content = content;
+    if (blocks !== undefined) patch.blocks = blocks;
+
+    const { data: existing } = await supabase
       .from("documents")
-      .upsert(
-        { date, title: "", sort_order: 0, content: content ?? "", blocks: blocks ?? null, updated_at: new Date().toISOString() },
-        { onConflict: "date" }
-      )
-      .select()
+      .select("id")
+      .eq("date", date)
       .single();
+
+    const query = existing
+      ? supabase.from("documents").update(patch).eq("id", existing.id)
+      : supabase
+          .from("documents")
+          .insert({ date, title: "", sort_order: 0, content: "", blocks: null, ...patch });
+
+    const { data: note, error } = await query.select().single();
     if (error) throw error;
 
     return NextResponse.json(note);

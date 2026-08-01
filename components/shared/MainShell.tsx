@@ -54,6 +54,7 @@ function showRailFor(pathname: string): boolean {
   if (pathname === "/") return false; // Today renders its own task column
   if (pathname === "/vault" || pathname.startsWith("/vault/")) return false;
   if (pathname === "/backlog") return false; // Backlog is its own task surface
+  if (pathname === "/day") return false; // Day doc is pull-based — no task list alongside
   if (pathname === "/docs" || pathname.startsWith("/docs/")) return false; // Docs is a reading surface, no task rail
   return true;
 }

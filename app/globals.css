@@ -415,3 +415,22 @@
   color: hsl(var(--muted-foreground));
   pointer-events: none;
 }
+
+/* Day view (Tiptap) */
+.day-editor-content p {
+  margin: 0.25rem 0;
+}
+
+.day-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.day-editor-content .ProseMirror-selectednode > div {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+  border-radius: 8px;
+}
