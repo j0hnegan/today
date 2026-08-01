@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-08-01 (steward — board unchanged; learnings + structure verified clean, nothing to fix; 3 standing items await John — 011 go/no-go, 018 gated, 019 blocked)_
+_Last run: 2026-08-01 (steward, 2nd run — board unchanged; learnings + structure clean, nothing to fix. New on `main`: the `/day` Today-doc view (df9f9d4, hand-shipped outside the loop, no folder — see HEALTH). 3 standing items await John — 011 go/no-go, 018 gated, 019 blocked)_
 
 <!-- DASHBOARD:END -->
 
