@@ -34,7 +34,7 @@ export function DayDocPanel() {
   }
 
   return (
-    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 md:h-full flex flex-col w-full max-w-3xl">
+    <div className="px-4 md:px-6 pt-5 md:pt-[80px] pb-6 flex flex-col w-full max-w-5xl">
       <div className="flex items-center justify-between min-h-7 mb-4">
         <h1 className="text-lg font-semibold tracking-tight truncate flex-1 min-w-0 mr-2">
           {formatDateHeader(selectedDate)}

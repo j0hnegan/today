@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor, type Editor, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
+import { CheckCircle2, CalendarX2, X } from "lucide-react";
 import { toast } from "sonner";
 import { TaskBlock } from "./TaskBlockExtension";
 import {
@@ -16,7 +17,10 @@ import { SlashMenu } from "./SlashMenu";
 import { TaskPickerModal } from "./TaskPickerModal";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { DueTodayTray } from "./DueTodayTray";
+import { DaySelectionContext } from "./selection";
 import { useTasks } from "@/lib/hooks";
+import { markTaskDone } from "@/lib/done-toast";
+import { moveToUpcoming } from "@/lib/taskMutations";
 import type { Note, Task } from "@/lib/types";
 
 const SAVE_DEBOUNCE_MS = 800;
@@ -31,6 +35,16 @@ function isTiptapDoc(blocks: unknown): blocks is TiptapDoc {
   );
 }
 
+// Task pills used to be block-level nodes; they're inline now. Wrap any
+// top-level taskBlock from an older doc in a paragraph so old docs still load.
+function normalizeDoc(blocks: unknown): TiptapDoc | "" {
+  if (!isTiptapDoc(blocks)) return "";
+  const content = (blocks.content ?? []).map((node) =>
+    node.type === "taskBlock" ? { type: "paragraph", content: [node] } : node
+  );
+  return { ...blocks, content };
+}
+
 function collectTaskIds(editor: Editor): Set<number> {
   const ids = new Set<number>();
   editor.state.doc.descendants((node) => {
@@ -41,8 +55,24 @@ function collectTaskIds(editor: Editor): Set<number> {
   return ids;
 }
 
-function taskBlockContent(ids: number[]) {
-  return ids.map((taskId) => ({ type: "taskBlock", attrs: { taskId } }));
+/** Task ids in document order (for shift-click range selection). */
+function orderedTaskIds(editor: Editor): number[] {
+  const ids: number[] = [];
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === "taskBlock" && node.attrs.taskId != null) {
+      ids.push(node.attrs.taskId as number);
+    }
+  });
+  return ids;
+}
+
+// Each task gets its own line, but as an inline pill inside a paragraph — so
+// you can click beside it and type on the same line.
+function taskParagraphs(ids: number[]) {
+  return ids.map((taskId) => ({
+    type: "paragraph",
+    content: [{ type: "taskBlock", attrs: { taskId } }],
+  }));
 }
 
 export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string; isToday: boolean }) {
@@ -55,6 +85,8 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   const [pickerOpen, setPickerOpen] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [embeddedIds, setEmbeddedIds] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const anchorRef = useRef<number | null>(null);
   const { data: allTasks } = useTasks();
 
   // Refs so the suggestion callbacks (created once) always see current state.
@@ -72,7 +104,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
     getTasks: () => tasksRef.current,
     insertTasks: (ids) => {
       if (!editorRef.current || ids.length === 0) return;
-      editorRef.current.chain().focus().insertContent(taskBlockContent(ids)).run();
+      editorRef.current.chain().focus().insertContent(taskParagraphs(ids)).run();
     },
   });
 
@@ -121,7 +153,6 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
     () => [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        // StarterKit v3 bundles link/underline; keep the doc simple.
         link: false,
       }),
       Placeholder.configure({
@@ -185,16 +216,25 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
 
   const editor = useEditor({
     extensions,
-    content: isTiptapDoc(note.blocks) ? note.blocks : "",
+    content: normalizeDoc(note.blocks),
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "day-editor-content outline-none min-h-[50vh] text-sm leading-relaxed",
+        // The big bottom padding is the Google-Docs-style runway: the doc
+        // scrolls past its content so there's always room to type or drop a
+        // pill below. Clicks in the padding land the cursor at the doc end.
+        class: "day-editor-content outline-none min-h-[60vh] pb-[35vh] text-sm leading-relaxed",
       },
     },
     onUpdate: ({ editor }) => {
       scheduleSave(editor.getJSON() as TiptapDoc);
       setEmbeddedIds(collectTaskIds(editor));
+      // Drop selections for pills that left the doc.
+      setSelected((prev) => {
+        const inDoc = collectTaskIds(editor);
+        const next = new Set(Array.from(prev).filter((id) => inDoc.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
     },
     onCreate: ({ editor }) => {
       setEmbeddedIds(collectTaskIds(editor));
@@ -206,7 +246,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   const insertAtSelection = useCallback(
     (ids: number[]) => {
       if (!editor || ids.length === 0) return;
-      editor.chain().focus().insertContent(taskBlockContent(ids)).run();
+      editor.chain().focus().insertContent(taskParagraphs(ids)).run();
     },
     [editor]
   );
@@ -217,20 +257,79 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       editor
         .chain()
         .focus("end")
-        .insertContent(taskBlockContent(tasks.map((t) => t.id)))
+        .insertContent(taskParagraphs(tasks.map((t) => t.id)))
         .run();
     },
     [editor]
   );
 
+  // --- Multi-select (shift-click range, cmd-click toggle) -----------------
+  const onPillClick = useCallback(
+    (taskId: number, e: React.MouseEvent): boolean => {
+      if (!editor) return false;
+      if (e.shiftKey && anchorRef.current !== null) {
+        const order = orderedTaskIds(editor);
+        const a = order.indexOf(anchorRef.current);
+        const b = order.indexOf(taskId);
+        if (a !== -1 && b !== -1) {
+          const range = order.slice(Math.min(a, b), Math.max(a, b) + 1);
+          setSelected(new Set(range));
+          return true;
+        }
+      }
+      // Cmd/ctrl (or first shift) click: toggle + set anchor.
+      anchorRef.current = taskId;
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(taskId)) next.delete(taskId);
+        else next.add(taskId);
+        return next;
+      });
+      return true;
+    },
+    [editor]
+  );
+
+  const selectionCtx = useMemo(() => ({ selected, onPillClick }), [selected, onPillClick]);
+
+  const clearSelection = useCallback(() => {
+    setSelected(new Set());
+    anchorRef.current = null;
+  }, []);
+
+  const selectedTasks = useMemo(
+    () => (allTasks ?? []).filter((t) => selected.has(t.id)),
+    [allTasks, selected]
+  );
+
+  const removeSelectedFromDoc = useCallback(() => {
+    if (!editor) return;
+    const ranges: { from: number; to: number }[] = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === "taskBlock" && selected.has(node.attrs.taskId as number)) {
+        ranges.push({ from: pos, to: pos + node.nodeSize });
+      }
+    });
+    let chain = editor.chain().focus();
+    for (const r of ranges.reverse()) chain = chain.deleteRange(r);
+    chain.run();
+    clearSelection();
+  }, [editor, selected, clearSelection]);
+
   return (
-    <>
+    <DaySelectionContext.Provider value={selectionCtx}>
       {isToday && (
         <DueTodayTray todayStr={dateStr} embeddedIds={embeddedIds} onPull={appendToDoc} />
       )}
 
-      <div className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 min-h-[55vh] md:min-h-0 md:overflow-y-auto p-4 md:p-6">
-        <EditorContent editor={editor} className="flex-1" />
+      <div
+        className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 p-4 md:p-6"
+        onClick={(e) => {
+          // Clicking the empty area below the editor drops the cursor at the end.
+          if (e.target === e.currentTarget) editor?.chain().focus("end").run();
+        }}
+      >
+        <EditorContent editor={editor} />
       </div>
 
       {slashState && (
@@ -241,6 +340,53 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
           onSelect={(item) => slashState.command(item)}
           onHover={setSlashIndex}
         />
+      )}
+
+      {/* Floating bulk-action bar for multi-selected pills */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-border bg-popover px-3 py-1.5 shadow-lg">
+          <span className="text-xs text-muted-foreground pr-2">
+            {selected.size} selected
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              selectedTasks.forEach((t) => void markTaskDone(t));
+              clearSelection();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs hover:bg-accent transition-colors"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Done
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              selectedTasks.forEach((t) => void moveToUpcoming(t));
+              clearSelection();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs hover:bg-accent transition-colors"
+          >
+            <CalendarX2 className="h-3.5 w-3.5" />
+            Not today
+          </button>
+          <button
+            type="button"
+            onClick={removeSelectedFromDoc}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs hover:bg-accent transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+            Remove from doc
+          </button>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="ml-1 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Clear selection"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
 
       <TaskPickerModal
@@ -258,6 +404,6 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
         onClose={() => setNewTaskOpen(false)}
         onCreated={(task) => insertAtSelection([task.id])}
       />
-    </>
+    </DaySelectionContext.Provider>
   );
 }

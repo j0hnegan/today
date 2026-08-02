@@ -419,6 +419,7 @@
 /* Day view (Tiptap) */
 .day-editor-content p {
   margin: 0.25rem 0;
+  line-height: 1.8;
 }
 
 .day-editor-content p.is-editor-empty:first-child::before {
@@ -429,8 +430,12 @@
   pointer-events: none;
 }
 
-.day-editor-content .ProseMirror-selectednode > div {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 1px;
-  border-radius: 8px;
+/* Node selection carries no useful affordance for pills (multi-select has its
+   own ring) — hide the default outline/selection paint. */
+.day-editor-content .ProseMirror-selectednode {
+  outline: none;
+}
+.day-editor-content span[data-task-block].ProseMirror-selectednode,
+.day-editor-content .ProseMirror-selectednode > span {
+  background: transparent;
 }
