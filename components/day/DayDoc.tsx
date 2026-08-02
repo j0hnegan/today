@@ -18,9 +18,11 @@ import { TaskPickerModal } from "./TaskPickerModal";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { DueTodayTray } from "./DueTodayTray";
 import { DaySelectionContext } from "./selection";
+import { useDayDocRealtime, type DayDocChange } from "./useDayDocRealtime";
 import { useTasks } from "@/lib/hooks";
 import { markTaskDone } from "@/lib/done-toast";
 import { moveToUpcoming } from "@/lib/taskMutations";
+import { mutate } from "@/lib/swr-helpers";
 import type { Note, Task } from "@/lib/types";
 
 const SAVE_DEBOUNCE_MS = 800;
@@ -111,6 +113,10 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   // --- Saving -------------------------------------------------------------
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<TiptapDoc | null>(null);
+  // updated_at of our last successful save — realtime events at or before
+  // this stamp are our own echoes and must not round-trip into the editor.
+  const lastSavedAtRef = useRef<string>(note.updated_at ?? "");
+  const lastEditAtRef = useRef(0);
 
   const persist = useCallback(
     async (doc: TiptapDoc) => {
@@ -124,6 +130,10 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
           keepalive: true,
         });
         if (!res.ok) throw new Error();
+        const row = (await res.json()) as { updated_at?: string };
+        if (row.updated_at && row.updated_at > lastSavedAtRef.current) {
+          lastSavedAtRef.current = row.updated_at;
+        }
       } catch {
         toast.error("Failed to save");
       }
@@ -220,6 +230,64 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   // Sync content that changed server-side (or arrived after a stale SWR
   // cache seeded the editor). Without this, returning to the Day view could
   // load an old cached doc and the next autosave would clobber newer notes.
+  // --- Live sync (other tabs / devices / MCP) -----------------------------
+  // Remote changes apply as soon as the editor is quiet: no pending save and
+  // no keystroke in the last 1.5s. While the user is mid-typing the change
+  // queues and retries — their in-flight save supersedes older remote state
+  // via the updated_at guard.
+  const remoteQueueRef = useRef<DayDocChange | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const tryApplyRemote = useCallback(() => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    const change = remoteQueueRef.current;
+    const ed = editorRef.current;
+    if (!change || !ed || ed.isDestroyed) return;
+    if (change.updated_at <= lastSavedAtRef.current) {
+      remoteQueueRef.current = null;
+      return;
+    }
+    const busy = pendingRef.current !== null || Date.now() - lastEditAtRef.current < 1500;
+    if (busy) {
+      retryTimerRef.current = setTimeout(tryApplyRemote, 1000);
+      return;
+    }
+    remoteQueueRef.current = null;
+    const incoming = normalizeDoc(change.blocks);
+    if (incoming === "") return;
+    if (JSON.stringify(incoming) !== JSON.stringify(ed.getJSON())) {
+      const sel = ed.state.selection.from;
+      ed.commands.setContent(incoming);
+      if (ed.isFocused) {
+        ed.commands.setTextSelection(Math.min(sel, ed.state.doc.content.size));
+      }
+      setEmbeddedIds(collectTaskIds(ed));
+    }
+    lastSavedAtRef.current = change.updated_at;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, []);
+
+  useDayDocRealtime(dateStr, (change) => {
+    if (change.updated_at <= lastSavedAtRef.current) return; // own echo / stale
+    remoteQueueRef.current = change;
+    // Keep the SWR cache in step so a remount doesn't resurrect old content.
+    mutate(
+      `/api/notes?date=${dateStr}`,
+      (curr: Note | undefined) =>
+        curr ? { ...curr, blocks: change.blocks, updated_at: change.updated_at } : curr,
+      { revalidate: false }
+    );
+    tryApplyRemote();
+  });
+
   const noteBlocks = note.blocks;
   useEffect(() => {
     const ed = editorRef.current;
@@ -247,6 +315,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       },
     },
     onUpdate: ({ editor }) => {
+      lastEditAtRef.current = Date.now();
       scheduleSave(editor.getJSON() as TiptapDoc);
       setEmbeddedIds(collectTaskIds(editor));
       // Drop selections for pills that left the doc.
