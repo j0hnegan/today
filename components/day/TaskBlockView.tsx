@@ -74,8 +74,14 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
             onPillClick(task.id, e);
           }
         }}
+        onClick={(e) => {
+          // Click anywhere on the pill opens the edit modal — except the
+          // check (stops its own propagation) and the hover menu.
+          if ((e.target as HTMLElement).closest("[data-no-open]")) return;
+          setEditOpen(true);
+        }}
         className={cn(
-          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 px-2.5 py-0.5 cursor-grab active:cursor-grabbing",
+          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0.5 cursor-pointer active:cursor-grabbing",
           isDone && "opacity-60",
           isSelected && "ring-2 ring-ring border-transparent"
         )}
@@ -85,35 +91,32 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           isDone={isDone}
           onMarkDone={(t) => void markTaskDone(t)}
           onLongPress={(t) => void (inProgress ? moveToToday(t) : moveToInProgress(t))}
-          className="flex-shrink-0"
+          className="flex-shrink-0 !text-green-400"
         />
 
-        <button
-          type="button"
-          onClick={() => setEditOpen(true)}
+        <span
           className={cn(
-            "min-w-0 truncate text-left text-sm hover:underline underline-offset-2",
+            "min-w-0 truncate text-sm",
             isDone && "line-through text-muted-foreground"
           )}
-          title="Open task"
         >
           {task.title}
-        </button>
+        </span>
 
         {task.due_date && (
-          <button
-            type="button"
-            onClick={() => setDueOpen(true)}
-            className="flex-shrink-0 text-xs font-mono text-muted-foreground hover:text-foreground"
+          <span
+            className="flex-shrink-0 text-xs font-mono text-muted-foreground"
             style={{ letterSpacing: "-0.25px" }}
-            title="Change due date"
           >
             {formatDate(task.due_date)}
-          </button>
+          </span>
         )}
 
         {/* Hover mini-menu: floats above the pill's top-right corner. */}
-        <span className="absolute -top-6 right-0 z-20 hidden group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md">
+        <span
+          data-no-open
+          className="absolute -top-6 right-0 z-20 hidden group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md"
+        >
           <Popover open={dueOpen} onOpenChange={setDueOpen}>
             <PopoverTrigger asChild>
               <button

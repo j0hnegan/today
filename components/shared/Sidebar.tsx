@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { preload } from "swr";
-import { CircleCheck, ListTodo, Eclipse, FileText, Archive, NotebookPen, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
+import { CircleCheck, ListTodo, Eclipse, FileText, Archive, PanelLeftClose, PanelLeft, Sun, Moon, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -16,20 +16,10 @@ import type { User } from "@supabase/supabase-js";
 // the click registers ~100ms later.
 export const navItems: { href: string; label: string; icon: typeof CircleCheck; color: string; preloadKeys: string[] }[] = [
   {
-    href: "/",
+    href: "/day",
     label: "Today",
     icon: CircleCheck,
     color: "#22c55e",
-    preloadKeys: [
-      "/api/tasks?destination=on_deck&status=active",
-      "/api/tasks?destination=in_progress&status=active",
-    ],
-  },
-  {
-    href: "/day",
-    label: "Day",
-    icon: NotebookPen,
-    color: "#f59e0b",
     preloadKeys: ["/api/tasks"],
   },
   {

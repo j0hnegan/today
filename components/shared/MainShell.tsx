@@ -51,7 +51,8 @@ const ENERGY_OPTIONS: {
 ];
 
 function showRailFor(pathname: string): boolean {
-  if (pathname === "/") return false; // Today renders its own task column
+  if (pathname === "/") return false; // redirects to /day
+  if (pathname === "/classic") return false; // classic Today renders its own task column
   if (pathname === "/vault" || pathname.startsWith("/vault/")) return false;
   if (pathname === "/backlog") return false; // Backlog is its own task surface
   if (pathname === "/day") return false; // Day doc is pull-based — no task list alongside
