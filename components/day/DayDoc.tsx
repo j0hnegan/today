@@ -119,6 +119,9 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date: dateStr, blocks: doc }),
+          // The unmount flush fires while navigating away; keepalive lets the
+          // request outlive the page transition instead of being aborted.
+          keepalive: true,
         });
         if (!res.ok) throw new Error();
       } catch {
@@ -213,6 +216,23 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
     ],
     []
   );
+
+  // Sync content that changed server-side (or arrived after a stale SWR
+  // cache seeded the editor). Without this, returning to the Day view could
+  // load an old cached doc and the next autosave would clobber newer notes.
+  const noteBlocks = note.blocks;
+  useEffect(() => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return;
+    // Never yank content out from under active typing or an unsaved edit.
+    if (ed.isFocused || pendingRef.current) return;
+    const incoming = normalizeDoc(noteBlocks);
+    if (incoming === "") return;
+    if (JSON.stringify(incoming) !== JSON.stringify(ed.getJSON())) {
+      ed.commands.setContent(incoming);
+      setEmbeddedIds(collectTaskIds(ed));
+    }
+  }, [noteBlocks]);
 
   const editor = useEditor({
     extensions,

@@ -430,6 +430,13 @@
   pointer-events: none;
 }
 
+/* A pill that starts a line gets pulled left so the text inside it (past the
+   border + padding) lines up with the paragraph text above/below, instead of
+   looking indented. */
+.day-editor-content p > .react-renderer:first-child {
+  margin-left: -12px;
+}
+
 /* Node selection carries no useful affordance for pills (multi-select has its
    own ring) — hide the default outline/selection paint. */
 .day-editor-content .ProseMirror-selectednode {

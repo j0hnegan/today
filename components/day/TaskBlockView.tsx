@@ -8,16 +8,16 @@ import { useTasks, useTags } from "@/lib/hooks";
 import { markTaskDone } from "@/lib/done-toast";
 import { deleteTask, moveToInProgress, moveToToday, patchTask } from "@/lib/taskMutations";
 import { LongPressCheck } from "@/components/shared/LongPressCheck";
-import { TagBadge } from "@/components/shared/TagBadge";
 import { TaskEditModal } from "@/components/vault/TaskEditModal";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useDaySelection } from "./selection";
 import { cn } from "@/lib/utils";
 
-function formatDue(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+// M/D, same as the vault's task rows.
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00");
+  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 function toDateStr(d: Date): string {
@@ -36,10 +36,10 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
 
   if (!task) {
     return (
-      <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5">
+      <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-1">
         <span
           contentEditable={false}
-          className="group inline-flex items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground"
+          className="group inline-flex items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground"
         >
           {allTasks === undefined ? "Loading task…" : "Task no longer exists"}
           <button
@@ -60,7 +60,9 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const isSelected = selected.has(task.id);
 
   return (
-    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 my-0.5">
+    // Negative vertical margin keeps the pill's line box near text height, so
+    // the caret next to a pill stays text-sized instead of stretching.
+    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-1">
       <span
         contentEditable={false}
         draggable
@@ -73,7 +75,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           }
         }}
         className={cn(
-          "group inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-background/50 px-2.5 py-1 cursor-grab active:cursor-grabbing",
+          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 px-2.5 py-0.5 cursor-grab active:cursor-grabbing",
           isDone && "opacity-60",
           isSelected && "ring-2 ring-ring border-transparent"
         )}
@@ -98,83 +100,80 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           {task.title}
         </button>
 
-        {inProgress && !isDone && (
-          <span className="flex-shrink-0 text-[10px] font-medium text-amber-500">
-            In Progress
-          </span>
+        {task.due_date && (
+          <button
+            type="button"
+            onClick={() => setDueOpen(true)}
+            className="flex-shrink-0 text-xs font-mono text-muted-foreground hover:text-foreground"
+            style={{ letterSpacing: "-0.25px" }}
+            title="Change due date"
+          >
+            {formatDate(task.due_date)}
+          </button>
         )}
 
-        {task.tags?.map((tag) => (
-          <span key={tag.id} className="flex-shrink-0 hidden sm:inline-flex">
-            <TagBadge tag={tag} />
-          </span>
-        ))}
-
-        <Popover open={dueOpen} onOpenChange={setDueOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "flex-shrink-0 inline-flex items-center gap-1 rounded px-1 py-0.5 text-[11px] transition-colors hover:bg-accent/50",
-                task.due_date
-                  ? "text-muted-foreground"
-                  : "text-muted-foreground/40 opacity-0 group-hover:opacity-100"
-              )}
-              title="Due date"
-            >
-              <CalendarIcon className="h-3 w-3" />
-              {task.due_date && formatDue(task.due_date)}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
-              onSelect={(day) => {
-                void patchTask(task, { due_date: day ? toDateStr(day) : null });
-                setDueOpen(false);
-              }}
-            />
-            {task.due_date && (
+        {/* Hover mini-menu: floats above the pill's top-right corner. */}
+        <span className="absolute -top-6 right-0 z-20 hidden group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md">
+          <Popover open={dueOpen} onOpenChange={setDueOpen}>
+            <PopoverTrigger asChild>
               <button
                 type="button"
-                className="w-full border-t border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  void patchTask(task, { due_date: null });
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                title="Due date"
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
+                onSelect={(day) => {
+                  void patchTask(task, { due_date: day ? toDateStr(day) : null });
                   setDueOpen(false);
                 }}
-              >
-                Clear due date
-              </button>
-            )}
-          </PopoverContent>
-        </Popover>
+              />
+              {task.due_date && (
+                <button
+                  type="button"
+                  className="w-full border-t border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    void patchTask(task, { due_date: null });
+                    setDueOpen(false);
+                  }}
+                >
+                  Clear due date
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
 
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              await deleteTask(task);
-              deleteNode();
-              toast.success("Task deleted");
-            } catch {
-              /* deleteTask already toasted */
-            }
-          }}
-          className="flex-shrink-0 p-0.5 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-accent/50 transition-opacity"
-          title="Delete task from vault"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await deleteTask(task);
+                deleteNode();
+                toast.success("Task deleted");
+              } catch {
+                /* deleteTask already toasted */
+              }
+            }}
+            className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent/50"
+            title="Delete task from vault"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
 
-        <button
-          type="button"
-          onClick={deleteNode}
-          className="flex-shrink-0 p-0.5 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent/50 transition-opacity"
-          title="Remove from doc (task is not deleted)"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+          <button
+            type="button"
+            onClick={deleteNode}
+            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            title="Remove from doc (task is not deleted)"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </span>
       </span>
 
       {editOpen && (
