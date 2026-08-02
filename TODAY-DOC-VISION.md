@@ -86,6 +86,10 @@ not inventing work.
 - The doc knows which notes sit under which task — structure the MCP can use.
 
 ### Search intelligence
-v1 search is substring across title/description/tags. If "migraine" needs to
-find "headache", that's embeddings or an LLM call — decide later if substring
-isn't enough. Saved searches / pull-in-a-whole-tag are cheap middle steps.
+v1 search is substring across title/description/tags. Shipped next: a hidden
+`keywords text[]` column on tasks (migration `20260801000000_add_task_keywords.sql`)
+searched by the picker, the slash menu, and MCP `search_tasks`. An agent fills
+keywords via MCP `update_task` — e.g. "get Tylenol" keyworded {migraine, health} —
+so search finds tasks by meaning without embeddings. The enrichment routine
+itself runs as a scheduled Claude session against the MCP (not in-app; the app
+has no Anthropic API key). True semantic search stays a later option.

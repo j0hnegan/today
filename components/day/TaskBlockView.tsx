@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { useTasks, useTags } from "@/lib/hooks";
 import { markTaskDone } from "@/lib/done-toast";
-import { moveToInProgress, moveToToday, patchTask } from "@/lib/taskMutations";
+import { deleteTask, moveToInProgress, moveToToday, patchTask } from "@/lib/taskMutations";
 import { LongPressCheck } from "@/components/shared/LongPressCheck";
 import { TagBadge } from "@/components/shared/TagBadge";
 import { TaskEditModal } from "@/components/vault/TaskEditModal";
@@ -62,7 +63,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
       <div
         contentEditable={false}
         className={cn(
-          "group flex items-center gap-2.5 rounded-md border border-border bg-background/50 px-3 py-2",
+          "group inline-flex w-fit max-w-full items-center gap-2.5 rounded-md border border-border bg-background/50 px-3 py-2",
           isDone && "opacity-60"
         )}
       >
@@ -78,7 +79,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           type="button"
           onClick={() => setEditOpen(true)}
           className={cn(
-            "flex-1 min-w-0 truncate text-left text-sm hover:underline underline-offset-2",
+            "min-w-0 truncate text-left text-sm hover:underline underline-offset-2",
             isDone && "line-through text-muted-foreground"
           )}
           title="Open task"
@@ -135,6 +136,23 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
             )}
           </PopoverContent>
         </Popover>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await deleteTask(task);
+              deleteNode();
+              toast.success("Task deleted");
+            } catch {
+              /* deleteTask already toasted */
+            }
+          }}
+          className="flex-shrink-0 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-accent/50 transition-opacity"
+          title="Delete task from vault"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
 
         <button
           type="button"

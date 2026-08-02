@@ -16,6 +16,7 @@ import { SlashMenu } from "./SlashMenu";
 import { TaskPickerModal } from "./TaskPickerModal";
 import { NewTaskDialog } from "./NewTaskDialog";
 import { DueTodayTray } from "./DueTodayTray";
+import { useTasks } from "@/lib/hooks";
 import type { Note, Task } from "@/lib/types";
 
 const SAVE_DEBOUNCE_MS = 800;
@@ -54,16 +55,25 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   const [pickerOpen, setPickerOpen] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [embeddedIds, setEmbeddedIds] = useState<Set<number>>(new Set());
+  const { data: allTasks } = useTasks();
 
   // Refs so the suggestion callbacks (created once) always see current state.
   const slashStateRef = useRef(slashState);
   slashStateRef.current = slashState;
   const slashIndexRef = useRef(slashIndex);
   slashIndexRef.current = slashIndex;
+  const tasksRef = useRef<Task[]>([]);
+  tasksRef.current = allTasks ?? [];
 
+  const editorRef = useRef<Editor | null>(null);
   const ctxRef = useRef<SlashContext>({
     openPicker: () => setPickerOpen(true),
     openNewTask: () => setNewTaskOpen(true),
+    getTasks: () => tasksRef.current,
+    insertTasks: (ids) => {
+      if (!editorRef.current || ids.length === 0) return;
+      editorRef.current.chain().focus().insertContent(taskBlockContent(ids)).run();
+    },
   });
 
   // --- Saving -------------------------------------------------------------
@@ -121,7 +131,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       SlashCommand.configure({
         suggestion: {
           char: "/",
-          items: ({ query }: { query: string }) => filterSlashItems(query),
+          items: ({ query }: { query: string }) => filterSlashItems(query, ctxRef.current),
           command: ({ editor, range, props }) =>
             props.run(editor, range, ctxRef.current),
           render: () => ({
@@ -190,6 +200,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       setEmbeddedIds(collectTaskIds(editor));
     },
   });
+  editorRef.current = editor;
 
   // --- Task insertion -----------------------------------------------------
   const insertAtSelection = useCallback(

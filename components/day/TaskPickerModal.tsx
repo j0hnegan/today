@@ -29,12 +29,13 @@ function formatDue(dateStr: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Search matches title, description, AND tag names — so "migraine" finds a
-// task named "book acupuncture" if it's described or tagged accordingly.
+// Search matches title, description, tag names, AND hidden keywords — so
+// "migraine" finds "get Tylenol" once the enrichment routine keyworded it.
 function matches(task: Task, q: string): boolean {
   if (task.title.toLowerCase().includes(q)) return true;
   if (task.description?.toLowerCase().includes(q)) return true;
-  return (task.tags ?? []).some((t) => t.name.toLowerCase().includes(q));
+  if ((task.tags ?? []).some((t) => t.name.toLowerCase().includes(q))) return true;
+  return (task.keywords ?? []).some((k) => k.toLowerCase().includes(q));
 }
 
 export function TaskPickerModal({

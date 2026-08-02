@@ -49,6 +49,8 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags?: Tag[];
+  /** Hidden search terms (auto-enriched via MCP) — surfaced by search, never shown as chips. */
+  keywords?: string[];
 }
 
 export interface Document {

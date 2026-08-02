@@ -45,6 +45,7 @@ export const updateTaskSchema = z
     sort_order: z.number().int().optional(),
     tag_ids: tagIds.optional(),
     category_ids: tagIds.optional(),
+    keywords: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
   })
   .refine(
     (v) => Object.keys(v).length > 0,

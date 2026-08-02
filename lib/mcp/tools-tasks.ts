@@ -109,32 +109,49 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
   server.registerTool(
     "search_tasks",
     {
-      description: "Substring search active tasks by title (case-insensitive).",
+      description:
+        "Substring search active tasks by title or hidden keywords (case-insensitive). Keywords are auto-enrichment terms — e.g. a task 'get Tylenol' keyworded 'migraine' matches a search for 'migraine'.",
       inputSchema: {
         query: z.string().min(1),
       },
     },
     async ({ query }) => {
-      const { data: tasks, error } = await supabase
+      const { data: rows, error } = await supabase
         .from("tasks")
-        .select("id, title, destination, consequence, due_date")
+        .select("*")
         .eq("status", "active")
-        .ilike("title", `%${query}%`)
-        .limit(50);
+        .limit(500);
       if (error) throw new Error(`DB error: ${error.message}`);
+
+      const q = query.toLowerCase();
+      const tasks = (rows ?? [])
+        .filter(
+          (t) =>
+            (t.title as string).toLowerCase().includes(q) ||
+            ((t.keywords as string[] | null) ?? []).some((k) => k.toLowerCase().includes(q))
+        )
+        .slice(0, 50)
+        .map((t) => ({
+          id: t.id,
+          title: t.title,
+          destination: t.destination,
+          consequence: t.consequence,
+          due_date: t.due_date,
+          keywords: t.keywords ?? [],
+        }));
 
       return {
         content: [
           {
             type: "text",
             text:
-              (tasks ?? []).length === 0
+              tasks.length === 0
                 ? `No active tasks match "${query}".`
-                : `${tasks!.length} match(es):\n` +
-                  tasks!.map((t) => `- [${t.id}] ${summaryLine(t)}`).join("\n"),
+                : `${tasks.length} match(es):\n` +
+                  tasks.map((t) => `- [${t.id}] ${summaryLine(t)}`).join("\n"),
           },
         ],
-        structuredContent: { tasks: tasks ?? [] },
+        structuredContent: { tasks },
       };
     }
   );
@@ -246,11 +263,12 @@ export function registerTaskTools(server: McpServer, supabase: SupabaseClient) {
     "update_task",
     {
       description:
-        "Update fields on a task. Only the fields you pass are changed. Changing due_date re-triages destination automatically.",
+        "Update fields on a task. Only the fields you pass are changed. Changing due_date re-triages destination automatically. `keywords` are hidden search-enrichment terms (not user-visible tags): set related concepts a search should match, e.g. ['migraine', 'health'] on a task titled 'get Tylenol'. Pass the full replacement list.",
       inputSchema: {
         id: z.number().int().positive(),
         title: z.string().min(1).max(200).optional(),
         description: z.string().max(10_000).optional(),
+        keywords: z.array(z.string().min(1).max(40)).max(20).optional(),
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         consequence: z.enum(["none", "soft", "hard"]).optional(),
         size: z.enum(["xs", "small", "medium", "large"]).optional(),
