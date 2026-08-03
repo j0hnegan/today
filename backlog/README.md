@@ -42,7 +42,7 @@ folder is the baton; loop and live session pass it back and forth.
 | 018 | Finance tab — two panels (upcoming + monthly costs) + forecast modal (blocked by 019) | review | 📥 ready (gated on 019) | — |
 | 019 | Plaid → Chase sync — balance, transactions, recurring streams (builds first) | review | 🚧 blocked (needs migration + Plaid setup) | — |
 
-_Last run: 2026-08-02 (steward — board unchanged; learnings + structure clean, nothing to fix. On `main`: 5 more hand-shipped commits — **the Day doc is now the Today view** (`/` → `/day`, classic two-panel view stashed at `/classic`), plus realtime doc sync, keyword search and 2 hand-run migrations. Still no backlog folder behind the app's largest surface, and `CLAUDE.md` now documents the retired view — see HEALTH. 3 standing items await John — 011 go/no-go, 018 gated, 019 blocked)_
+_Last run: 2026-08-03 (steward — board unchanged; learnings + structure clean, nothing to fix. On `main`: 4 more hand-shipped commits — day-doc carry-over on first open, cursor-following hover menu, pill selection sweep, and a Tags section in the task modal. Keyword enrichment now runs as its own 7am routine. `CLAUDE.md` still documents the retired Today view — 3rd run flagged, see HEALTH. 3 standing items await John — 011 go/no-go, 018 gated, 019 blocked)_
 
 <!-- DASHBOARD:END -->
 
