@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { CalendarIcon, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,20 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const { selected, onPillClick } = useDaySelection();
   const [editOpen, setEditOpen] = useState(false);
   const [dueOpen, setDueOpen] = useState(false);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const menuRef = useRef<HTMLSpanElement>(null);
+
+  // The hover menu rides above the cursor instead of pinning to the pill's
+  // far corner — on a long pill you'd otherwise have to travel for it.
+  function followCursor(e: React.MouseEvent) {
+    const pill = pillRef.current;
+    const menu = menuRef.current;
+    if (!pill || !menu) return;
+    const rect = pill.getBoundingClientRect();
+    const half = (menu.offsetWidth || 90) / 2;
+    const x = Math.max(half, Math.min(e.clientX - rect.left, rect.width - half));
+    menu.style.left = `${x}px`;
+  }
 
   const task = allTasks?.find((t) => t.id === taskId);
 
@@ -66,9 +80,11 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
     // margin keeps the line box from growing.
     <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-0.5">
       <span
+        ref={pillRef}
         contentEditable={false}
         draggable
         data-drag-handle
+        onMouseMove={followCursor}
         onClickCapture={(e) => {
           if (e.shiftKey || e.metaKey || e.ctrlKey) {
             e.preventDefault();
@@ -114,10 +130,12 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           </span>
         )}
 
-        {/* Hover mini-menu: floats above the pill's top-right corner. */}
+        {/* Hover mini-menu: floats above the pill and follows the cursor. */}
         <span
+          ref={menuRef}
           data-no-open
-          className="absolute -top-6 right-0 z-20 hidden group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md"
+          className="absolute -top-7 z-20 hidden -translate-x-1/2 group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md"
+          style={{ left: "50%" }}
         >
           <Popover open={dueOpen} onOpenChange={setDueOpen}>
             <PopoverTrigger asChild>

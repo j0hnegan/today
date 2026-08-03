@@ -422,6 +422,17 @@
   line-height: 1.8;
 }
 
+/* ProseMirror inserts an invisible separator <img> after inline node views;
+   its intrinsic broken-image height inflates pill lines (~34px vs ~19px for
+   text). Zero it so pill lines match text lines. */
+.day-editor-content img.ProseMirror-separator {
+  display: inline !important;
+  width: 0 !important;
+  height: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
 .day-editor-content p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: hsl(var(--muted-foreground));
