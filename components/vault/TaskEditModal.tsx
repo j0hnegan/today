@@ -24,7 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Zap, CalendarIcon, Trash2, X } from "lucide-react";
+import { Zap, CalendarIcon, ChevronDown, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TagInput } from "@/components/shared/TagInput";
 import { FileUpload } from "@/components/shared/FileUpload";
@@ -69,6 +69,9 @@ export function TaskEditModal({
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
     task.tags?.map((t) => t.id) ?? []
   );
+  const [keywords, setKeywords] = useState<string[]>(task.keywords ?? []);
+  const [keywordsOpen, setKeywordsOpen] = useState(false);
+  const [keywordInput, setKeywordInput] = useState("");
   const [destination, setDestination] = useState<Destination>(task.destination);
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -87,9 +90,10 @@ export function TaskEditModal({
       size !== task.size ||
       destination !== task.destination ||
       currentDue !== initialDue ||
-      currentTagIds !== initialTagIds
+      currentTagIds !== initialTagIds ||
+      keywords.join("\n") !== (task.keywords ?? []).join("\n")
     );
-  }, [title, description, consequence, size, destination, dueDate, selectedTagIds, task]);
+  }, [title, description, consequence, size, destination, dueDate, selectedTagIds, keywords, task]);
 
   function refreshAll() {
     mutate(
@@ -115,6 +119,7 @@ export function TaskEditModal({
           destination,
           due_date: dueDate ? dueDate.toISOString().split("T")[0] : null,
           tag_ids: selectedTagIds,
+          keywords,
         }),
       });
       if (!res.ok) throw new Error("API error");
@@ -280,6 +285,64 @@ export function TaskEditModal({
             onTagsChange={setSelectedTagIds}
             onTagCreated={() => mutate("/api/tags")}
           />
+
+          {/* Search tags (keywords): hidden terms that make search find this
+              task by meaning. Filled by the enrichment agent, editable here. */}
+          <div className="rounded-md border border-border">
+            <button
+              type="button"
+              onClick={() => setKeywordsOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="font-mono">
+                Tags{keywords.length > 0 && ` (${keywords.length})`}
+              </span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", keywordsOpen && "rotate-180")}
+              />
+            </button>
+            {keywordsOpen && (
+              <div className="border-t border-border px-3 py-2.5 space-y-2">
+                {keywords.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="inline-flex items-center gap-1 rounded-full bg-accent/60 px-2 py-0.5 text-[11px]"
+                      >
+                        {kw}
+                        <button
+                          type="button"
+                          onClick={() => setKeywords((prev) => prev.filter((k) => k !== kw))}
+                          className="rounded-full p-0.5 -mr-0.5 hover:bg-accent"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    No tags yet — these power search (e.g. &quot;migraine&quot; finds &quot;get
+                    Tylenol&quot;). The enrichment agent fills them in, or add your own.
+                  </p>
+                )}
+                <Input
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter" && e.key !== ",") return;
+                    e.preventDefault();
+                    const kw = keywordInput.trim().toLowerCase();
+                    if (kw && !keywords.includes(kw)) setKeywords((prev) => [...prev, kw]);
+                    setKeywordInput("");
+                  }}
+                  placeholder="Add a tag, press Enter"
+                  className="h-7 text-xs"
+                />
+              </div>
+            )}
+          </div>
 
           {/* Attachments */}
           <FileUpload

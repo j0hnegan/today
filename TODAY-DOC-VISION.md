@@ -85,6 +85,17 @@ not inventing work.
   (EditorContextMenu already has a similar flow to docs).
 - The doc knows which notes sit under which task — structure the MCP can use.
 
+### Tags (keywords) — remaining ideas
+Shipped: keywords column + search, hand-editing in the task modal's collapsed
+Tags section, and a daily scheduled agent (hush-keyword-enrichment, 7am) that
+fills empty keyword lists via Supabase REST. Still open:
+- A browse-all-tags view alongside Categories and Goals under My Tasks
+  (taxonomy question: categories vs goals vs keywords needs untangling).
+- More /add picker filters: due date, goal — search + destination + category
+  chips exist today.
+- Maybe someday: highlight text near a pill → append to task description
+  (John doubts he'd use it; descriptions barely used at all).
+
 ### Search intelligence
 v1 search is substring across title/description/tags. Shipped next: a hidden
 `keywords text[]` column on tasks (migration `20260801000000_add_task_keywords.sql`)
