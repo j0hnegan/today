@@ -1,5 +1,7 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { Plugin } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { TaskBlockView } from "./TaskBlockView";
 
 // An embedded task: a live reference to a vault task by id. The doc stores
@@ -42,5 +44,31 @@ export const TaskBlock = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(TaskBlockView);
+  },
+
+  // Browsers don't paint ::selection over node views, so a text selection
+  // (drag, cmd+A) would sweep past pills invisibly. Decorate every pill
+  // inside the selection range so it highlights like the text around it.
+  addProseMirrorPlugins() {
+    const name = this.name;
+    return [
+      new Plugin({
+        props: {
+          decorations(state) {
+            const { from, to, empty } = state.selection;
+            if (empty) return null;
+            const decos: Decoration[] = [];
+            state.doc.nodesBetween(from, to, (node, pos) => {
+              if (node.type.name === name) {
+                decos.push(
+                  Decoration.node(pos, pos + node.nodeSize, { class: "pill-in-selection" })
+                );
+              }
+            });
+            return DecorationSet.create(state.doc, decos);
+          },
+        },
+      }),
+    ];
   },
 });

@@ -60,9 +60,11 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const isSelected = selected.has(task.id);
 
   return (
-    // Negative vertical margin keeps the pill's line box near text height, so
-    // the caret next to a pill stays text-sized instead of stretching.
-    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-1">
+    // The caret beside an inline element stretches to that element's
+    // border-box height, so the pill must stay close to text height: py-0
+    // keeps the box at ~22px (check circle + border), and the small negative
+    // margin keeps the line box from growing.
+    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-0.5">
       <span
         contentEditable={false}
         draggable
@@ -81,7 +83,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           setEditOpen(true);
         }}
         className={cn(
-          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0.5 cursor-pointer active:cursor-grabbing",
+          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0 cursor-pointer active:cursor-grabbing",
           isDone && "opacity-60",
           isSelected && "ring-2 ring-ring border-transparent"
         )}

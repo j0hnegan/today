@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { useNote } from "@/lib/hooks";
-import { DayDoc } from "./DayDoc";
+import { DayDoc, isTiptapDoc, normalizeDoc, type TiptapDoc } from "./DayDoc";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { JSONContent } from "@tiptap/react";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -18,12 +28,95 @@ function formatDateHeader(d: Date): string {
   });
 }
 
+// True when the doc has anything worth carrying: a task pill or actual text.
+function docHasContent(blocks: unknown): boolean {
+  if (!isTiptapDoc(blocks)) return false;
+  const walk = (nodes: JSONContent[]): boolean =>
+    nodes.some(
+      (n) =>
+        n.type === "taskBlock" ||
+        (n.type === "text" && (n.text ?? "").trim().length > 0) ||
+        (n.content ? walk(n.content) : false)
+    );
+  return walk(blocks.content ?? []);
+}
+
 export function DayDocPanel() {
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const isToday = dateStr === toDateStr(new Date());
 
-  const { data: note } = useNote(dateStr);
+  const { data: note, mutate: mutateNote } = useNote(dateStr);
+
+  // New-day carry-over (ported from the classic Today page): if the tab sits
+  // open past midnight while viewing what was "today", advance to the new day
+  // and offer to bring yesterday's doc forward.
+  const sessionTodayRef = useRef(toDateStr(new Date()));
+  const selectedDateRef = useRef(selectedDate);
+  selectedDateRef.current = selectedDate;
+  const noteRef = useRef(note);
+  noteRef.current = note;
+  const [carryover, setCarryover] = useState<{ fromDate: string; blocks: TiptapDoc } | null>(null);
+
+  useEffect(() => {
+    function checkRollover() {
+      const realToday = toDateStr(new Date());
+      if (realToday === sessionTodayRef.current) return;
+      const prevToday = sessionTodayRef.current;
+      sessionTodayRef.current = realToday;
+      // Only act if the user is still looking at the day that just ended.
+      if (toDateStr(selectedDateRef.current) !== prevToday) return;
+      const prevBlocks = noteRef.current?.blocks;
+      setSelectedDate(new Date(realToday + "T00:00:00"));
+      const normalized = normalizeDoc(prevBlocks);
+      if (normalized !== "" && docHasContent(normalized)) {
+        setCarryover({ fromDate: prevToday, blocks: normalized });
+      }
+    }
+    window.addEventListener("focus", checkRollover);
+    document.addEventListener("visibilitychange", checkRollover);
+    const interval = setInterval(checkRollover, 60_000);
+    return () => {
+      window.removeEventListener("focus", checkRollover);
+      document.removeEventListener("visibilitychange", checkRollover);
+      clearInterval(interval);
+    };
+  }, []);
+
+  async function handleCarryOver() {
+    if (!carryover) return;
+    const todayStr = toDateStr(new Date());
+    let existing: JSONContent[] = [];
+    try {
+      const res = await fetch(`/api/notes?date=${todayStr}`);
+      if (res.ok) {
+        const todayNote = await res.json();
+        const norm = normalizeDoc(todayNote?.blocks);
+        if (norm !== "" && docHasContent(norm)) existing = norm.content ?? [];
+      }
+    } catch {
+      /* treat as empty */
+    }
+    const merged: TiptapDoc = {
+      type: "doc",
+      content: existing.length
+        ? [...existing, { type: "horizontalRule" }, ...(carryover.blocks.content ?? [])]
+        : carryover.blocks.content ?? [],
+    };
+    try {
+      const res = await fetch("/api/notes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: todayStr, blocks: merged }),
+      });
+      if (!res.ok) throw new Error();
+      await mutateNote();
+      toast.success("Carried over yesterday's doc");
+    } catch {
+      toast.error("Couldn't carry over");
+    }
+    setCarryover(null);
+  }
 
   function navigateDate(delta: number) {
     setSelectedDate((prev) => {
@@ -74,6 +167,27 @@ export function DayDocPanel() {
       {note !== undefined && (
         <DayDoc key={dateStr} note={note} dateStr={dateStr} isToday={isToday} />
       )}
+
+      {/* New-day carry-over prompt */}
+      <Dialog open={!!carryover} onOpenChange={(v) => { if (!v) setCarryover(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>New day</DialogTitle>
+            <DialogDescription>
+              It&apos;s {formatDateHeader(new Date())}. Carry over your doc from{" "}
+              {carryover && formatDateHeader(new Date(carryover.fromDate + "T00:00:00"))}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setCarryover(null)}>
+              Start fresh
+            </Button>
+            <Button size="sm" onClick={handleCarryOver}>
+              Carry over
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -442,6 +442,14 @@
 .day-editor-content .ProseMirror-selectednode {
   outline: none;
 }
+
+/* Pills swept by a text selection (drag, cmd+A) highlight like the text
+   around them — class applied by the TaskBlock selection decoration. The
+   blue mirrors the native ::selection paint so pills read as part of it. */
+.day-editor-content .pill-in-selection span[draggable] {
+  background-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.55);
+}
 .day-editor-content span[data-task-block].ProseMirror-selectednode,
 .day-editor-content .ProseMirror-selectednode > span {
   background: transparent;

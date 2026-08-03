@@ -27,9 +27,9 @@ import type { Note, Task } from "@/lib/types";
 
 const SAVE_DEBOUNCE_MS = 800;
 
-type TiptapDoc = JSONContent & { type: "doc" };
+export type TiptapDoc = JSONContent & { type: "doc" };
 
-function isTiptapDoc(blocks: unknown): blocks is TiptapDoc {
+export function isTiptapDoc(blocks: unknown): blocks is TiptapDoc {
   return (
     typeof blocks === "object" &&
     blocks !== null &&
@@ -39,7 +39,7 @@ function isTiptapDoc(blocks: unknown): blocks is TiptapDoc {
 
 // Task pills used to be block-level nodes; they're inline now. Wrap any
 // top-level taskBlock from an older doc in a paragraph so old docs still load.
-function normalizeDoc(blocks: unknown): TiptapDoc | "" {
+export function normalizeDoc(blocks: unknown): TiptapDoc | "" {
   if (!isTiptapDoc(blocks)) return "";
   const content = (blocks.content ?? []).map((node) =>
     node.type === "taskBlock" ? { type: "paragraph", content: [node] } : node
