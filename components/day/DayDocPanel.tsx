@@ -83,6 +83,40 @@ export function DayDocPanel() {
     };
   }, []);
 
+  // Fresh-open carry-over: the midnight watcher above only helps a tab that
+  // crossed midnight while open. Opening the app on a new day is the common
+  // case — if today's doc is still empty and yesterday's has content, offer
+  // to carry it over (once per day; "Start fresh" remembers the answer).
+  const checkedFreshRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isToday || note === undefined || carryover) return;
+    if (checkedFreshRef.current === dateStr) return;
+    checkedFreshRef.current = dateStr;
+    if (localStorage.getItem(`day-carryover-dismissed-${dateStr}`)) return;
+    const todayNorm = normalizeDoc(note.blocks);
+    if (todayNorm !== "" && docHasContent(todayNorm)) return; // day already started
+    const y = new Date(dateStr + "T00:00:00");
+    y.setDate(y.getDate() - 1);
+    const yStr = toDateStr(y);
+    fetch(`/api/notes?date=${yStr}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((n) => {
+        const norm = normalizeDoc(n?.blocks);
+        if (norm !== "" && docHasContent(norm)) {
+          setCarryover({ fromDate: yStr, blocks: norm });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isToday, note, dateStr, carryover]);
+
+  function dismissCarryover() {
+    if (carryover) {
+      localStorage.setItem(`day-carryover-dismissed-${toDateStr(new Date())}`, "1");
+    }
+    setCarryover(null);
+  }
+
   async function handleCarryOver() {
     if (!carryover) return;
     const todayStr = toDateStr(new Date());
@@ -169,7 +203,7 @@ export function DayDocPanel() {
       )}
 
       {/* New-day carry-over prompt */}
-      <Dialog open={!!carryover} onOpenChange={(v) => { if (!v) setCarryover(null); }}>
+      <Dialog open={!!carryover} onOpenChange={(v) => { if (!v) dismissCarryover(); }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>New day</DialogTitle>
@@ -179,7 +213,7 @@ export function DayDocPanel() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={() => setCarryover(null)}>
+            <Button variant="ghost" size="sm" onClick={dismissCarryover}>
               Start fresh
             </Button>
             <Button size="sm" onClick={handleCarryOver}>
