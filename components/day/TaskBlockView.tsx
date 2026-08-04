@@ -50,10 +50,10 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
 
   if (!task) {
     return (
-      <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-1">
+      <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 h-4 overflow-visible">
         <span
           contentEditable={false}
-          className="group inline-flex items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground"
+          className="group relative -top-[3px] inline-flex items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-0 text-xs text-muted-foreground"
         >
           {allTasks === undefined ? "Loading task…" : "Task no longer exists"}
           <button
@@ -74,11 +74,11 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const isSelected = selected.has(task.id);
 
   return (
-    // The caret beside an inline element stretches to that element's
-    // border-box height, so the pill must stay close to text height: py-0
-    // keeps the box at ~22px (check circle + border), and the small negative
-    // margin keeps the line box from growing.
-    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 -my-0.5">
+    // The caret beside an inline element matches that element's border-box
+    // height — there's no CSS to size a caret directly. So the wrapper (the
+    // element the caret sits beside) is text-height (16px) and the pill
+    // visually overflows it, nudged up to stay optically centered.
+    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 h-4 overflow-visible">
       <span
         ref={pillRef}
         contentEditable={false}
@@ -99,7 +99,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           setEditOpen(true);
         }}
         className={cn(
-          "group relative inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0 cursor-pointer active:cursor-grabbing",
+          "group relative -top-[3px] inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0 cursor-pointer active:cursor-grabbing",
           isDone && "opacity-60",
           isSelected && "ring-2 ring-ring border-transparent"
         )}
