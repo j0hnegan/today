@@ -4,6 +4,35 @@ Append-only run log. `/standup` reads the latest entries.
 
 ---
 
+## 2026-08-04 — steward run (daily health)
+- 😴 **No drift — board unchanged, nothing needed fixing.** Four commits since yesterday's
+  steward run (`c1876bc` → `68afd92`): three builder quiet-run doc commits plus one real code
+  commit, `24dfd79` (day-doc caret polish, by hand). 19 features, all `spec.md`+`log.md`
+  present, all `Status:`/`Class:` valid (16 shipped, 011 `proposed`, 018 `ready`, 019
+  `blocked`), all agree with `gh pr list` (no new PRs; #13 still the sole open PR, draft).
+  Dashboard ↔ folders 1:1. `main` in sync with `origin/main`. No `PAUSED`, nothing
+  `building`/`discussing`.
+- 🔬 LEARNINGS.md re-checked — no contradictions, no dead refs, no dupes. Re-walked every
+  referenced path (`lib/server-fetchers.ts`, `lib/validation/`, `lib/triage.ts`,
+  `components/shared/ServerSWR.tsx`, `lib/hooks.ts`, `app/api/mcp/`, next-themes) — all live.
+  Unchanged since 2026-06-10. No edits needed.
+- 🔴 **`CLAUDE.md` drift — 4th run flagged.** Re-verified in the tree: `/` redirects to `/day`,
+  `/classic` appears in no nav, `components/focus/TaskListPanel` doesn't exist (it's
+  `TaskSidebar.tsx`), `components/day/*` + `/day` are missing from Key directories, and there is
+  still no `app/api/cron/`. Left alone deliberately — `CLAUDE.md` is John's and sits outside
+  `backlog/`. One word and the next run patches all four.
+- 🟡 **Day doc: 10 hand commits in four days (2026-08-01 → 08-03), still no backlog folder.**
+  The whole surface — including the nav swap that made it Today — was built outside the loop,
+  and two commits re-do carry-over that 004/014 already shipped for `NoteEditor`.
+- 🤔 **011 (search) still `proposed`** — 58 days untouched; scope now honestly docs/notes-only.
+- 🚧 **018/019 still gated/blocked** — 54 days since last activity; re-verified today, no
+  `PLAID_*` vars, no `plaid` dep, none of the four tables.
+- 📅 **iOS PR #13 now 65 days open** — no backlog folder; standing track/park/close decision.
+- 🔍 `feature/task-triage-v2` (44 days, local, no PR) and
+  `origin/claude/fix-task-categorization-j8nuy` (95 days) still unresolved. See HEALTH.md.
+- No push sent — every item above is standing and already flagged in prior runs; nothing
+  newly needs John.
+
 ## 2026-07-31 — builder run (cron, quiet)
 - 😴 **Quiet run — board unchanged.** Clean main (up to date with origin), no
   PAUSED. 19 features: 16 shipped, 011 `proposed`, 018 `ready` (gated on 019),
