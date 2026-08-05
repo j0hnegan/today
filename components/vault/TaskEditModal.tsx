@@ -189,6 +189,7 @@ export function TaskEditModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="on_deck">Today</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="upcoming">Upcoming</SelectItem>
                   <SelectItem value="someday">Someday</SelectItem>
                   <SelectItem value="backlog">Backlog</SelectItem>

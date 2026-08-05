@@ -4,7 +4,7 @@ import { useRef, useCallback, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/lib/types";
 
-function CheckCircleIcon({ className }: { className?: string }) {
+function CheckCircleIcon({ className, halfFill = false }: { className?: string; halfFill?: boolean }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,6 +14,9 @@ function CheckCircleIcon({ className }: { className?: string }) {
       stroke="currentColor"
       className={className}
     >
+      {halfFill && (
+        <path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none" opacity="0.4" />
+      )}
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -26,19 +29,23 @@ function CheckCircleIcon({ className }: { className?: string }) {
 /**
  * Check circle with two gestures: quick click marks the task done; press-and-hold
  * (750ms, with a progress ring) fires onLongPress — used to toggle In Progress.
- * Shared by the Today panel and the vault so both screens behave identically.
+ * Shared by the Today panel, the vault, and the Day doc so all screens behave
+ * identically. Three visual states: white outline (to do), half-filled green
+ * (in progress), green (done).
  */
 export function LongPressCheck({
   task,
   onMarkDone,
   onLongPress,
   isDone = false,
+  inProgress = false,
   className,
 }: {
   task: Task;
   onMarkDone: (t: Task) => void;
   onLongPress: (t: Task) => void;
   isDone?: boolean;
+  inProgress?: boolean;
   className?: string;
 }) {
   const [pressing, setPressing] = useState(false);
@@ -115,7 +122,7 @@ export function LongPressCheck({
       onClick={(e) => e.stopPropagation()}
       className={cn(
         "inline-flex items-center justify-center w-5 h-5 flex-shrink-0 transition-colors relative",
-        isDone
+        isDone || inProgress
           ? "text-green-400"
           : "text-muted-foreground group-hover/task:text-green-400 group-hover:text-green-400 hover:!text-green-400",
         className
@@ -146,7 +153,7 @@ export function LongPressCheck({
           />
         </svg>
       ) : (
-        <CheckCircleIcon className="h-5 w-5" />
+        <CheckCircleIcon className="h-5 w-5" halfFill={inProgress && !isDone} />
       )}
     </button>
   );

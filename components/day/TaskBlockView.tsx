@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { CalendarIcon, Trash2, X } from "lucide-react";
+import { CalendarIcon, Pause, Play, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTasks, useTags } from "@/lib/hooks";
 import { markTaskDone } from "@/lib/done-toast";
@@ -107,9 +107,10 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
         <LongPressCheck
           task={task}
           isDone={isDone}
+          inProgress={!isDone && inProgress}
           onMarkDone={(t) => void markTaskDone(t)}
           onLongPress={(t) => void (inProgress ? moveToToday(t) : moveToInProgress(t))}
-          className="flex-shrink-0 !text-green-400"
+          className="flex-shrink-0"
         />
 
         <span
@@ -137,6 +138,17 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           className="absolute -top-7 z-20 hidden -translate-x-1/2 group-hover:inline-flex items-center gap-0.5 rounded-md border border-border bg-popover px-1 py-0.5 shadow-md"
           style={{ left: "50%" }}
         >
+          {!isDone && (
+            <button
+              type="button"
+              onClick={() => void (inProgress ? moveToToday(task) : moveToInProgress(task))}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              title={inProgress ? "Stop — back to To Do" : "Start — mark In Progress"}
+            >
+              {inProgress ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+            </button>
+          )}
+
           <Popover open={dueOpen} onOpenChange={setDueOpen}>
             <PopoverTrigger asChild>
               <button

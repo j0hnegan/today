@@ -114,6 +114,7 @@ export const TaskRow = memo(function TaskRow({
       <LongPressCheck
         task={task}
         isDone={isDone}
+        inProgress={!isDone && task.destination === "in_progress"}
         onMarkDone={(t) => {
           if (onMarkDone && !isDone) onMarkDone(t);
         }}
