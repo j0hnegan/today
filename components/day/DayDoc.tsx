@@ -99,11 +99,15 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
   const tasksRef = useRef<Task[]>([]);
   tasksRef.current = allTasks ?? [];
 
+  const embeddedIdsRef = useRef(embeddedIds);
+  embeddedIdsRef.current = embeddedIds;
+
   const editorRef = useRef<Editor | null>(null);
   const ctxRef = useRef<SlashContext>({
     openPicker: () => setPickerOpen(true),
     openNewTask: () => setNewTaskOpen(true),
     getTasks: () => tasksRef.current,
+    getEmbedded: () => embeddedIdsRef.current,
     insertTasks: (ids) => {
       if (!editorRef.current || ids.length === 0) return;
       editorRef.current.chain().focus().insertContent(taskParagraphs(ids)).run();

@@ -3,6 +3,22 @@
 import { useEffect, useRef } from "react";
 import type { SlashItem } from "./SlashCommand";
 
+// Emphasize the matched substring ("/med" lights up the "med" in
+// "find new migraine medication").
+function HighlightedLabel({ label, query }: { label: string; query?: string }) {
+  const idx = query ? label.toLowerCase().indexOf(query.toLowerCase()) : -1;
+  if (!query || idx === -1) return <>{label}</>;
+  return (
+    <>
+      {label.slice(0, idx)}
+      <span className="bg-foreground/20 rounded-[2px]">
+        {label.slice(idx, idx + query.length)}
+      </span>
+      {label.slice(idx + query.length)}
+    </>
+  );
+}
+
 export function SlashMenu({
   items,
   rect,
@@ -52,7 +68,9 @@ export function SlashMenu({
           >
             <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <span className="flex flex-col min-w-0">
-              <span className="font-medium">{item.label}</span>
+              <span className="font-medium truncate">
+                <HighlightedLabel label={item.label} query={item.query} />
+              </span>
               <span className="text-[10px] text-muted-foreground truncate">
                 {item.description}
               </span>

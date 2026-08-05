@@ -1,5 +1,6 @@
 import { Extension, type Editor, type Range } from "@tiptap/core";
 import Suggestion, { type SuggestionOptions } from "@tiptap/suggestion";
+import { createTask } from "@/lib/taskMutations";
 import {
   CalendarClock,
   Heading1,
@@ -22,6 +23,7 @@ export interface SlashContext {
   openPicker: () => void;
   openNewTask: () => void;
   getTasks: () => Task[];
+  getEmbedded: () => Set<number>;
   insertTasks: (ids: number[]) => void;
 }
 
@@ -30,8 +32,18 @@ export interface SlashItem {
   label: string;
   description: string;
   icon: LucideIcon;
-  run: (editor: Editor, range: Range, ctx: SlashContext) => void;
+  /** When set, SlashMenu highlights this substring inside the label. */
+  query?: string;
+  run: (editor: Editor, range: Range, ctx: SlashContext) => void | Promise<void>;
 }
+
+const DEST_LABELS: Record<Task["destination"], string> = {
+  on_deck: "Today",
+  in_progress: "In Progress",
+  upcoming: "Upcoming",
+  someday: "Someday",
+  backlog: "Backlog",
+};
 
 const clearSlash = (editor: Editor, range: Range) =>
   editor.chain().focus().deleteRange(range);
@@ -118,6 +130,63 @@ const STATIC_ITEMS: SlashItem[] = [
   },
 ];
 
+// "/med" → tasks whose titles contain the query, matched substring highlighted.
+// Enter embeds the task right here.
+function taskItems(query: string, ctx: SlashContext): SlashItem[] {
+  if (query.length < 2) return [];
+  const q = query.toLowerCase();
+  const embedded = ctx.getEmbedded();
+
+  return ctx
+    .getTasks()
+    .filter(
+      (t) =>
+        t.status === "active" &&
+        !embedded.has(t.id) &&
+        t.title.toLowerCase().includes(q)
+    )
+    .sort((a, b) => {
+      const ai = a.title.toLowerCase().indexOf(q);
+      const bi = b.title.toLowerCase().indexOf(q);
+      if (ai !== bi) return ai - bi;
+      return a.title.length - b.title.length;
+    })
+    .slice(0, 5)
+    .map((t) => ({
+      id: `task:${t.id}`,
+      label: t.title,
+      description: `${DEST_LABELS[t.destination]} — add to this doc`,
+      icon: SquareCheck,
+      query,
+      run: (editor, range, runCtx) => {
+        clearSlash(editor, range).run();
+        runCtx.insertTasks([t.id]);
+      },
+    }));
+}
+
+// "/find new migraine medication" with no match → create it as a Today task
+// and embed it where the slash was typed.
+function createItem(query: string): SlashItem | null {
+  const title = query.trim();
+  if (title.length === 0) return null;
+  return {
+    id: "create",
+    label: `Add new task: "${title}"`,
+    description: "Create in Today and add to this doc",
+    icon: Plus,
+    run: async (editor, range, runCtx) => {
+      clearSlash(editor, range).run();
+      try {
+        const task = await createTask({ title, destination: "on_deck" });
+        runCtx.insertTasks([task.id]);
+      } catch {
+        /* createTask already toasted */
+      }
+    },
+  };
+}
+
 // "/migraine" → one entry per tag or keyword matching the query, with its task
 // count, inserting that whole cluster as blocks.
 function termItems(query: string, ctx: SlashContext): SlashItem[] {
@@ -195,8 +264,15 @@ export function filterSlashItems(query: string, ctx: SlashContext): SlashItem[] 
     ? all.filter((item) => item.label.toLowerCase().includes(q) || item.id.includes(q))
     : all;
 
-  // Tag/keyword matches lead when the user is typing a term.
-  return [...termItems(query, ctx), ...filtered];
+  // Matching task titles lead, then tag/keyword clusters, then "add new task"
+  // (first — and the Enter default — when nothing matched), then commands.
+  const create = createItem(query);
+  return [
+    ...taskItems(query, ctx),
+    ...termItems(query, ctx),
+    ...(create ? [create] : []),
+    ...filtered,
+  ];
 }
 
 export const SlashCommand = Extension.create<{
