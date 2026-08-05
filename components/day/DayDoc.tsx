@@ -179,6 +179,9 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       SlashCommand.configure({
         suggestion: {
           char: "/",
+          // Multi-word queries: "/find new migraine medication" keeps the
+          // menu open across spaces (it still ends at the line break).
+          allowSpaces: true,
           items: ({ query }: { query: string }) => filterSlashItems(query, ctxRef.current),
           command: ({ editor, range, props }) =>
             props.run(editor, range, ctxRef.current),
