@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-08-07 (steward). Overwritten each run; latest state only._
+_Last run: 2026-08-07 #2 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -14,15 +14,15 @@ _Last run: 2026-08-07 (steward). Overwritten each run; latest state only._
 
 ## Changed since last run
 
-**One commit**, and it's a doc commit: `65bc94a`, the builder's 9th consecutive quiet run.
-No code landed on `main` in the last 48 hours — the first two-day gap in hand work since the
-day doc started moving on 2026-08-01. `main` is in sync with `origin/main` (0/0); working tree
-clean except the untracked `ios/` folder (app code — left untouched).
+**Nothing. Literally zero commits** — `git log bf491e8..origin/main` is empty. This is the second
+steward run today, and no builder run, no hand commit, and no branch movement happened in between.
+`main` is in sync with `origin/main` (0/0); working tree clean except the untracked `ios/` folder
+(app code — left untouched). Fourth straight day the board hasn't moved.
 
-The board is byte-identical to yesterday's. Everything below is a re-verification, not a new finding.
+Everything below is a re-verification against the live tree, not a new finding.
 
 ## Fixed this run
-- **Nothing needed fixing.** Full re-audit against the current tree, all green:
+- **Nothing needed fixing.** Full re-audit, all green:
   - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid
     (16 shipped, 011 `proposed`, 018 `ready`, 019 `blocked`).
   - Every status agrees with GitHub (`gh pr list`): #16–#29 merged; **#13 is still the only
@@ -30,8 +30,8 @@ The board is byte-identical to yesterday's. Everything below is a re-verificatio
     with their statuses.
   - Dashboard ↔ folders 1:1 (001–019). No orphan folders, no orphan dashboard rows.
   - `LEARNINGS.md`: no dupes, **no contradictions** (nothing to supersede), no dead refs.
-    Re-walked every referenced path today — `lib/server-fetchers.ts`, `lib/validation/`,
-    `lib/triage.ts`, `components/shared/ServerSWR.tsx`, `lib/hooks.ts`, `app/api/mcp/` — all present.
+    Re-walked every path it references today — `lib/server-fetchers.ts`, `lib/validation/`,
+    `lib/triage.ts`, `lib/hooks.ts`, `components/shared/ServerSWR.tsx`, `app/api/mcp/` — all present.
   - Nothing `building`/`discussing` → no builder race. No `backlog/PAUSED`.
 - Dashboard "Last run" line refreshed to this run.
 
@@ -39,15 +39,15 @@ The board is byte-identical to yesterday's. Everything below is a re-verificatio
 
 Two items are yours to decide and clear the whole board; the rest is bookkeeping.
 
-- **🔴 `CLAUDE.md` still documents the view you retired — sixth run flagged, nothing changed.**
+- **🔴 `CLAUDE.md` still documents the view you retired — seventh run flagged, nothing changed.**
   The one thing on the board that can actively send the builder to the wrong file. Re-verified
-  today against the tree; all four errors still stand:
+  against the tree today; all four errors still stand:
   - Lines 65–67 "## Today page" describe the two-panel note-editor + task-sidebar layout. That is
     now `/classic` — `app/(main)/page.tsx` redirects `/` to `/day`, and `Sidebar.tsx`'s `navItems`
-    links only `/day`, `/vault`, `/backlog`, `/docs` — **`/classic` appears in no nav** (confirmed
-    again today). A builder told to "fix something on Today" edits the dead view.
+    link only `/day`, `/vault`, `/backlog`, `/docs` — **`/classic` appears in no nav**. A builder
+    told to "fix something on Today" edits the dead view.
   - Line 58 names `components/focus/*` as the Today page and cites **`TaskListPanel`, which does
-    not exist** — the file is `components/focus/TaskSidebar.tsx`.
+    not exist** — confirmed again today; the file is `components/focus/TaskSidebar.tsx`.
   - `components/day/*` (the app's largest surface) and the `/day` route are absent from
     "Key directories" entirely.
   - Line 15 says `/api/cron/*` runs on Node; there is no `app/api/cron/` (confirmed again today).
@@ -59,11 +59,11 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
 
 - **🟡 019's blocker is a migration — and you run migrations by hand anyway.** The only reason 019
   has sat `blocked` for 57 days is the loop's hard "never run a migration" rule. Re-verified today:
-  no `PLAID_*` vars in `.env.local`, no `plaid` dependency in `package.json`, none of the four
-  tables (`plaid_items`, `bank_accounts`, `bank_transactions`, `recurring_streams`) — newest
-  migration is still `20260802000000_enable_realtime_documents.sql`. Write that migration the way
-  you wrote the last two and 019 flips to `ready`, 018 unblocks behind it — **two of your three
-  standing items clear at once.**
+  no `PLAID_*` vars, no `plaid` dependency in `package.json`, none of the four tables
+  (`plaid_items`, `bank_accounts`, `bank_transactions`, `recurring_streams`) — newest migration is
+  still `20260802000000_enable_realtime_documents.sql`. Write that migration the way you wrote the
+  last two and 019 flips to `ready`, 018 unblocks behind it — **two of your three standing items
+  clear at once.**
 
 - **011 search — 61 days untouched and overtaken.** Its open question was "whole-app omnisearch vs.
   docs-only." Task search is answered: `keywords text[]`, keyword search in the picker and slash
@@ -72,11 +72,12 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
   as absorbed — it shouldn't keep occupying a `proposed` slot.
 
 - **🟡 The day doc still has no backlog folder.** `components/day/*` is **13 commits deep since
-  2026-08-01** with no folder, and it now edits loop-owned shared code (`components/shared/LongPressCheck.tsx`,
-  the component **001** extracted), plus two commits reimplementing carry-over that **004** and **014**
-  already shipped for `NoteEditor`. Nothing wrong with the work — it means the loop can't help with
-  any of it and the board understates what's live by an entire feature area. A single `/backlog`
-  "day doc" folder, even seeded retroactively from `TODAY-DOC-VISION.md`, would fix that.
+  2026-08-01** (last touched 2026-08-05) with no folder, and it edits loop-owned shared code
+  (`components/shared/LongPressCheck.tsx`, the component **001** extracted), plus two commits
+  reimplementing carry-over that **004** and **014** already shipped for `NoteEditor`. Nothing wrong
+  with the work — it means the loop can't help with any of it and the board understates what's live
+  by an entire feature area. A single `/backlog` "day doc" folder, even seeded retroactively from
+  `TODAY-DOC-VISION.md`, would fix that.
 
 - **Un-backlogged work still queued in `TODAY-DOC-VISION.md`.** Browse-all-tags view under My Tasks
   (needs a categories vs goals vs keywords taxonomy decision), more `/add` picker filters (due date,
