@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-08-08 (steward). Overwritten each run; latest state only._
+_Last run: 2026-08-09 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -10,13 +10,13 @@ _Last run: 2026-08-08 (steward). Overwritten each run; latest state only._
 - 🏗 building / 💬 discussing / 👀 preview / 🔁 iterating: 0
 
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
-**Shipped this week (loop):** 0 (last merge was #29 on 2026-06-10 — 59 days ago). **Shipped by hand:** 0 this run.
+**Shipped this week (loop):** 0 (last merge was #29 on 2026-06-10 — 60 days ago). **Shipped by hand:** 0 this run.
 
 ## Changed since last run
 
-**Nothing. Zero commits** — `git log 3bf1afa..origin/main` is empty. No builder run, no hand commit,
+**Nothing. Zero commits** — `git log cd2972c..origin/main` is empty. No builder run, no hand commit,
 no branch movement since yesterday's run. `main` is in sync with `origin/main` (0/0); working tree
-clean except the untracked `ios/` folder (app code — left untouched). Fifth straight day the board
+clean except the untracked `ios/` folder (app code — left untouched). Sixth straight day the board
 hasn't moved.
 
 Everything below is a re-verification against the live tree, not a new finding.
@@ -31,7 +31,8 @@ Everything below is a re-verification against the live tree, not a new finding.
   - Dashboard ↔ folders 1:1 (001–019). No orphan folders, no orphan dashboard rows.
   - `LEARNINGS.md`: no dupes, **no contradictions** (nothing to supersede), no dead refs.
     Re-walked every path it references today — `lib/server-fetchers.ts`, `lib/validation/`,
-    `app/api/mcp/` — all present.
+    `app/api/mcp/` — all present. Content unchanged since the 2026-06-10 entries; file last
+    touched 2026-07-31 (steward formatting pass, no entries added or altered).
   - Nothing `building`/`discussing` → no builder race. No `backlog/PAUSED`.
 - Dashboard "Last run" line refreshed to this run.
 
@@ -39,16 +40,17 @@ Everything below is a re-verification against the live tree, not a new finding.
 
 Two items are yours to decide and clear the whole board; the rest is bookkeeping.
 
-- **🔴 `CLAUDE.md` still documents the view you retired — eighth run flagged, nothing changed.**
+- **🔴 `CLAUDE.md` still documents the view you retired — ninth run flagged, nothing changed.**
   The one thing on the board that can actively send the builder to the wrong file. Re-verified
   against the tree today; all four errors still stand:
   - The "## Today page" section describes the two-panel note-editor + task-sidebar layout. That is
-    now `/classic` — `app/(main)/page.tsx` redirects `/` to `/day`, and `Sidebar.tsx`'s `navItems`
-    link only `/day`, `/vault`, `/backlog`, `/docs` — **`/classic` appears in no nav**. A builder
-    told to "fix something on Today" edits the dead view.
+    now `/classic` — `app/(main)/page.tsx` redirects `/` to `/day` (its own comment says "The Day
+    doc is the Today view now"), and `Sidebar.tsx`'s `navItems` link only `/day`, `/vault`,
+    `/backlog`, `/docs` — **`/classic` appears in no nav**. A builder told to "fix something on
+    Today" edits the dead view.
   - "Key directories" names `components/focus/*` as the Today page and cites **`TaskListPanel`,
     which does not exist** — confirmed again today; the file is `components/focus/TaskSidebar.tsx`.
-  - `components/day/*` (11 files, the app's largest surface) and the `/day` route are absent from
+  - `components/day/*` (the app's largest surface) and the `/day` route are absent from
     "Key directories" entirely.
   - It says `/api/cron/*` runs on Node; there is no `app/api/cron/` (confirmed again today).
 
@@ -58,21 +60,21 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
   is the Today surface — that's a preference, so it needs your ratification, not my guess.
 
 - **🟡 019's blocker is a migration — and you run migrations by hand anyway.** The only reason 019
-  has sat `blocked` for 58 days is the loop's hard "never run a migration" rule. Re-verified today:
+  has sat `blocked` for 59 days is the loop's hard "never run a migration" rule. Re-verified today:
   no `PLAID_*` vars, no `plaid` dependency in `package.json`, none of the four tables
   (`plaid_items`, `bank_accounts`, `bank_transactions`, `recurring_streams`) — newest migration is
   still `20260802000000_enable_realtime_documents.sql`. Write that migration the way you wrote the
   last two and 019 flips to `ready`, 018 unblocks behind it — **two of your three standing items
   clear at once.**
 
-- **011 search — 62 days untouched and overtaken.** Its open question was "whole-app omnisearch vs.
+- **011 search — 63 days untouched and overtaken.** Its open question was "whole-app omnisearch vs.
   docs-only." Task search is answered: `keywords text[]`, keyword search in the picker and slash
   menu, `search_tasks` in MCP, hand-editable Tags in the task modal, plus the 7am enrichment
   routine. The honest remaining scope is **docs/notes search only**. Narrow it to that, or close it
   as absorbed — it shouldn't keep occupying a `proposed` slot.
 
-- **🟡 The day doc still has no backlog folder.** `components/day/*` is **13 commits deep since
-  2026-08-01** (last touched 2026-08-05) with no folder, and it edits loop-owned shared code
+- **🟡 The day doc still has no backlog folder.** `components/day/*` is 13 commits deep since
+  2026-08-01 (last touched 2026-08-05) with no folder, and it edits loop-owned shared code
   (`components/shared/LongPressCheck.tsx`, the component **001** extracted), plus two commits
   reimplementing carry-over that **004** and **014** already shipped for `NoteEditor`. Nothing wrong
   with the work — it means the loop can't help with any of it and the board understates what's live
@@ -88,18 +90,18 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
 
 | Item | Untouched | Note |
 |---|---|---|
-| 011 search | 62 days | Overtaken — narrow to docs-only or close (above) |
-| 018 finance tab | 58 days | Not neglect — gated on 019 by design |
-| 019 Plaid sync | 58 days | Blocked on the migration (above) |
-| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 69 days | `feat/ios-capacitor`, 1 commit ahead, no folder. **Track** (seed a folder from the PR body), **park** (folder, `status: blocked` — needs Xcode/signing), or **close**. The untracked `ios/` folder correlates with this branch. |
-| `feature/task-triage-v2` | 48 days | Local branch, 1 commit, no PR, no folder. The vision doc argues auto-triage should go away entirely, which likely makes it moot — look before investing. File a PR, `/backlog` it, or drop it. |
-| `origin/claude/fix-task-categorization-j8nuy` | 99 days | 1 commit ahead, no PR ever filed. Previously diffed against `feature/task-triage-v2`: that branch is a much larger rewrite (163 files) with its own categorization changes, but not a clean superset — can't confirm it subsumes this one without a closer read. |
+| 011 search | 63 days | Overtaken — narrow to docs-only or close (above) |
+| 018 finance tab | 59 days | Not neglect — gated on 019 by design |
+| 019 Plaid sync | 59 days | Blocked on the migration (above) |
+| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 70 days | `feat/ios-capacitor`, 1 commit ahead, no folder. **Track** (seed a folder from the PR body), **park** (folder, `status: blocked` — needs Xcode/signing), or **close**. The untracked `ios/` folder correlates with this branch. |
+| `feature/task-triage-v2` | 49 days | Local branch, 1 commit, no PR, no folder. The vision doc argues auto-triage should go away entirely, which likely makes it moot — look before investing. File a PR, `/backlog` it, or drop it. |
+| `origin/claude/fix-task-categorization-j8nuy` | 100 days | 1 commit ahead, no PR ever filed. Previously diffed against `feature/task-triage-v2`: that branch is a much larger rewrite (163 files) with its own categorization changes, but not a clean superset — can't confirm it subsumes this one without a closer read. |
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`; all `Status:`/`Class:` values valid.
 - Every `Status:` agrees with GitHub. #13 is the only open PR (draft).
 - Dashboard ↔ folders 1:1 (001–019). No orphans.
-- `LEARNINGS.md` clean — no contradictions, no dead refs, no dupes. Unchanged since 2026-06-10.
+- `LEARNINGS.md` clean — no contradictions, no dead refs, no dupes.
 - Nothing `building`/`discussing` → no builder race. No `backlog/PAUSED` kill switch.
 - `main` in sync with `origin/main`.
 
