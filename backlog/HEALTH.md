@@ -1,6 +1,6 @@
 # Health — steward snapshot
 
-_Last run: 2026-08-09 (steward). Overwritten each run; latest state only._
+_Last run: 2026-08-10 (steward). Overwritten each run; latest state only._
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -10,14 +10,19 @@ _Last run: 2026-08-09 (steward). Overwritten each run; latest state only._
 - 🏗 building / 💬 discussing / 👀 preview / 🔁 iterating: 0
 
 **Waiting on you:** 2 (011 proposal + 019 unblock). **In flight:** 0. **Queued for builder:** 1.
-**Shipped this week (loop):** 0 (last merge was #29 on 2026-06-10 — 60 days ago). **Shipped by hand:** 0 this run.
+**Shipped this week (loop):** 0 (last merge was #29 on 2026-06-10 — 61 days ago). **Shipped by hand:** 0 this run.
 
 ## Changed since last run
 
-**Nothing. Zero commits** — `git log cd2972c..origin/main` is empty. No builder run, no hand commit,
-no branch movement since yesterday's run. `main` is in sync with `origin/main` (0/0); working tree
-clean except the untracked `ios/` folder (app code — left untouched). Sixth straight day the board
-hasn't moved.
+**Nothing substantive.** The only commits since yesterday's steward run are the builder's three
+quiet-run notes (`e817e6d`, `29051c5`, `e3338d4`) — doc-only, board byte-identical. No code commit,
+no branch movement. Seventh straight day the board hasn't moved. `main` is in sync with
+`origin/main` (0/0); working tree clean except the untracked `ios/` folder (app code — left untouched).
+
+One thing that *looks* like movement and isn't: **draft PR #13's `updatedAt` jumped to today
+(13:22:32Z)**. That is the builder's 09:22:30-04:00 push to `main` (= 13:22:30Z) registering as a
+`referenced` timeline event — the PR still has its single 2026-05-31 commit and its one 2026-05-31
+Vercel comment. Nothing was pushed to it.
 
 Everything below is a re-verification against the live tree, not a new finding.
 
@@ -26,8 +31,7 @@ Everything below is a re-verification against the live tree, not a new finding.
   - All 19 folders have `spec.md` + `log.md`. All `Status:`/`Class:` values valid
     (16 shipped, 011 `proposed`, 018 `ready`, 019 `blocked`).
   - Every status agrees with GitHub (`gh pr list`): #16–#29 merged; **#13 is still the only
-    open PR** (draft, untouched since 2026-05-31); 011/018/019 have no branch or PR, consistent
-    with their statuses.
+    open PR** (draft); 011/018/019 have no branch or PR, consistent with their statuses.
   - Dashboard ↔ folders 1:1 (001–019). No orphan folders, no orphan dashboard rows.
   - `LEARNINGS.md`: no dupes, **no contradictions** (nothing to supersede), no dead refs.
     Re-walked every path it references today — `lib/server-fetchers.ts`, `lib/validation/`,
@@ -40,14 +44,13 @@ Everything below is a re-verification against the live tree, not a new finding.
 
 Two items are yours to decide and clear the whole board; the rest is bookkeeping.
 
-- **🔴 `CLAUDE.md` still documents the view you retired — ninth run flagged, nothing changed.**
+- **🔴 `CLAUDE.md` still documents the view you retired — tenth run flagged, nothing changed.**
   The one thing on the board that can actively send the builder to the wrong file. Re-verified
   against the tree today; all four errors still stand:
   - The "## Today page" section describes the two-panel note-editor + task-sidebar layout. That is
-    now `/classic` — `app/(main)/page.tsx` redirects `/` to `/day` (its own comment says "The Day
-    doc is the Today view now"), and `Sidebar.tsx`'s `navItems` link only `/day`, `/vault`,
-    `/backlog`, `/docs` — **`/classic` appears in no nav**. A builder told to "fix something on
-    Today" edits the dead view.
+    now `/classic` — `app/(main)/page.tsx` redirects `/` to `/day`, and `Sidebar.tsx`'s `navItems`
+    link only `/day`, `/vault`, `/backlog`, `/docs` — **`/classic` appears in no nav**. A builder
+    told to "fix something on Today" edits the dead view.
   - "Key directories" names `components/focus/*` as the Today page and cites **`TaskListPanel`,
     which does not exist** — confirmed again today; the file is `components/focus/TaskSidebar.tsx`.
   - `components/day/*` (the app's largest surface) and the `/day` route are absent from
@@ -60,14 +63,14 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
   is the Today surface — that's a preference, so it needs your ratification, not my guess.
 
 - **🟡 019's blocker is a migration — and you run migrations by hand anyway.** The only reason 019
-  has sat `blocked` for 59 days is the loop's hard "never run a migration" rule. Re-verified today:
+  has sat `blocked` for 60 days is the loop's hard "never run a migration" rule. Re-verified today:
   no `PLAID_*` vars, no `plaid` dependency in `package.json`, none of the four tables
   (`plaid_items`, `bank_accounts`, `bank_transactions`, `recurring_streams`) — newest migration is
   still `20260802000000_enable_realtime_documents.sql`. Write that migration the way you wrote the
   last two and 019 flips to `ready`, 018 unblocks behind it — **two of your three standing items
   clear at once.**
 
-- **011 search — 63 days untouched and overtaken.** Its open question was "whole-app omnisearch vs.
+- **011 search — 64 days untouched and overtaken.** Its open question was "whole-app omnisearch vs.
   docs-only." Task search is answered: `keywords text[]`, keyword search in the picker and slash
   menu, `search_tasks` in MCP, hand-editable Tags in the task modal, plus the 7am enrichment
   routine. The honest remaining scope is **docs/notes search only**. Narrow it to that, or close it
@@ -90,12 +93,12 @@ Two items are yours to decide and clear the whole board; the rest is bookkeeping
 
 | Item | Untouched | Note |
 |---|---|---|
-| 011 search | 63 days | Overtaken — narrow to docs-only or close (above) |
-| 018 finance tab | 59 days | Not neglect — gated on 019 by design |
-| 019 Plaid sync | 59 days | Blocked on the migration (above) |
-| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 70 days | `feat/ios-capacitor`, 1 commit ahead, no folder. **Track** (seed a folder from the PR body), **park** (folder, `status: blocked` — needs Xcode/signing), or **close**. The untracked `ios/` folder correlates with this branch. |
-| `feature/task-triage-v2` | 49 days | Local branch, 1 commit, no PR, no folder. The vision doc argues auto-triage should go away entirely, which likely makes it moot — look before investing. File a PR, `/backlog` it, or drop it. |
-| `origin/claude/fix-task-categorization-j8nuy` | 100 days | 1 commit ahead, no PR ever filed. Previously diffed against `feature/task-triage-v2`: that branch is a much larger rewrite (163 files) with its own categorization changes, but not a clean superset — can't confirm it subsumes this one without a closer read. |
+| 011 search | 64 days | Overtaken — narrow to docs-only or close (above) |
+| 018 finance tab | 60 days | Not neglect — gated on 019 by design |
+| 019 Plaid sync | 60 days | Blocked on the migration (above) |
+| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 71 days | `feat/ios-capacitor`, 1 commit ahead, no folder. Today's `updatedAt` bump is a `referenced` event from a `main` push, not real activity. **Track** (seed a folder from the PR body), **park** (folder, `status: blocked` — needs Xcode/signing), or **close**. The untracked `ios/` folder correlates with this branch. |
+| `feature/task-triage-v2` | 50 days | Local branch, 1 commit, no PR, no folder. The vision doc argues auto-triage should go away entirely, which likely makes it moot — look before investing. File a PR, `/backlog` it, or drop it. |
+| `origin/claude/fix-task-categorization-j8nuy` | 101 days | 1 commit ahead, no PR ever filed. Previously diffed against `feature/task-triage-v2`: that branch is a much larger rewrite (163 files) with its own categorization changes, but not a clean superset — can't confirm it subsumes this one without a closer read. |
 
 ## Healthy
 - All 19 folders have `spec.md` + `log.md`; all `Status:`/`Class:` values valid.
