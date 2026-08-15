@@ -282,18 +282,24 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
     };
   }, []);
 
-  useDayDocRealtime(dateStr, (change) => {
-    if (change.updated_at <= lastSavedAtRef.current) return; // own echo / stale
-    remoteQueueRef.current = change;
-    // Keep the SWR cache in step so a remount doesn't resurrect old content.
-    mutate(
-      `/api/notes?date=${dateStr}`,
-      (curr: Note | undefined) =>
-        curr ? { ...curr, blocks: change.blocks, updated_at: change.updated_at } : curr,
-      { revalidate: false }
-    );
-    tryApplyRemote();
-  });
+  useDayDocRealtime(
+    dateStr,
+    (change) => {
+      if (change.updated_at <= lastSavedAtRef.current) return; // own echo / stale
+      remoteQueueRef.current = change;
+      // Keep the SWR cache in step so a remount doesn't resurrect old content.
+      mutate(
+        `/api/notes?date=${dateStr}`,
+        (curr: Note | undefined) =>
+          curr ? { ...curr, blocks: change.blocks, updated_at: change.updated_at } : curr,
+        { revalidate: false }
+      );
+      tryApplyRemote();
+    },
+    () => {
+      mutate(`/api/notes?date=${dateStr}`);
+    }
+  );
 
   const noteBlocks = note.blocks;
   useEffect(() => {
