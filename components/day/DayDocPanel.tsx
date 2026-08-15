@@ -46,7 +46,11 @@ export function DayDocPanel() {
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const isToday = dateStr === toDateStr(new Date());
 
-  const { data: note, mutate: mutateNote, isValidating: noteIsValidating } = useNote(dateStr);
+  const {
+    data: note,
+    mutate: mutateNote,
+    isValidating: noteIsValidating,
+  } = useNote(dateStr, { revalidateOnFocus: false });
 
   // New-day carry-over (ported from the classic Today page): if the tab sits
   // open past midnight while viewing what was "today", advance to the new day

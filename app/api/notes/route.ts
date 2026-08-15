@@ -47,19 +47,11 @@ export async function PATCH(request: NextRequest) {
     if (content !== undefined) patch.content = content;
     if (blocks !== undefined) patch.blocks = blocks;
 
-    const { data: existing } = await supabase
+    const { data: note, error } = await supabase
       .from("documents")
-      .select("id")
-      .eq("date", date)
+      .upsert({ date, ...patch }, { onConflict: "date" })
+      .select()
       .single();
-
-    const query = existing
-      ? supabase.from("documents").update(patch).eq("id", existing.id)
-      : supabase
-          .from("documents")
-          .insert({ date, title: "", sort_order: 0, content: "", blocks: null, ...patch });
-
-    const { data: note, error } = await query.select().single();
     if (error) throw error;
 
     return NextResponse.json(note);

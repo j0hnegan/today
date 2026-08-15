@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { Task, Tag, Category, Goal, Document, CheckIn, Note, Attachment, CashFlow } from "./types";
+import type { Task, Category, Goal, Document, CheckIn, Note, Attachment, CashFlow } from "./types";
 
 export const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -21,16 +21,18 @@ export function useTasks(params?: {
   const query = searchParams.toString();
   const url = `/api/tasks${query ? `?${query}` : ""}`;
 
-  return useSWR<Task[]>(url, fetcher);
+  return useSWR<Task[]>(url, fetcher, { revalidateOnFocus: false });
 }
 
 export function useCategories() {
-  return useSWR<Category[]>("/api/tags", fetcher);
+  return useSWR<Category[]>("/api/tags", fetcher, {
+    revalidateOnFocus: false,
+  });
 }
 
 // Backward compat alias
 export function useTags() {
-  return useSWR<Tag[]>("/api/tags", fetcher);
+  return useCategories();
 }
 
 export function useGoals() {
@@ -53,8 +55,8 @@ export function useDoc(id: number | null) {
   });
 }
 
-export function useNote(date: string) {
-  return useSWR<Note>(date ? `/api/notes?date=${date}` : null, fetcher);
+export function useNote(date: string, options?: { revalidateOnFocus?: boolean }) {
+  return useSWR<Note>(date ? `/api/notes?date=${date}` : null, fetcher, options);
 }
 
 export function useAttachments(entityType: string, entityId: number | null) {
@@ -92,10 +94,11 @@ export function useCashFlow(id: string | null) {
 }
 
 export function useLatestCheckin() {
-  return useSWR<CheckIn | null>("/api/checkins", fetcher);
+  return useSWR<CheckIn | null>("/api/checkins", fetcher, {
+    revalidateOnFocus: false,
+  });
 }
 
 export function useSettings() {
   return useSWR<Record<string, string>>("/api/settings", fetcher);
 }
-

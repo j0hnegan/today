@@ -18,9 +18,14 @@ function CacheSyncer({ data }: { data: Record<string, unknown> }) {
       const existing = map.get(key);
       if (existing && typeof existing === "object") {
         // Preserve SWR's internal state shape, overwrite data
-        map.set(key, { ...(existing as Record<string, unknown>), data: value });
+        map.set(key, {
+          ...(existing as Record<string, unknown>),
+          data: value,
+          isLoading: false,
+          isValidating: false,
+        });
       } else {
-        map.set(key, { data: value, isLoading: false, isValidating: true });
+        map.set(key, { data: value, isLoading: false, isValidating: false });
       }
     }
   }
@@ -35,7 +40,7 @@ export function ServerSWR({
   children: React.ReactNode;
 }) {
   return (
-    <SWRConfig value={{ fallback }}>
+    <SWRConfig value={{ fallback, revalidateIfStale: false }}>
       <CacheSyncer data={fallback} />
       {children}
     </SWRConfig>
