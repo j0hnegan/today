@@ -70,6 +70,9 @@ export interface Note {
   content: string;
   /** Day view's Tiptap doc JSON (null/legacy shapes possible — validate before use). */
   blocks?: unknown;
+  rollover_source_date?: string | null;
+  rollover_status?: "carried" | "dismissed" | null;
+  rollover_decided_at?: string | null;
   attachments?: Attachment[];
   created_at?: string;
   updated_at?: string;

@@ -46,7 +46,7 @@ export function DayDocPanel() {
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const isToday = dateStr === toDateStr(new Date());
 
-  const { data: note, mutate: mutateNote } = useNote(dateStr);
+  const { data: note, mutate: mutateNote, isValidating: noteIsValidating } = useNote(dateStr);
 
   // New-day carry-over (ported from the classic Today page): if the tab sits
   // open past midnight while viewing what was "today", advance to the new day
@@ -57,6 +57,11 @@ export function DayDocPanel() {
   const noteRef = useRef(note);
   noteRef.current = note;
   const [carryover, setCarryover] = useState<{ fromDate: string; blocks: TiptapDoc } | null>(null);
+  const [rolloverCandidate, setRolloverCandidate] = useState<{
+    fromDate: string;
+    blocks: TiptapDoc;
+  } | null>(null);
+  const [rolloverPending, setRolloverPending] = useState(false);
 
   useEffect(() => {
     function checkRollover() {
@@ -70,7 +75,7 @@ export function DayDocPanel() {
       setSelectedDate(new Date(realToday + "T00:00:00"));
       const normalized = normalizeDoc(prevBlocks);
       if (normalized !== "" && docHasContent(normalized)) {
-        setCarryover({ fromDate: prevToday, blocks: normalized });
+        setRolloverCandidate({ fromDate: prevToday, blocks: normalized });
       }
     }
     window.addEventListener("focus", checkRollover);
@@ -86,15 +91,29 @@ export function DayDocPanel() {
   // Fresh-open carry-over: the midnight watcher above only helps a tab that
   // crossed midnight while open. Opening the app on a new day is the common
   // case — if today's doc is still empty and yesterday's has content, offer
-  // to carry it over (once per day; "Start fresh" remembers the answer).
+  // to carry it over. The server-side decision prevents repeat prompts.
   const checkedFreshRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isToday || note === undefined || carryover) return;
+    if (!isToday || note === undefined) return;
+
+    const todayNorm = normalizeDoc(note.blocks);
+    if (note.rollover_status || (todayNorm !== "" && docHasContent(todayNorm))) {
+      setCarryover(null);
+      setRolloverCandidate(null);
+      return;
+    }
+
+    if (noteIsValidating || carryover || rolloverPending) return;
+
     if (checkedFreshRef.current === dateStr) return;
     checkedFreshRef.current = dateStr;
-    if (localStorage.getItem(`day-carryover-dismissed-${dateStr}`)) return;
-    const todayNorm = normalizeDoc(note.blocks);
-    if (todayNorm !== "" && docHasContent(todayNorm)) return; // day already started
+
+    if (rolloverCandidate) {
+      setCarryover(rolloverCandidate);
+      setRolloverCandidate(null);
+      return;
+    }
+
     const y = new Date(dateStr + "T00:00:00");
     y.setDate(y.getDate() - 1);
     const yStr = toDateStr(y);
@@ -102,54 +121,66 @@ export function DayDocPanel() {
       .then((r) => (r.ok ? r.json() : null))
       .then((n) => {
         const norm = normalizeDoc(n?.blocks);
-        if (norm !== "" && docHasContent(norm)) {
+        const currentNote = noteRef.current;
+        const currentNorm = normalizeDoc(currentNote?.blocks);
+        const dayStillEmpty =
+          !currentNote?.rollover_status &&
+          (currentNorm === "" || !docHasContent(currentNorm));
+        if (
+          toDateStr(selectedDateRef.current) === dateStr &&
+          dayStillEmpty &&
+          norm !== "" &&
+          docHasContent(norm)
+        ) {
           setCarryover({ fromDate: yStr, blocks: norm });
         }
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isToday, note, dateStr, carryover]);
+  }, [
+    isToday,
+    note,
+    noteIsValidating,
+    dateStr,
+    carryover,
+    rolloverCandidate,
+    rolloverPending,
+  ]);
 
-  function dismissCarryover() {
-    if (carryover) {
-      localStorage.setItem(`day-carryover-dismissed-${toDateStr(new Date())}`, "1");
-    }
-    setCarryover(null);
-  }
-
-  async function handleCarryOver() {
-    if (!carryover) return;
+  async function handleRollover(action: "carried" | "dismissed") {
+    if (!carryover || rolloverPending) return;
+    const activeCarryover = carryover;
     const todayStr = toDateStr(new Date());
-    let existing: JSONContent[] = [];
+    setCarryover(null);
+    setRolloverPending(true);
+
     try {
-      const res = await fetch(`/api/notes?date=${todayStr}`);
-      if (res.ok) {
-        const todayNote = await res.json();
-        const norm = normalizeDoc(todayNote?.blocks);
-        if (norm !== "" && docHasContent(norm)) existing = norm.content ?? [];
+      const res = await fetch("/api/notes/rollover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from_date: activeCarryover.fromDate,
+          to_date: todayStr,
+          action,
+        }),
+      });
+      if (!res.ok) throw new Error("Rollover failed");
+      const updatedNote = await res.json();
+      await mutateNote(updatedNote, { revalidate: false });
+
+      if (action === "carried") {
+        if (updatedNote.rollover_status === "carried") {
+          toast.success("Carried over yesterday's doc");
+        } else {
+          toast.info("Today's doc already changed, so nothing was overwritten");
+        }
       }
     } catch {
-      /* treat as empty */
+      if (!noteRef.current?.rollover_status) setCarryover(activeCarryover);
+      toast.error(action === "carried" ? "Couldn't carry over" : "Couldn't start fresh");
+    } finally {
+      setRolloverPending(false);
     }
-    const merged: TiptapDoc = {
-      type: "doc",
-      content: existing.length
-        ? [...existing, { type: "horizontalRule" }, ...(carryover.blocks.content ?? [])]
-        : carryover.blocks.content ?? [],
-    };
-    try {
-      const res = await fetch("/api/notes", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: todayStr, blocks: merged }),
-      });
-      if (!res.ok) throw new Error();
-      await mutateNote();
-      toast.success("Carried over yesterday's doc");
-    } catch {
-      toast.error("Couldn't carry over");
-    }
-    setCarryover(null);
   }
 
   function navigateDate(delta: number) {
@@ -203,7 +234,12 @@ export function DayDocPanel() {
       )}
 
       {/* New-day carry-over prompt */}
-      <Dialog open={!!carryover} onOpenChange={(v) => { if (!v) dismissCarryover(); }}>
+      <Dialog
+        open={!!carryover}
+        onOpenChange={(open) => {
+          if (!open) void handleRollover("dismissed");
+        }}
+      >
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>New day</DialogTitle>
@@ -213,10 +249,19 @@ export function DayDocPanel() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" size="sm" onClick={dismissCarryover}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={rolloverPending}
+              onClick={() => void handleRollover("dismissed")}
+            >
               Start fresh
             </Button>
-            <Button size="sm" onClick={handleCarryOver}>
+            <Button
+              size="sm"
+              disabled={rolloverPending}
+              onClick={() => void handleRollover("carried")}
+            >
               Carry over
             </Button>
           </div>

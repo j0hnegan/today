@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase-browser";
 export interface DayDocChange {
   blocks: unknown;
   updated_at: string;
+  rollover_source_date: string | null;
+  rollover_status: "carried" | "dismissed" | null;
+  rollover_decided_at: string | null;
 }
 
 /**
@@ -37,7 +40,13 @@ export function useDayDocRealtime(
       if (data.session) await supabase.realtime.setAuth(data.session.access_token);
 
       const onChange = (payload: { new: unknown }) => {
-        const row = payload.new as { blocks?: unknown; updated_at?: string } | null;
+        const row = payload.new as {
+          blocks?: unknown;
+          updated_at?: string;
+          rollover_source_date?: string | null;
+          rollover_status?: "carried" | "dismissed" | null;
+          rollover_decided_at?: string | null;
+        } | null;
         if (!row?.updated_at || row.blocks === undefined) return;
         let blocks = row.blocks;
         if (typeof blocks === "string") {
@@ -47,7 +56,13 @@ export function useDayDocRealtime(
             return;
           }
         }
-        cbRef.current({ blocks, updated_at: row.updated_at });
+        cbRef.current({
+          blocks,
+          updated_at: row.updated_at,
+          rollover_source_date: row.rollover_source_date ?? null,
+          rollover_status: row.rollover_status ?? null,
+          rollover_decided_at: row.rollover_decided_at ?? null,
+        });
       };
 
       let hadDropped = false;

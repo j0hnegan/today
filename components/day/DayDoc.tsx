@@ -291,7 +291,16 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       mutate(
         `/api/notes?date=${dateStr}`,
         (curr: Note | undefined) =>
-          curr ? { ...curr, blocks: change.blocks, updated_at: change.updated_at } : curr,
+          curr
+            ? {
+                ...curr,
+                blocks: change.blocks,
+                updated_at: change.updated_at,
+                rollover_source_date: change.rollover_source_date,
+                rollover_status: change.rollover_status,
+                rollover_decided_at: change.rollover_decided_at,
+              }
+            : curr,
         { revalidate: false }
       );
       tryApplyRemote();
