@@ -7,6 +7,7 @@ import { Placeholder } from "@tiptap/extensions";
 import { CheckCircle2, CalendarX2, X } from "lucide-react";
 import { toast } from "sonner";
 import { TaskBlock } from "./TaskBlockExtension";
+import { addTaskBlockSeparators, TASK_BLOCK_SEPARATOR } from "./taskBlockSpacing";
 import {
   SlashCommand,
   filterSlashItems,
@@ -44,7 +45,7 @@ export function normalizeDoc(blocks: unknown): TiptapDoc | "" {
   const content = (blocks.content ?? []).map((node) =>
     node.type === "taskBlock" ? { type: "paragraph", content: [node] } : node
   );
-  return { ...blocks, content };
+  return addTaskBlockSeparators({ ...blocks, content }) as TiptapDoc;
 }
 
 function collectTaskIds(editor: Editor): Set<number> {
@@ -70,10 +71,13 @@ function orderedTaskIds(editor: Editor): number[] {
 
 // Each task gets its own line, but as an inline pill inside a paragraph — so
 // you can click beside it and type on the same line.
-function taskParagraphs(ids: number[]) {
+export function taskParagraphs(ids: number[]) {
   return ids.map((taskId) => ({
     type: "paragraph",
-    content: [{ type: "taskBlock", attrs: { taskId } }],
+    content: [
+      { type: "taskBlock", attrs: { taskId } },
+      { type: "text", text: TASK_BLOCK_SEPARATOR },
+    ],
   }));
 }
 
