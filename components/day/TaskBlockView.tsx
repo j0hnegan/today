@@ -34,9 +34,9 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const pillRef = useRef<HTMLSpanElement>(null);
   const menuRef = useRef<HTMLSpanElement>(null);
 
-  // The hover menu rides above the cursor instead of pinning to the pill's
-  // far corner — on a long pill you'd otherwise have to travel for it.
-  function followCursor(e: React.MouseEvent) {
+  // Anchor the hover menu where the cursor enters the pill so its actions stay
+  // still while the cursor moves into the menu.
+  function positionMenu(e: React.MouseEvent) {
     const pill = pillRef.current;
     const menu = menuRef.current;
     if (!pill || !menu) return;
@@ -50,10 +50,10 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
 
   if (!task) {
     return (
-      <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 h-4 overflow-visible">
+      <NodeViewWrapper as="span" className="inline-block h-4 align-baseline overflow-visible">
         <span
           contentEditable={false}
-          className="group relative -top-[3px] inline-flex items-center gap-2 rounded-md border border-dashed border-border px-2.5 py-0 text-xs text-muted-foreground"
+          className="group inline-flex h-4 items-center gap-1.5 rounded-sm px-0.5 text-xs leading-none text-muted-foreground transition-colors hover:bg-foreground/5"
         >
           {allTasks === undefined ? "Loading task…" : "Task no longer exists"}
           <button
@@ -74,17 +74,13 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
   const isSelected = selected.has(task.id);
 
   return (
-    // The caret beside an inline element matches that element's border-box
-    // height — there's no CSS to size a caret directly. So the wrapper (the
-    // element the caret sits beside) is text-height (16px) and the pill
-    // visually overflows it, nudged up to stay optically centered.
-    <NodeViewWrapper as="span" className="inline-block align-middle mx-0.5 h-4 overflow-visible">
+    <NodeViewWrapper as="span" className="inline-block h-4 align-baseline overflow-visible">
       <span
         ref={pillRef}
         contentEditable={false}
         draggable
         data-drag-handle
-        onMouseMove={followCursor}
+        onMouseEnter={positionMenu}
         onClickCapture={(e) => {
           if (e.shiftKey || e.metaKey || e.ctrlKey) {
             e.preventDefault();
@@ -99,9 +95,9 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           setEditOpen(true);
         }}
         className={cn(
-          "group relative -top-[3px] inline-flex max-w-full items-center gap-2 rounded-md border border-foreground/20 bg-foreground/5 pl-1 pr-2.5 py-0 cursor-pointer active:cursor-grabbing",
+          "group relative inline-flex h-4 max-w-full items-center gap-1.5 rounded-sm px-0.5 align-baseline cursor-pointer transition-colors hover:bg-foreground/5 active:cursor-grabbing",
           isDone && "opacity-60",
-          isSelected && "ring-2 ring-ring border-transparent"
+          isSelected && "bg-foreground/10 ring-1 ring-ring"
         )}
       >
         <LongPressCheck
@@ -110,12 +106,12 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           inProgress={!isDone && inProgress}
           onMarkDone={(t) => void markTaskDone(t)}
           onLongPress={(t) => void (inProgress ? moveToToday(t) : moveToInProgress(t))}
-          className="flex-shrink-0"
+          className="h-4 w-4 flex-shrink-0 [&>svg]:h-4 [&>svg]:w-4"
         />
 
         <span
           className={cn(
-            "min-w-0 truncate text-sm",
+            "min-w-0 truncate text-sm leading-none",
             isDone && "line-through text-muted-foreground"
           )}
         >
@@ -124,14 +120,14 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
 
         {task.due_date && (
           <span
-            className="flex-shrink-0 text-xs font-mono text-muted-foreground"
+            className="flex-shrink-0 text-xs font-mono leading-none text-muted-foreground"
             style={{ letterSpacing: "-0.25px" }}
           >
             {formatDate(task.due_date)}
           </span>
         )}
 
-        {/* Hover mini-menu: floats above the pill and follows the cursor. */}
+        {/* Hover mini-menu: floats above the point where the cursor entered. */}
         <span
           ref={menuRef}
           data-no-open
