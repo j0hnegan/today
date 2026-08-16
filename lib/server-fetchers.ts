@@ -9,6 +9,10 @@ import type {
   Note,
   Attachment,
 } from "@/lib/types";
+import {
+  createDayRolloverCandidate,
+  type DayContext,
+} from "@/lib/day-rollover";
 
 // Server-side fetchers that mirror the responses of the matching `/api/*`
 // route handlers. Used by App Router Server Components to pre-populate the
@@ -201,6 +205,52 @@ export async function fetchNote(supabase: SB, date: string): Promise<Note> {
     .order("created_at", { ascending: false });
 
   return { ...note, blocks, attachments: attachments ?? [] } as Note;
+}
+
+export async function fetchDayContext(supabase: SB, date: string): Promise<DayContext> {
+  const previous = new Date(`${date}T00:00:00Z`);
+  previous.setUTCDate(previous.getUTCDate() - 1);
+  const previousDate = previous.toISOString().slice(0, 10);
+
+  const { data: rows, error } = await supabase
+    .from("documents")
+    .select("*")
+    .in("date", [date, previousDate]);
+  if (error) throw error;
+
+  const parseNote = (row: Record<string, unknown> | undefined, rowDate: string): Note => {
+    if (!row) return { id: null, date: rowDate, content: "", blocks: null };
+
+    let blocks = row.blocks ?? null;
+    if (typeof blocks === "string") {
+      try {
+        blocks = JSON.parse(blocks);
+      } catch {
+        blocks = null;
+      }
+    }
+    return { ...row, blocks } as unknown as Note;
+  };
+
+  const today = parseNote(rows?.find((row) => row.date === date), date);
+  const previousNote = rows?.find((row) => row.date === previousDate);
+  const yesterday = previousNote ? parseNote(previousNote, previousDate) : null;
+
+  let attachments: Attachment[] = [];
+  if (today.id !== null) {
+    const { data } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("entity_type", "document")
+      .eq("entity_id", today.id)
+      .order("created_at", { ascending: false });
+    attachments = (data ?? []) as Attachment[];
+  }
+
+  return {
+    note: { ...today, attachments },
+    rolloverCandidate: createDayRolloverCandidate(today, yesterday),
+  };
 }
 
 export async function fetchSettings(

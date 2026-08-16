@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
-import { fetchNote, fetchTasks } from "@/lib/server-fetchers";
+import { fetchDayContext, fetchTasks } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
 import { DayDocPanel } from "@/components/day/DayDocPanel";
 
@@ -10,16 +10,16 @@ function toDateStr(d: Date): string {
 export default async function DayPage() {
   const supabase = createClient();
   const todayStr = toDateStr(new Date());
-  const [note, tasks] = await Promise.all([
-    fetchNote(supabase, todayStr),
+  const [dayContext, tasks] = await Promise.all([
+    fetchDayContext(supabase, todayStr),
     fetchTasks(supabase),
   ]);
 
   return (
     <ServerSWR
-      fallback={{ [`/api/notes?date=${todayStr}`]: note, "/api/tasks": tasks }}
+      fallback={{ [`/api/notes?date=${todayStr}`]: dayContext.note, "/api/tasks": tasks }}
     >
-      <DayDocPanel />
+      <DayDocPanel initialRolloverCandidate={dayContext.rolloverCandidate} />
     </ServerSWR>
   );
 }

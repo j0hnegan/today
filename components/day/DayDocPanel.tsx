@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 import { useNote } from "@/lib/hooks";
-import { DayDoc, isTiptapDoc, normalizeDoc, type TiptapDoc } from "./DayDoc";
+import { DayDoc, normalizeDoc, type TiptapDoc } from "./DayDoc";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { JSONContent } from "@tiptap/react";
+import type { DayContext, DayRolloverCandidate } from "@/lib/day-rollover";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -28,29 +29,25 @@ function formatDateHeader(d: Date): string {
   });
 }
 
-// True when the doc has anything worth carrying: a task pill or actual text.
-function docHasContent(blocks: unknown): boolean {
-  if (!isTiptapDoc(blocks)) return false;
-  const walk = (nodes: JSONContent[]): boolean =>
-    nodes.some(
-      (n) =>
-        n.type === "taskBlock" ||
-        (n.type === "text" && (n.text ?? "").trim().length > 0) ||
-        (n.content ? walk(n.content) : false)
-    );
-  return walk(blocks.content ?? []);
+function normalizeCandidate(
+  candidate: DayRolloverCandidate | null
+): { fromDate: string; blocks: TiptapDoc } | null {
+  if (!candidate) return null;
+  const blocks = normalizeDoc(candidate.blocks);
+  return blocks === "" ? null : { fromDate: candidate.fromDate, blocks };
 }
 
-export function DayDocPanel() {
+export function DayDocPanel({
+  initialRolloverCandidate = null,
+}: {
+  initialRolloverCandidate?: DayRolloverCandidate | null;
+}) {
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const dateStr = useMemo(() => toDateStr(selectedDate), [selectedDate]);
   const isToday = dateStr === toDateStr(new Date());
+  const { mutate: mutateCache } = useSWRConfig();
 
-  const {
-    data: note,
-    mutate: mutateNote,
-    isValidating: noteIsValidating,
-  } = useNote(dateStr, { revalidateOnFocus: false });
+  const { data: note, mutate: mutateNote } = useNote(dateStr, { revalidateOnFocus: false });
 
   // New-day carry-over (ported from the classic Today page): if the tab sits
   // open past midnight while viewing what was "today", advance to the new day
@@ -60,96 +57,52 @@ export function DayDocPanel() {
   selectedDateRef.current = selectedDate;
   const noteRef = useRef(note);
   noteRef.current = note;
-  const [carryover, setCarryover] = useState<{ fromDate: string; blocks: TiptapDoc } | null>(null);
-  const [rolloverCandidate, setRolloverCandidate] = useState<{
-    fromDate: string;
-    blocks: TiptapDoc;
-  } | null>(null);
+  const [carryover, setCarryover] = useState<{ fromDate: string; blocks: TiptapDoc } | null>(
+    () => normalizeCandidate(initialRolloverCandidate)
+  );
   const [rolloverPending, setRolloverPending] = useState(false);
+  const contextRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
-    function checkRollover() {
+    async function checkRollover() {
       const realToday = toDateStr(new Date());
       if (realToday === sessionTodayRef.current) return;
       const prevToday = sessionTodayRef.current;
-      sessionTodayRef.current = realToday;
-      // Only act if the user is still looking at the day that just ended.
-      if (toDateStr(selectedDateRef.current) !== prevToday) return;
-      const prevBlocks = noteRef.current?.blocks;
-      setSelectedDate(new Date(realToday + "T00:00:00"));
-      const normalized = normalizeDoc(prevBlocks);
-      if (normalized !== "" && docHasContent(normalized)) {
-        setRolloverCandidate({ fromDate: prevToday, blocks: normalized });
+      const selected = toDateStr(selectedDateRef.current);
+      if (selected !== prevToday && selected !== realToday) return;
+      if (contextRequestRef.current === realToday) return;
+
+      contextRequestRef.current = realToday;
+      try {
+        const response = await fetch(`/api/notes/context?date=${realToday}`);
+        if (!response.ok) throw new Error("Day context failed");
+        const context = (await response.json()) as DayContext;
+        await mutateCache(`/api/notes?date=${realToday}`, context.note, { revalidate: false });
+
+        const currentSelection = toDateStr(selectedDateRef.current);
+        if (currentSelection !== prevToday && currentSelection !== realToday) return;
+        sessionTodayRef.current = realToday;
+        setSelectedDate(new Date(`${realToday}T00:00:00`));
+        setCarryover(normalizeCandidate(context.rolloverCandidate));
+      } catch {
+        // A later focus, visibility, or interval event retries the same day.
+      } finally {
+        contextRequestRef.current = null;
       }
     }
-    window.addEventListener("focus", checkRollover);
-    document.addEventListener("visibilitychange", checkRollover);
-    const interval = setInterval(checkRollover, 60_000);
+    const onFocus = () => void checkRollover();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void checkRollover();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const interval = setInterval(() => void checkRollover(), 60_000);
     return () => {
-      window.removeEventListener("focus", checkRollover);
-      document.removeEventListener("visibilitychange", checkRollover);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       clearInterval(interval);
     };
-  }, []);
-
-  // Fresh-open carry-over: the midnight watcher above only helps a tab that
-  // crossed midnight while open. Opening the app on a new day is the common
-  // case — if today's doc is still empty and yesterday's has content, offer
-  // to carry it over. The server-side decision prevents repeat prompts.
-  const checkedFreshRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!isToday || note === undefined) return;
-
-    const todayNorm = normalizeDoc(note.blocks);
-    if (note.rollover_status || (todayNorm !== "" && docHasContent(todayNorm))) {
-      setCarryover(null);
-      setRolloverCandidate(null);
-      return;
-    }
-
-    if (noteIsValidating || carryover || rolloverPending) return;
-
-    if (checkedFreshRef.current === dateStr) return;
-    checkedFreshRef.current = dateStr;
-
-    if (rolloverCandidate) {
-      setCarryover(rolloverCandidate);
-      setRolloverCandidate(null);
-      return;
-    }
-
-    const y = new Date(dateStr + "T00:00:00");
-    y.setDate(y.getDate() - 1);
-    const yStr = toDateStr(y);
-    fetch(`/api/notes?date=${yStr}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((n) => {
-        const norm = normalizeDoc(n?.blocks);
-        const currentNote = noteRef.current;
-        const currentNorm = normalizeDoc(currentNote?.blocks);
-        const dayStillEmpty =
-          !currentNote?.rollover_status &&
-          (currentNorm === "" || !docHasContent(currentNorm));
-        if (
-          toDateStr(selectedDateRef.current) === dateStr &&
-          dayStillEmpty &&
-          norm !== "" &&
-          docHasContent(norm)
-        ) {
-          setCarryover({ fromDate: yStr, blocks: norm });
-        }
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isToday,
-    note,
-    noteIsValidating,
-    dateStr,
-    carryover,
-    rolloverCandidate,
-    rolloverPending,
-  ]);
+  }, [mutateCache]);
 
   async function handleRollover(action: "carried" | "dismissed") {
     if (!carryover || rolloverPending) return;
