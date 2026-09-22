@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { fetchDayContext, fetchTasks } from "@/lib/server-fetchers";
 import { ServerSWR } from "@/components/shared/ServerSWR";
+import { TodayLayout } from "@/components/day/TodayLayout";
 import { DayDocPanel } from "@/components/day/DayDocPanel";
 
 function toDateStr(d: Date): string {
@@ -19,7 +20,9 @@ export default async function DayPage() {
     <ServerSWR
       fallback={{ [`/api/notes?date=${todayStr}`]: dayContext.note, "/api/tasks": tasks }}
     >
-      <DayDocPanel initialRolloverCandidate={dayContext.rolloverCandidate} />
+      <TodayLayout>
+        <DayDocPanel initialRolloverCandidate={dayContext.rolloverCandidate} />
+      </TodayLayout>
     </ServerSWR>
   );
 }

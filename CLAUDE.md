@@ -63,8 +63,11 @@ When changing a read endpoint, edit the fetcher — the route and SSR both follo
   `next/dynamic` so the login card paints without waiting on the 3D engine
 
 ## Today page
-Freeform note editor (`NoteEditor`) on the left; task sidebar (`TaskListPanel`)
-on the right with **Today** and **In Progress** tabs.
+Current `/day`: `TodayLayout` places the existing `DayDocPanel` / `DayDoc`
+editor on the left and `TaskSidebar` on the right. The sidebar reuses My Tasks'
+`VaultSection`, `TaskList`, and `TaskRow` for **Today** and **In Progress**.
+Panel handles drag or click to swap sides; the choice is saved locally. Mobile
+stacks notes above tasks. The classic editor remains at `/classic`.
 - Click the check circle = mark done; long-press (1.5s) = move to In Progress.
 - Click a title to edit inline (blur saves, Escape cancels).
 - Hover actions: date picker, Not Today, delete.
