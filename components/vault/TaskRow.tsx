@@ -11,6 +11,7 @@ import type { Task } from "@/lib/types";
 export type SelectionPosition = "solo" | "first" | "middle" | "last" | null;
 
 interface TaskRowProps {
+  compact?: boolean;
   task: Task;
   onClick: (e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent, task: Task) => void;
@@ -64,6 +65,7 @@ function DescDot({ task }: { task: Task }) {
 }
 
 export const TaskRow = memo(function TaskRow({
+  compact = false,
   task,
   onClick,
   onDragStart,
@@ -104,13 +106,13 @@ export const TaskRow = memo(function TaskRow({
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onClick={onClick}
-      className={`group flex w-full items-center gap-2 ${selectionRadius} px-2 h-11 text-left text-sm cursor-pointer transition-colors overflow-visible ${
+      className={`group flex w-full items-center gap-2 ${selectionRadius} ${compact ? "px-1 h-8 coarse:h-11" : "px-2 h-11"} text-left text-sm cursor-pointer transition-colors overflow-visible ${
         isSelected
           ? "bg-accent/50"
           : "hover:bg-white/[0.02]"
       } ${isDragging ? "opacity-40" : ""}`}
     >
-      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab flex-shrink-0" />
+      {!compact && <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab flex-shrink-0" />}
       <LongPressCheck
         task={task}
         isDone={isDone}

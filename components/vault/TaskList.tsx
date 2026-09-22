@@ -7,6 +7,7 @@ import type { Task } from "@/lib/types";
 import { useTouchDragSort } from "@/lib/useTouchDragSort";
 
 interface TaskListProps {
+  compact?: boolean;
   tasks: Task[];
   onTaskClick: (task: Task, e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent, task: Task) => void;
@@ -27,11 +28,11 @@ interface TaskListProps {
   onTouchReorder?: (section: string, fromTaskId: number, insertionIndex: number) => void;
 }
 
-function AddTaskButton({ section }: { section?: string }) {
+function AddTaskButton({ section, compact }: { section?: string; compact: boolean }) {
   return (
     <button
       type="button"
-      className="flex w-full items-center rounded-[10px] px-2 py-3 text-sm text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-colors"
+      className={`flex w-full items-center rounded-[10px] ${compact ? "px-1 h-8 coarse:h-11" : "px-2 py-3"} text-sm text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30 transition-colors`}
       onClick={() => {
         // Dispatch custom event with destination info before opening modal
         if (section) {
@@ -49,7 +50,7 @@ function AddTaskButton({ section }: { section?: string }) {
       }}
     >
       {/* Offset to align with status dot: grip (14px) + gap (8px) */}
-      <span className="pl-[22px]">+ Add a task</span>
+      <span className={compact ? undefined : "pl-[22px]"}>+ Add a task</span>
     </button>
   );
 }
@@ -63,6 +64,7 @@ function DropIndicator() {
 }
 
 export function TaskList({
+  compact = false,
   tasks,
   onTaskClick,
   onDragStart,
@@ -145,6 +147,7 @@ export function TaskList({
         >
           {dropIndicatorIndex === i && <DropIndicator />}
           <TaskRow
+            compact={compact}
             task={task}
             onClick={(e) => onTaskClick(task, e)}
             onDragStart={onDragStart}
@@ -169,7 +172,7 @@ export function TaskList({
       ))}
       {/* Show indicator after last task */}
       {dropIndicatorIndex === tasks.length && <DropIndicator />}
-      <AddTaskButton section={section} />
+      <AddTaskButton section={section} compact={compact} />
     </div>
   );
 }

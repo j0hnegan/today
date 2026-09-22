@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTasks, useTags } from "@/lib/hooks";
 import { useTaskActions } from "@/lib/useTaskActions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { VaultSection } from "@/components/vault/VaultSection";
 import { TaskList } from "@/components/vault/TaskList";
 import { TaskEditModal } from "@/components/vault/TaskEditModal";
@@ -93,15 +94,33 @@ function sortTasks(tasks: Task[], sortKey: SortKey): Task[] {
 }
 
 export function TaskSidebar({
+  tabbed = false,
   headerLeading,
   panelProps,
   panelClassName,
 }: {
+  tabbed?: boolean;
   headerLeading?: React.ReactNode;
   // 012: spread by PagePanel onto the bordered panel div for edge-grab drag.
   panelProps?: React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean };
   panelClassName?: string;
 }) {
+  const [activeSection, setActiveSection] = useState("on_deck");
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const [tabIndicator, setTabIndicator] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const list = tabListRef.current;
+    if (!list) return;
+    const measure = () => {
+      const active = list.querySelector<HTMLElement>('[data-state="active"]');
+      if (active) setTabIndicator({ left: active.offsetLeft, width: active.offsetWidth });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [activeSection, tabbed]);
   const { data: allTasks } = useTasks();
   const { data: tags } = useTags();
   const actions = useTaskActions(allTasks ?? []);
@@ -118,7 +137,7 @@ export function TaskSidebar({
   });
 
   // Filters (vault parity — size / dates / goals; session-only)
-  const [showSize, setShowSize] = useState(true);
+  const [showSize, setShowSize] = useState(!tabbed);
   const [showDates, setShowDates] = useState(true);
   const [showGoals, setShowGoals] = useState(true);
   const [sizeFilter, setSizeFilter] = useState<Size[]>([...ALL_SIZES]);
@@ -302,7 +321,7 @@ export function TaskSidebar({
   }
 
   function resetFilters() {
-    setShowSize(true);
+    setShowSize(!tabbed);
     setShowDates(true);
     setShowGoals(true);
     setSizeFilter([...ALL_SIZES]);
@@ -354,10 +373,25 @@ export function TaskSidebar({
   const dropHighlight = "ring-2 ring-accent ring-offset-2 ring-offset-background rounded-[10px]";
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <Tabs value={activeSection} onValueChange={setActiveSection} className="flex flex-col flex-1 min-h-0">
       {/* Date row + Filters (vault-style) */}
-      <div className="flex items-center justify-between min-h-7" style={{ marginBottom: "1rem" }}>
-        <div className="flex items-center min-w-0 flex-1">{headerLeading}</div>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 min-h-7 mb-4">
+        {tabbed ? (
+          <TabsList ref={tabListRef} aria-label="Task section" className="relative isolate h-7 gap-0 rounded-full bg-transparent p-0">
+            <span aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-full bg-accent transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
+              style={{ width: tabIndicator.width, transform: `translateX(${tabIndicator.left}px)` }}
+            />
+            {SECTIONS.map(({ section, title }) => (
+              <TabsTrigger key={section} value={section}
+                className="h-7 rounded-full px-2 py-0 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+                {title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        ) : <div className="flex items-center min-w-0 flex-1">{headerLeading}</div>}
+        <div className="flex items-center gap-3 ml-auto">
+        {tabbed && renderSortDropdown(activeSection)}
         <Popover>
           <PopoverTrigger asChild>
             <button className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
@@ -596,49 +630,62 @@ export function TaskSidebar({
             </div>
           </PopoverContent>
         </Popover>
+        </div>
       </div>
 
       {/* Bordered panel (mirrors the Notes panel) holding the two sections */}
       <div
         {...panelProps}
+        data-panel-surface="tasks"
         className={cn(
           "rounded-[10px] border border-border bg-panel p-3 flex-1 min-h-0 overflow-visible md:overflow-y-auto space-y-2",
+          tabbed && "p-2",
           panelClassName
         )}
       >
         {SECTIONS.map(({ key, section, title }) => {
           const sectionTasks = grouped[key as keyof typeof grouped];
+          const list = (
+            <TaskList
+              compact={tabbed}
+              tasks={sectionTasks}
+              showSize={showSize}
+              showDates={showDates}
+              showGoals={showGoals}
+              section={section}
+              onTaskClick={(task) => setEditingTask(task)}
+              onDragStart={handleDragStart}
+              draggingTaskId={draggingTaskId}
+              onDelete={actions.onDeleteTask}
+              onMarkDone={actions.onMarkDone}
+              onLongPress={handleLongPress}
+              onNotToday={section === "on_deck" ? actions.onNotTodayTask : undefined}
+              dropIndicatorIndex={dropIndicator?.section === section ? dropIndicator.index : null}
+              onRowDragOver={handleRowDragOver}
+              onTouchDragStart={setDraggingTaskId}
+              onTouchDragEnd={handleDragEnd}
+              onTouchReorder={reorderSectionByIndex}
+            />
+          );
           return (
             <div
               key={section}
+              hidden={tabbed && activeSection !== section}
               onDragOver={(e) => handleDragOver(e, section)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, section)}
               className={`transition-all ${dragOverSection === section ? dropHighlight : ""}`}
             >
-              <VaultSection
+              {tabbed ? (
+                <TabsContent value={section} className="mt-0">{list}</TabsContent>
+              ) : <VaultSection
                 title={title}
                 count={sectionTasks.length}
                 defaultOpen
                 headerExtra={renderSortDropdown(section)}
               >
-                <TaskList
-                  tasks={sectionTasks}
-                  section={section}
-                  onTaskClick={(task) => setEditingTask(task)}
-                  onDragStart={handleDragStart}
-                  draggingTaskId={draggingTaskId}
-                  onDelete={actions.onDeleteTask}
-                  onMarkDone={actions.onMarkDone}
-                  onLongPress={handleLongPress}
-                  onNotToday={section === "on_deck" ? actions.onNotTodayTask : undefined}
-                  dropIndicatorIndex={dropIndicator?.section === section ? dropIndicator.index : null}
-                  onRowDragOver={handleRowDragOver}
-                  onTouchDragStart={setDraggingTaskId}
-                  onTouchDragEnd={handleDragEnd}
-                  onTouchReorder={reorderSectionByIndex}
-                />
-              </VaultSection>
+                {list}
+              </VaultSection>}
             </div>
           );
         })}
@@ -652,6 +699,6 @@ export function TaskSidebar({
           onClose={() => setEditingTask(null)}
         />
       )}
-    </div>
+    </Tabs>
   );
 }

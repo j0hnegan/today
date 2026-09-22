@@ -20,9 +20,12 @@ test("Today keeps the notes editor beside only active Today and In Progress task
       <TodayLayout><div>Existing notes editor</div></TodayLayout>
     </SWRConfig>
   );
-  for (const text of ["Existing notes editor", "Today task", "Ongoing task", "Swap notes panel sides", "Swap tasks panel sides"]) {
+  for (const text of ["Existing notes editor", "Today task", "In Progress", 'role="tablist"']) {
     assert.ok(html.includes(text), text);
   }
+  assert.ok(!html.includes("15-30 min"));
+  assert.ok(!html.includes("lucide-grip-vertical"));
+  assert.ok(!html.includes("Ongoing task"));
   assert.ok(!html.includes("Future task"));
   assert.ok(!html.includes("Finished task"));
   assert.ok(html.indexOf('data-today-panel="notes"') < html.indexOf('data-today-panel="tasks"'));

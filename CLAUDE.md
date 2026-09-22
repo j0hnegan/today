@@ -66,7 +66,9 @@ When changing a read endpoint, edit the fetcher — the route and SSR both follo
 Current `/day`: `TodayLayout` places the existing `DayDocPanel` / `DayDoc`
 editor on the left and `TaskSidebar` on the right. The sidebar reuses My Tasks'
 `VaultSection`, `TaskList`, and `TaskRow` for **Today** and **In Progress**.
-Panel handles drag or click to swap sides; the choice is saved locally. Mobile
+Task sections use rounded header tabs with sorting beside Filters. Drag panel
+borders to swap sides (or focus a panel and press Alt+Left/Right); the choice
+is saved locally. Mobile
 stacks notes above tasks. The classic editor remains at `/classic`.
 - Click the check circle = mark done; long-press (1.5s) = move to In Progress.
 - Click a title to edit inline (blur saves, Escape cancels).

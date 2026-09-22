@@ -438,6 +438,7 @@ export function DayDoc({ note, dateStr, isToday }: { note: Note; dateStr: string
       )}
 
       <div
+        data-panel-surface="notes"
         className="rounded-[10px] border border-border bg-panel flex flex-col flex-1 p-4 md:p-6"
         onClick={(e) => {
           // Clicking the empty area below the editor drops the cursor at the end.
