@@ -75,6 +75,8 @@ stacks notes above tasks. The classic editor remains at `/classic`.
 - Add a task opens a blank inline entry with a faint check circle; Enter saves,
   Escape cancels. Failed saves preserve the draft.
 - Hover/focus actions: calendar for due date, right arrow for Not Today, delete.
+- Cmd/Ctrl+Z undoes the latest task completion until typing resumes; the toast
+  Undo button does the same. Completed note pills fade, but their menus do not.
 - Drag a Today/In Progress row into the notes editor to insert a live task
   reference at the drop position; the task remains in its list.
 

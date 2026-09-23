@@ -96,7 +96,6 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
         }}
         className={cn(
           "group relative inline-flex h-4 max-w-full items-center gap-1.5 rounded-sm px-0.5 align-baseline cursor-pointer transition-colors hover:bg-foreground/5 active:cursor-grabbing",
-          isDone && "opacity-60",
           isSelected && "bg-foreground/10 ring-1 ring-ring"
         )}
       >
@@ -106,13 +105,13 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
           inProgress={!isDone && inProgress}
           onMarkDone={(t) => void markTaskDone(t)}
           onLongPress={(t) => void (inProgress ? moveToToday(t) : moveToInProgress(t))}
-          className="h-4 w-4 flex-shrink-0 [&>svg]:h-4 [&>svg]:w-4"
+          className={cn("h-4 w-4 flex-shrink-0 [&>svg]:h-4 [&>svg]:w-4", isDone && "opacity-60")}
         />
 
         <span
           className={cn(
             "min-w-0 truncate text-sm leading-none",
-            isDone && "line-through text-muted-foreground"
+            isDone && "line-through text-muted-foreground opacity-60"
           )}
         >
           {task.title}
@@ -120,7 +119,7 @@ export function TaskBlockView({ node, deleteNode }: NodeViewProps) {
 
         {task.due_date && (
           <span
-            className="flex-shrink-0 text-xs font-mono leading-none text-muted-foreground"
+            className={cn("flex-shrink-0 text-xs font-mono leading-none text-muted-foreground", isDone && "opacity-60")}
             style={{ letterSpacing: "-0.25px" }}
           >
             {formatDate(task.due_date)}

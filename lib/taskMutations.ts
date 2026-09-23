@@ -126,6 +126,8 @@ export async function patchTask(task: Task, patch: Partial<Task>): Promise<Task>
     // Done means it leaves all active per-destination lists, but stays in
     // the unfiltered cache with status=done so /vault's Done section sees it.
     mutate(prevKey, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
+  } else if (task.status === "done" && patch.status === "active") {
+    mutate(nextKey, (curr: Task[] | undefined) => append(without(curr, task.id), optimistic), { revalidate: false });
   } else if (nextDest !== prevDest) {
     mutate(prevKey, (curr: Task[] | undefined) => without(curr, task.id), { revalidate: false });
     mutate(nextKey, (curr: Task[] | undefined) => append(curr, optimistic), { revalidate: false });

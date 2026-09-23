@@ -28,6 +28,8 @@ export async function PATCH(
     // Auto-set done_at when marking as done
     if (fields.status === "done") {
       updates.done_at = new Date().toISOString();
+    } else if (fields.status === "active") {
+      updates.done_at = null;
     }
 
     // Update task and get the result in one call (replaces separate SELECT + UPDATE)
