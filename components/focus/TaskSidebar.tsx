@@ -213,7 +213,8 @@ export function TaskSidebar({
 
   const handleDragStart = useCallback((e: React.DragEvent, task: Task) => {
     e.dataTransfer.setData("text/plain", String(task.id));
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/html", `<span data-task-block data-task-id="${task.id}"></span>`);
+    e.dataTransfer.effectAllowed = "copyMove";
     setDraggingTaskId(task.id);
   }, []);
 
@@ -676,6 +677,7 @@ export function TaskSidebar({
               onDragOver={(e) => handleDragOver(e, section)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, section)}
+              onDragEnd={handleDragEnd}
               className={`transition-all ${dragOverSection === section ? dropHighlight : ""}`}
             >
               {tabbed ? (

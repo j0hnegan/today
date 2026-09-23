@@ -75,6 +75,8 @@ stacks notes above tasks. The classic editor remains at `/classic`.
 - Add a task opens a blank inline entry with a faint check circle; Enter saves,
   Escape cancels. Failed saves preserve the draft.
 - Hover/focus actions: calendar for due date, right arrow for Not Today, delete.
+- Drag a Today/In Progress row into the notes editor to insert a live task
+  reference at the drop position; the task remains in its list.
 
 ## Environment (`.env.local`)
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
