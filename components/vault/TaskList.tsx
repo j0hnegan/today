@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useCallback, useRef } from "react";
+import { InlineTaskEntry } from "./InlineTaskEntry";
 import { TaskRow } from "./TaskRow";
 import type { SelectionPosition } from "./TaskRow";
-import type { Task } from "@/lib/types";
+import type { Task, Destination } from "@/lib/types";
 import { useTouchDragSort } from "@/lib/useTouchDragSort";
 
 interface TaskListProps {
   compact?: boolean;
+  inlineAddDestination?: Destination;
+  showDueDateAction?: boolean;
   tasks: Task[];
   onTaskClick: (task: Task, e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent, task: Task) => void;
@@ -65,6 +68,8 @@ function DropIndicator() {
 
 export function TaskList({
   compact = false,
+  inlineAddDestination,
+  showDueDateAction,
   tasks,
   onTaskClick,
   onDragStart,
@@ -148,6 +153,7 @@ export function TaskList({
           {dropIndicatorIndex === i && <DropIndicator />}
           <TaskRow
             compact={compact}
+            showDueDateAction={showDueDateAction}
             task={task}
             onClick={(e) => onTaskClick(task, e)}
             onDragStart={onDragStart}
@@ -172,7 +178,7 @@ export function TaskList({
       ))}
       {/* Show indicator after last task */}
       {dropIndicatorIndex === tasks.length && <DropIndicator />}
-      <AddTaskButton section={section} compact={compact} />
+      {inlineAddDestination ? <InlineTaskEntry destination={inlineAddDestination} compact={compact} /> : <AddTaskButton section={section} compact={compact} />}
     </div>
   );
 }

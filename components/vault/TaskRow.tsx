@@ -1,9 +1,13 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { TagBadge } from "@/components/shared/TagBadge";
-import { GripVertical, Trash2, CalendarX2 } from "lucide-react";
+import { GripVertical, Trash2, ArrowRight, CalendarDays } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { patchTask } from "@/lib/taskMutations";
 import { LongPressCheck } from "@/components/shared/LongPressCheck";
 import { hashDesc, useDescSeen } from "@/lib/descSeen";
 import type { Task } from "@/lib/types";
@@ -12,6 +16,7 @@ export type SelectionPosition = "solo" | "first" | "middle" | "last" | null;
 
 interface TaskRowProps {
   compact?: boolean;
+  showDueDateAction?: boolean;
   task: Task;
   onClick: (e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent, task: Task) => void;
@@ -66,6 +71,7 @@ function DescDot({ task }: { task: Task }) {
 
 export const TaskRow = memo(function TaskRow({
   compact = false,
+  showDueDateAction = false,
   task,
   onClick,
   onDragStart,
@@ -80,6 +86,8 @@ export const TaskRow = memo(function TaskRow({
   showDates = true,
   showGoals = true,
 }: TaskRowProps) {
+  const [dueOpen, setDueOpen] = useState(false);
+
   // Compute border-radius based on position in contiguous selection block
   let selectionRadius = "rounded-[10px]";
   if (isSelected && selectionPosition) {
@@ -169,31 +177,61 @@ export const TaskRow = memo(function TaskRow({
           )}
         </>
       )}
-      {onNotToday && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onNotToday(task);
-          }}
-          className="opacity-0 group-hover:opacity-100 coarse:opacity-100 transition-opacity text-muted-foreground hover:text-foreground flex-shrink-0 p-1"
-          title="Not today"
-        >
-          <CalendarX2 className="h-3.5 w-3.5" />
-        </button>
-      )}
-      {onDelete && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task);
-          }}
-          className="opacity-0 group-hover:opacity-100 coarse:opacity-100 transition-opacity text-muted-foreground hover:text-destructive flex-shrink-0 p-1"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      )}
+      <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 coarse:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+        {showDueDateAction && (
+          <Popover open={dueOpen} onOpenChange={setDueOpen}>
+            <PopoverTrigger asChild>
+              <button type="button" title="Due date" aria-label="Due date"
+                className="rounded p-1.5 coarse:p-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <CalendarDays className="h-3.5 w-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end" onClick={(e) => e.stopPropagation()}>
+              <Calendar mode="single"
+                selected={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
+                defaultMonth={task.due_date ? new Date(task.due_date + "T00:00:00") : undefined}
+                onSelect={(day) => {
+                  patchTask(task, { due_date: day ? format(day, "yyyy-MM-dd") : null }).catch(() => {});
+                  setDueOpen(false);
+                }} />
+              {task.due_date && <button type="button"
+                className="w-full border-t border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  patchTask(task, { due_date: null }).catch(() => {});
+                  setDueOpen(false);
+                }}>Clear due date</button>}
+            </PopoverContent>
+          </Popover>
+        )}
+        {onNotToday && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNotToday(task);
+            }}
+            className="rounded p-1.5 coarse:p-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            title="Not today"
+            aria-label="Not today"
+          >
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task);
+            }}
+            title="Delete task"
+            aria-label="Delete task"
+            className="rounded p-1.5 coarse:p-3 text-muted-foreground hover:text-destructive hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 });

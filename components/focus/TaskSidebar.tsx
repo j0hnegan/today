@@ -648,6 +648,8 @@ export function TaskSidebar({
           const list = (
             <TaskList
               compact={tabbed}
+              inlineAddDestination={section}
+              showDueDateAction
               tasks={sectionTasks}
               showSize={showSize}
               showDates={showDates}

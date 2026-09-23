@@ -23,6 +23,11 @@ test("Today keeps the notes editor beside only active Today and In Progress task
   for (const text of ["Existing notes editor", "Today task", "In Progress", 'role="tablist"']) {
     assert.ok(html.includes(text), text);
   }
+  for (const label of ["Due date", "Not today", "Delete task"]) {
+    assert.ok(html.includes(`aria-label="${label}"`), label);
+  }
+  assert.ok(html.includes("lucide-arrow-right"));
+  assert.ok(html.includes("+ Add a task"));
   assert.ok(!html.includes("15-30 min"));
   assert.ok(!html.includes("lucide-grip-vertical"));
   assert.ok(!html.includes("Ongoing task"));

@@ -72,7 +72,9 @@ is saved locally. Mobile
 stacks notes above tasks. The classic editor remains at `/classic`.
 - Click the check circle = mark done; long-press (1.5s) = move to In Progress.
 - Click a title to edit inline (blur saves, Escape cancels).
-- Hover actions: date picker, Not Today, delete.
+- Add a task opens a blank inline entry with a faint check circle; Enter saves,
+  Escape cancels. Failed saves preserve the draft.
+- Hover/focus actions: calendar for due date, right arrow for Not Today, delete.
 
 ## Environment (`.env.local`)
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
