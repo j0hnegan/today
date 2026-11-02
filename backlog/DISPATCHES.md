@@ -1242,3 +1242,11 @@ Append-only run log. `/standup` reads the latest entries.
 - 🤔 **011 (search) still `proposed`** — awaiting your go/no-go on Phase 1.
 - ℹ️ No open `auto/*` PRs; no merges since #29 → LEARNINGS unchanged. PR #13 (iOS shell) and untracked `ios/` / `Alpine-Night-Loop/` dirs left alone.
 - No push sent (nothing newly needs John).
+
+## 2026-11-02 #3 — builder run (cron, quiet)
+- 😴 **Quiet run — board unchanged.** Nothing built, iterated, proposed, or shipped. 16 shipped, 011 `proposed`, 018 `ready` (gated), 019 `blocked`.
+- ⏸️ **Zero commits since run #2** (`d6074f5`). Same two standing items, both yours.
+- 🚧 **019 still blocked** — no `PLAID_*` vars, no `plaid` package, no Plaid tables (newest migration `20260815171632_optimize_app_database.sql`). **018 stays gated.**
+- 🤔 **011 (search) still `proposed`** — awaiting your go/no-go on Phase 1.
+- ℹ️ No open `auto/*` PRs; no merges since #29 → LEARNINGS unchanged. PR #13 and untracked `ios/` / `Alpine-Night-Loop/` left alone.
+- No push sent (nothing newly needs John).
