@@ -1,10 +1,10 @@
 # Health — steward snapshot
 
-_Last run: 2026-11-02 19:23 EST (steward re-run; prior run 2026-11-02 09:50). Overwritten each run; latest state only._
+_Last run: 2026-11-03 08:26 EST (steward daily run; prior run 2026-11-02 19:23). Overwritten each run; latest state only._
 
-> **No change since this morning's run (09:50).** Only three quiet builder dashboard commits on `main`;
+> **No change since yesterday's runs (2026-11-02).** No commits on `main` since the last steward run,
 > no PR movement (#13 still the only open PR), no edits to `LEARNINGS.md`, nothing `building`/`discussing`.
-> Audit still green; same day, so stale counts unchanged. Everything below is still accurate.
+> Audit still green; stale counts below advanced by one day. Everything below is still accurate.
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
@@ -51,7 +51,7 @@ _Last run: 2026-11-02 19:23 EST (steward re-run; prior run 2026-11-02 09:50). Ov
 - **🟡 019 still blocked on a migration you'd run by hand.** No `PLAID_*` vars, no `plaid` dep, none of
   the four tables. You've written two migrations by hand since (08-15) — one more for 019 flips it to
   `ready` and unblocks 018 behind it.
-- **011 search — 148 days untouched.** Task search is covered (keywords, picker, MCP `search_tasks`).
+- **011 search — 149 days untouched.** Task search is covered (keywords, picker, MCP `search_tasks`).
   Narrow to docs/notes-only or close as absorbed.
 - **🟡 The Today/day-doc work has no backlog folder.** ~25 hand commits across two feature areas the
   board doesn't know exist. One retroactive `/backlog` folder would let the loop iterate on it.
@@ -60,12 +60,12 @@ _Last run: 2026-11-02 19:23 EST (steward re-run; prior run 2026-11-02 09:50). Ov
 
 | Item | Untouched | Note |
 |---|---|---|
-| 011 search | 148 days | Overtaken — narrow or close (above) |
-| 018 finance tab | 144 days | Gated on 019 by design |
-| 019 Plaid sync | 144 days | Blocked on the migration (above) |
-| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 155 days | `feat/ios-capacitor`, 1 commit, no folder. Track, park, or close. Untracked `ios/` correlates. |
-| `feature/task-triage-v2` | 134 days | Local, 1 commit, no PR/folder. Likely moot if auto-triage is retired. |
-| `origin/claude/fix-task-categorization-j8nuy` | 185 days | 1 commit, no PR ever filed. |
+| 011 search | 149 days | Overtaken — narrow or close (above) |
+| 018 finance tab | 145 days | Gated on 019 by design |
+| 019 Plaid sync | 145 days | Blocked on the migration (above) |
+| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 156 days | `feat/ios-capacitor`, 1 commit, no folder. Track, park, or close. Untracked `ios/` correlates. |
+| `feature/task-triage-v2` | 135 days | Local, 1 commit, no PR/folder. Likely moot if auto-triage is retired. |
+| `origin/claude/fix-task-categorization-j8nuy` | 186 days | 1 commit, no PR ever filed. |
 
 ## Cleanup candidates (not the steward's to delete)
 - Local `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app` — 0 commits ahead of main.
