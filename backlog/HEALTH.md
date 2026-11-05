@@ -1,10 +1,10 @@
 # Health — steward snapshot
 
-_Last run: 2026-11-04 10:57 EST (steward daily run; prior run 2026-11-03 19:43). Overwritten each run; latest state only._
+_Last run: 2026-11-04 20:31 EST (steward re-run; prior run 2026-11-04 10:57). Overwritten each run; latest state only._
 
-> **No change since yesterday.** No commits on `main` besides steward runs, no PR movement
+> **No change since this morning's run.** No commits on `main` besides steward runs, no PR movement
 > (#13 still the only open PR), no edits to `LEARNINGS.md` (last touched 2026-07-31), nothing
-> `building`/`discussing`. Audit green. Only the stale-day counts moved (+1).
+> `building`/`discussing`. Audit green. Stale-day counts unchanged (same day).
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
