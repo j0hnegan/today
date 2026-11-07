@@ -1,10 +1,10 @@
 # Health — steward snapshot
 
-_Last run: 2026-11-06 12:30 EST (steward daily run). Overwritten each run; latest state only._
+_Last run: 2026-11-06 19:23 EST (steward re-run). Overwritten each run; latest state only._
 
-> **No change since yesterday.** Last commit on `main` was the 2026-11-05 19:22 steward re-run. No PR movement
-> (#13 still the only open PR), no branch movement, no edits to `LEARNINGS.md` (last touched 2026-07-31),
-> nothing `building`/`discussing`. Audit green. Stale-day counts +1.
+> **No change since this morning's run.** Only two quiet builder runs since (DISPATCHES + "Last run" line).
+> No PR movement (#13 still the only open PR), no branch movement, no edits to `LEARNINGS.md`
+> (last touched 2026-07-31), nothing `building`/`discussing`. Audit green. CLAUDE.md leftovers re-checked: still true.
 
 ## Status counts (19 features)
 - ✅ **shipped:** 16 — 001–010, 012–017 (all merged, #16–#29)
