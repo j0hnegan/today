@@ -1,8 +1,8 @@
 # Health — steward snapshot
 
-_Last run: 2026-11-22 19:23 EST (steward daily run). Overwritten each run; latest state only._
+_Last run: 2026-11-23 14:38 EST (steward daily run). Overwritten each run; latest state only._
 
-> **No change since the last run (2026-11-22 13:12).** No commits, PR movement (#13 still the only open PR),
+> **No change since the last run (2026-11-22 19:23).** No commits, PR movement (#13 still the only open PR),
 > or branch movement since. `LEARNINGS.md` unchanged (last touched 2026-07-31), nothing
 > `building`/`discussing`. Audit green. CLAUDE.md leftovers re-checked: still true.
 
@@ -30,14 +30,14 @@ _Last run: 2026-11-22 19:23 EST (steward daily run). Overwritten each run; lates
 
 ## Needs John
 
-- **🟡 `CLAUDE.md` — three small leftovers** (yours to edit; I don't touch it). Still true 2026-11-22:
+- **🟡 `CLAUDE.md` — three small leftovers** (yours to edit; I don't touch it). Still true 2026-11-23:
   - "Key directories" lists `components/focus/*` as `PagePanel`, `NoteEditor`, **`TaskListPanel`**
     — that file doesn't exist (it's `TaskSidebar.tsx`).
   - `components/day/*` (`TodayLayout`, `DayDoc`, `DayDocPanel`, task pills) isn't in "Key directories".
   - Tech Stack says `/api/cron/*` runs on Node — there's no `app/api/cron/`.
 - **🟡 019 still blocked on a migration you'd run by hand.** No `PLAID_*` vars, no `plaid` dep, none of
   the four tables. One migration flips it to `ready` and unblocks 018 behind it.
-- **011 search — 168 days untouched.** Task search is covered (keywords, picker, MCP `search_tasks`).
+- **011 search — 169 days untouched.** Task search is covered (keywords, picker, MCP `search_tasks`).
   Narrow to docs/notes-only or close as absorbed.
 - **🟡 The Today/day-doc work has no backlog folder.** ~25 hand commits (08-15 → 09-23) the board
   doesn't know exist. One retroactive `/backlog` folder would let the loop iterate on it.
@@ -46,12 +46,12 @@ _Last run: 2026-11-22 19:23 EST (steward daily run). Overwritten each run; lates
 
 | Item | Untouched | Note |
 |---|---|---|
-| 011 search | 168 days | Overtaken — narrow or close (above) |
-| 018 finance tab | 164 days | Gated on 019 by design |
-| 019 Plaid sync | 164 days | Blocked on the migration (above) |
-| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 175 days | `feat/ios-capacitor`, 1 commit, no folder. Track, park, or close. Untracked `ios/` correlates. |
-| `feature/task-triage-v2` | 154 days | Local, 1 commit, no PR/folder. Likely moot if auto-triage is retired. |
-| `origin/claude/fix-task-categorization-j8nuy` | 205 days | 1 commit, no PR ever filed. |
+| 011 search | 169 days | Overtaken — narrow or close (above) |
+| 018 finance tab | 165 days | Gated on 019 by design |
+| 019 Plaid sync | 165 days | Blocked on the migration (above) |
+| [Draft PR #13](https://github.com/j0hnegan/today/pull/13) iOS shell | 176 days | `feat/ios-capacitor`, 1 commit, no folder. Track, park, or close. Untracked `ios/` correlates. |
+| `feature/task-triage-v2` | 155 days | Local, 1 commit, no PR/folder. Likely moot if auto-triage is retired. |
+| `origin/claude/fix-task-categorization-j8nuy` | 206 days | 1 commit, no PR ever filed. |
 
 ## Cleanup candidates (not the steward's to delete)
 - Local `claude/wonderful-einstein`, `claude/wonderful-goodall`, `ios-app` — 0 commits ahead of main.
