@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Eclipse } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+import { isNative, signInWithGoogleNative } from "@/lib/native";
 import dynamic from "next/dynamic";
 
 // Three.js (~140 kB) only draws the decorative background, so load it
@@ -49,6 +50,10 @@ export default function LoginPage() {
   }, []);
 
   const handleGoogleLogin = async () => {
+    if (isNative()) {
+      await signInWithGoogleNative();
+      return;
+    }
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
